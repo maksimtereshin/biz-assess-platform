@@ -26,7 +26,7 @@ export function FullPage() {
     canGoNext,
     isCurrentCategoryCompleted,
     getNextCategory,
-    goToNextCategory,
+    // goToNextCategory,
     getOverallProgress,
     getCategoryProgress,
     isSurveyCompleted,

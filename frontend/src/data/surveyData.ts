@@ -1,4 +1,4 @@
-import { Category, SurveyVariant, AnswerOption, Question } from '../types/survey';
+import { Category, SurveyVariant, Question } from '../types/survey';
 
 
 // Common answer options for standardization

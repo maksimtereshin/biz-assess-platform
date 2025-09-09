@@ -26,7 +26,7 @@ export function ExpressPage() {
     canGoNext,
     isCurrentCategoryCompleted,
     getNextCategory,
-    goToNextCategory,
+    // goToNextCategory,
     getOverallProgress,
     getCategoryProgress,
     isSurveyCompleted,

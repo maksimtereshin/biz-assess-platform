@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { Category } from '../types/survey';
 

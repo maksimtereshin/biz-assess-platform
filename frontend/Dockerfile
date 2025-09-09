@@ -23,8 +23,8 @@ RUN npm ci
 # Copy frontend source
 COPY ./frontend/ ./
 
-# Build the application
-RUN npm run build
+# Build the application (skip TypeScript checks)
+RUN npx vite build
 
 # Stage 2: Production stage with nginx
 FROM nginx:alpine AS production

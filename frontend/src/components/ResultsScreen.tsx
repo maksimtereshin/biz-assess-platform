@@ -1,5 +1,4 @@
 import { Category } from '../types/survey';
-import { getQuestionsForVariant } from '../data/surveyData';
 
 // Import provided result images for future detailed category reports
 // import overviewImage from 'figma:asset/377bde54d27f4d2155315fbe79dd6692447581cd.png';
@@ -20,7 +19,7 @@ interface CategoryResult {
   color: string;
 }
 
-export function ResultsScreen({ categories, surveyVariant, responses, onBackToMain }: ResultsScreenProps) {
+export function ResultsScreen({ categories, responses, onBackToMain }: ResultsScreenProps) {
   // Calculate scores for each category
   const calculateCategoryScore = (category: any): number => {
     if (!category || !category.questions) return 0;

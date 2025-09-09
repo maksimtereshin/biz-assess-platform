@@ -39,9 +39,8 @@ RUN npm ci
 # Copy source code
 COPY ./backend/src/ ./src/
 
-# Ensure data files are copied for build
-RUN mkdir -p dist/data
-COPY ./backend/src/data/ ./dist/data/ 2>/dev/null || true
+# Create dist directory
+RUN mkdir -p dist
 
 # Build the application
 RUN npm run build
@@ -49,7 +48,7 @@ RUN npm run build
 # Stage 2: Production stage
 FROM node:18-alpine AS production
 
-# Install runtime canvas dependencies
+# Install runtime canvas dependencies and build tools for npm install
 RUN apk add --no-cache \
     cairo \
     jpeg \
@@ -59,7 +58,14 @@ RUN apk add --no-cache \
     pixman \
     pangomm \
     libjpeg-turbo \
-    freetype
+    freetype \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    musl-dev
 
 # Create app user for security
 RUN addgroup -g 1001 -S nodejs
