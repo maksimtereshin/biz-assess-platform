@@ -43,7 +43,7 @@ services:
         sync: false # Set manually in Render dashboard
       - key: DB_SYNC
         value: "false" # Database schema sync disabled after initial deployment
-    healthCheckPath: /health
+    healthCheckPath: /api/health
 
   # Frontend Service
   - type: web
