@@ -19,6 +19,15 @@ fi
 
 echo "Configuring nginx to proxy API requests to: $BACKEND_URL"
 
+# Test backend connectivity before starting nginx
+echo "Testing backend connectivity..."
+if wget --spider --timeout=10 "$BACKEND_URL/api/health" 2>/dev/null; then
+    echo "✅ Backend is reachable at $BACKEND_URL"
+else
+    echo "❌ Backend is not reachable at $BACKEND_URL"
+    echo "This may cause 502 errors. Check backend service status."
+fi
+
 # Replace template variables and create final nginx config
 envsubst '${BACKEND_URL}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
