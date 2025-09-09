@@ -45,6 +45,9 @@ RUN mkdir -p dist
 # Build the application
 RUN npm run build
 
+# Copy data files that TypeScript doesn't copy
+COPY ./backend/src/data/ ./dist/data/
+
 # Stage 2: Production stage
 FROM node:18-alpine AS production
 
