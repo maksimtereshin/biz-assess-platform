@@ -1,8 +1,10 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { Survey, SurveySession, SurveyType } from 'bizass-shared';
 
-// API client configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// API client configuration - use relative URLs for production, full URL for development
+const API_BASE_URL = import.meta.env.DEV 
+  ? (import.meta.env.VITE_API_URL || 'http://localhost:3001')
+  : '/api'; // In production, nginx will proxy /api to backend
 
 class ApiClient {
   private client: AxiosInstance;

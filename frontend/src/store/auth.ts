@@ -44,7 +44,7 @@ export const useAuthStore = create<AuthState>()(
           if (currentToken && !currentToken.startsWith('demo-token-')) {
             // Проверяем валидность токена
             try {
-              const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/auth/verify`, {
+              const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/verify`, {
                 headers: {
                   'Authorization': `Bearer ${currentToken}`
                 }
@@ -70,7 +70,7 @@ export const useAuthStore = create<AuthState>()(
             
             if (telegramInitData) {
               try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/auth/telegram`, {
+                const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/telegram`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
