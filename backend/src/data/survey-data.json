@@ -1,0 +1,600 @@
+{
+  "EXPRESS": {
+    "id": 1,
+    "type": "EXPRESS",
+    "name": "Express Business Assessment",
+    "structure": [
+      {
+        "id": "product",
+        "name": "Product",
+        "subcategories": [
+          {
+            "id": "product-line",
+            "name": "Product Line",
+            "questions": [
+              {
+                "id": 1,
+                "text": "How well-defined is your product or service offering?"
+              },
+              {
+                "id": 2,
+                "text": "How unique is your product compared to competitors?"
+              },
+              {
+                "id": 3,
+                "text": "How well does your product solve the target customer's problem?"
+              }
+            ]
+          },
+          {
+            "id": "personal-brand",
+            "name": "Personal Brand",
+            "questions": [
+              {
+                "id": 4,
+                "text": "How strong is your personal brand in your industry?"
+              },
+              {
+                "id": 5,
+                "text": "How well do you communicate your expertise to potential customers?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "marketing",
+        "name": "Marketing",
+        "subcategories": [
+          {
+            "id": "monetization",
+            "name": "Monetization",
+            "questions": [
+              {
+                "id": 6,
+                "text": "How clear is your revenue model?"
+              },
+              {
+                "id": 7,
+                "text": "How well do you understand your pricing strategy?"
+              }
+            ]
+          },
+          {
+            "id": "customer-avatar",
+            "name": "Customer Avatar",
+            "questions": [
+              {
+                "id": 8,
+                "text": "How well-defined is your ideal customer profile?"
+              },
+              {
+                "id": 9,
+                "text": "How well do you understand your customer's pain points?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sales",
+        "name": "Sales",
+        "subcategories": [
+          {
+            "id": "strategy-funnels",
+            "name": "Strategy and Funnels",
+            "questions": [
+              {
+                "id": 10,
+                "text": "How well-defined is your sales process?"
+              },
+              {
+                "id": 11,
+                "text": "How effective are your sales funnels?"
+              }
+            ]
+          },
+          {
+            "id": "promotion-channels",
+            "name": "Promotion Channels",
+            "questions": [
+              {
+                "id": 12,
+                "text": "How well do you utilize your marketing channels?"
+              },
+              {
+                "id": 13,
+                "text": "How effective are your promotional strategies?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hr",
+        "name": "HR (Human Resources)",
+        "subcategories": [
+          {
+            "id": "delegation",
+            "name": "Delegation",
+            "questions": [
+              {
+                "id": 14,
+                "text": "How well do you delegate tasks to team members?"
+              },
+              {
+                "id": 15,
+                "text": "How effective is your team management?"
+              }
+            ]
+          },
+          {
+            "id": "economics",
+            "name": "Economics",
+            "questions": [
+              {
+                "id": 16,
+                "text": "How well do you understand your business economics?"
+              },
+              {
+                "id": 17,
+                "text": "How effective is your financial planning?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "automation",
+        "name": "Automation and Technology",
+        "subcategories": [
+          {
+            "id": "sales-organization",
+            "name": "Sales Organization",
+            "questions": [
+              {
+                "id": 18,
+                "text": "How well-organized is your sales team?"
+              },
+              {
+                "id": 19,
+                "text": "How effective are your sales processes?"
+              }
+            ]
+          },
+          {
+            "id": "ai-technology",
+            "name": "AI Technology Implementation",
+            "questions": [
+              {
+                "id": 20,
+                "text": "How well do you leverage AI and technology in your business?"
+              },
+              {
+                "id": 21,
+                "text": "How effective are your automation strategies?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "metrics",
+        "name": "Metrics and Analytics",
+        "subcategories": [
+          {
+            "id": "metrics-tracking",
+            "name": "Metrics",
+            "questions": [
+              {
+                "id": 22,
+                "text": "How well do you track key business metrics?"
+              },
+              {
+                "id": 23,
+                "text": "How effective is your data analysis?"
+              }
+            ]
+          },
+          {
+            "id": "professional",
+            "name": "Professional",
+            "questions": [
+              {
+                "id": 24,
+                "text": "How professional is your business presentation?"
+              },
+              {
+                "id": 25,
+                "text": "How well do you maintain professional standards?"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "FULL": {
+    "id": 2,
+    "type": "FULL",
+    "name": "Full Business Assessment",
+    "structure": [
+      {
+        "id": "product",
+        "name": "Product",
+        "subcategories": [
+          {
+            "id": "product-line",
+            "name": "Product Line",
+            "questions": [
+              {
+                "id": 1,
+                "text": "How well-defined is your product or service offering?"
+              },
+              {
+                "id": 2,
+                "text": "How unique is your product compared to competitors?"
+              },
+              {
+                "id": 3,
+                "text": "How well does your product solve the target customer's problem?"
+              },
+              {
+                "id": 4,
+                "text": "How well do you understand your product's value proposition?"
+              },
+              {
+                "id": 5,
+                "text": "How effective is your product development process?"
+              }
+            ]
+          },
+          {
+            "id": "personal-brand",
+            "name": "Personal Brand",
+            "questions": [
+              {
+                "id": 6,
+                "text": "How strong is your personal brand in your industry?"
+              },
+              {
+                "id": 7,
+                "text": "How well do you communicate your expertise to potential customers?"
+              },
+              {
+                "id": 8,
+                "text": "How consistent is your brand messaging across all channels?"
+              },
+              {
+                "id": 9,
+                "text": "How well do you build trust with your audience?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "marketing",
+        "name": "Marketing",
+        "subcategories": [
+          {
+            "id": "monetization",
+            "name": "Monetization",
+            "questions": [
+              {
+                "id": 10,
+                "text": "How clear is your revenue model?"
+              },
+              {
+                "id": 11,
+                "text": "How well do you understand your pricing strategy?"
+              },
+              {
+                "id": 12,
+                "text": "How effective are your monetization strategies?"
+              },
+              {
+                "id": 13,
+                "text": "How well do you optimize for customer lifetime value?"
+              }
+            ]
+          },
+          {
+            "id": "customer-avatar",
+            "name": "Customer Avatar",
+            "questions": [
+              {
+                "id": 14,
+                "text": "How well-defined is your ideal customer profile?"
+              },
+              {
+                "id": 15,
+                "text": "How well do you understand your customer's pain points?"
+              },
+              {
+                "id": 16,
+                "text": "How well do you know your customer's buying behavior?"
+              },
+              {
+                "id": 17,
+                "text": "How effective is your customer segmentation?"
+              }
+            ]
+          },
+          {
+            "id": "strategy-funnels",
+            "name": "Strategy and Funnels",
+            "questions": [
+              {
+                "id": 18,
+                "text": "How well-defined is your marketing strategy?"
+              },
+              {
+                "id": 19,
+                "text": "How effective are your marketing funnels?"
+              },
+              {
+                "id": 20,
+                "text": "How well do you optimize conversion rates?"
+              },
+              {
+                "id": 21,
+                "text": "How effective is your lead nurturing process?"
+              }
+            ]
+          },
+          {
+            "id": "promotion-channels",
+            "name": "Promotion Channels",
+            "questions": [
+              {
+                "id": 22,
+                "text": "How well do you utilize your marketing channels?"
+              },
+              {
+                "id": 23,
+                "text": "How effective are your promotional strategies?"
+              },
+              {
+                "id": 24,
+                "text": "How well do you integrate your marketing channels?"
+              },
+              {
+                "id": 25,
+                "text": "How effective is your content marketing strategy?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sales",
+        "name": "Sales",
+        "subcategories": [
+          {
+            "id": "sales-organization",
+            "name": "Sales Organization",
+            "questions": [
+              {
+                "id": 26,
+                "text": "How well-organized is your sales team?"
+              },
+              {
+                "id": 27,
+                "text": "How effective are your sales processes?"
+              },
+              {
+                "id": 28,
+                "text": "How well do you train your sales team?"
+              },
+              {
+                "id": 29,
+                "text": "How effective is your sales management?"
+              }
+            ]
+          },
+          {
+            "id": "sales-funnel",
+            "name": "Sales Funnel",
+            "questions": [
+              {
+                "id": 30,
+                "text": "How well-defined is your sales funnel?"
+              },
+              {
+                "id": 31,
+                "text": "How effective is your lead qualification process?"
+              },
+              {
+                "id": 32,
+                "text": "How well do you handle objections in sales?"
+              },
+              {
+                "id": 33,
+                "text": "How effective is your closing process?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hr",
+        "name": "HR (Human Resources)",
+        "subcategories": [
+          {
+            "id": "delegation",
+            "name": "Delegation",
+            "questions": [
+              {
+                "id": 34,
+                "text": "How well do you delegate tasks to team members?"
+              },
+              {
+                "id": 35,
+                "text": "How effective is your team management?"
+              },
+              {
+                "id": 36,
+                "text": "How well do you empower your team members?"
+              },
+              {
+                "id": 37,
+                "text": "How effective is your performance management?"
+              }
+            ]
+          },
+          {
+            "id": "economics",
+            "name": "Economics",
+            "questions": [
+              {
+                "id": 38,
+                "text": "How well do you understand your business economics?"
+              },
+              {
+                "id": 39,
+                "text": "How effective is your financial planning?"
+              },
+              {
+                "id": 40,
+                "text": "How well do you manage cash flow?"
+              },
+              {
+                "id": 41,
+                "text": "How effective is your cost management?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "automation",
+        "name": "Automation and Technology",
+        "subcategories": [
+          {
+            "id": "automation",
+            "name": "Automation",
+            "questions": [
+              {
+                "id": 42,
+                "text": "How well do you automate repetitive tasks?"
+              },
+              {
+                "id": 43,
+                "text": "How effective are your automation workflows?"
+              },
+              {
+                "id": 44,
+                "text": "How well do you integrate your business systems?"
+              },
+              {
+                "id": 45,
+                "text": "How effective is your process optimization?"
+              }
+            ]
+          },
+          {
+            "id": "ai-technology",
+            "name": "AI Technology Implementation",
+            "questions": [
+              {
+                "id": 46,
+                "text": "How well do you leverage AI and technology in your business?"
+              },
+              {
+                "id": 47,
+                "text": "How effective are your automation strategies?"
+              },
+              {
+                "id": 48,
+                "text": "How well do you stay updated with technology trends?"
+              },
+              {
+                "id": 49,
+                "text": "How effective is your technology adoption process?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "metrics",
+        "name": "Metrics and Analytics",
+        "subcategories": [
+          {
+            "id": "metrics-tracking",
+            "name": "Metrics",
+            "questions": [
+              {
+                "id": 50,
+                "text": "How well do you track key business metrics?"
+              },
+              {
+                "id": 51,
+                "text": "How effective is your data analysis?"
+              },
+              {
+                "id": 52,
+                "text": "How well do you use data for decision making?"
+              },
+              {
+                "id": 53,
+                "text": "How effective is your reporting system?"
+              }
+            ]
+          },
+          {
+            "id": "professional",
+            "name": "Professional",
+            "questions": [
+              {
+                "id": 54,
+                "text": "How professional is your business presentation?"
+              },
+              {
+                "id": 55,
+                "text": "How well do you maintain professional standards?"
+              },
+              {
+                "id": 56,
+                "text": "How effective is your professional development?"
+              },
+              {
+                "id": 57,
+                "text": "How well do you build professional relationships?"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "competency",
+        "name": "Competency Map",
+        "subcategories": [
+          {
+            "id": "social",
+            "name": "Social",
+            "questions": [
+              {
+                "id": 58,
+                "text": "How well do you build and maintain professional networks?"
+              },
+              {
+                "id": 59,
+                "text": "How effective is your social media presence?"
+              },
+              {
+                "id": 60,
+                "text": "How well do you engage with your community?"
+              },
+              {
+                "id": 61,
+                "text": "How effective is your social selling strategy?"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

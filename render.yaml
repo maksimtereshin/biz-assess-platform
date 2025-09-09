@@ -1,0 +1,57 @@
+services:
+  # Backend API Service
+  - type: web
+    name: bizass-backend
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DB_HOST
+        fromDatabase:
+          name: bizass-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: bizass-postgres
+          property: port
+      - key: DB_USERNAME
+        fromDatabase:
+          name: bizass-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: bizass-postgres
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: bizass-postgres
+          property: database
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://bizass-frontend.onrender.com
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false # Set manually in Render dashboard
+    healthCheckPath: /health
+
+  # Frontend Service
+  - type: web
+    name: bizass-frontend
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./
+    envVars:
+      - key: VITE_API_URL
+        value: https://bizass-backend.onrender.com
+
+databases:
+  - name: bizass-postgres
+    databaseName: bizass_platform
+    user: postgres
+    plan: starter
