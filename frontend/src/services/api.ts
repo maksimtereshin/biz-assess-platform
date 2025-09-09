@@ -89,22 +89,40 @@ class ApiClient {
   }
 
   // Additional methods from BusinessAssessmentPlatform
-  async startSurvey(version: 'express' | 'full'): Promise<{ surveyId: string; answers: Record<string, number> }> {
-    const response = await this.client.post('/surveys', { version });
-    return response.data;
-  }
-
-  async restoreSurveySession(userId: string, version: 'express' | 'full'): Promise<any> {
-    const response = await this.client.get(`/surveys?version=${version}&status=in_progress&userId=${userId}`);
-    return response.data;
-  }
-
-  async saveAnswer(surveyId: string, questionId: string, answer: number): Promise<any> {
-    const response = await this.client.put(`/surveys/${surveyId}/answer`, {
-      questionId,
-      answer,
+  async startSurvey(version: 'express' | 'full', telegramId?: number): Promise<{ session: SurveySession; sessionToken: string }> {
+    // Use the authenticate method if we have a telegram ID, otherwise start a new session
+    if (telegramId) {
+      // Generate a token for the telegram user and authenticate
+      const tokenResponse = await this.generateTestToken(telegramId);
+      return this.authenticate(tokenResponse.token, version as SurveyType);
+    }
+    // For non-telegram users, start a session with a default ID
+    const response = await this.client.post('/surveys/start', {
+      telegramId: Date.now(), // Use timestamp as a temporary ID
+      surveyType: version
     });
+    if (response.data.sessionToken) {
+      this.setSessionToken(response.data.sessionToken);
+    }
     return response.data;
+  }
+
+  async restoreSurveySession(userId: string, version: 'express' | 'full'): Promise<SurveySession | null> {
+    // Try to get the current session if we have a token
+    if (this.sessionToken) {
+      try {
+        return await this.getCurrentSession();
+      } catch (error) {
+        console.error('Failed to restore session:', error);
+        this.clearSessionToken();
+      }
+    }
+    return null;
+  }
+
+  async saveAnswer(surveyId: string, questionId: string, answer: number): Promise<void> {
+    // Use the submitAnswer method which expects questionId as a number
+    await this.submitAnswer(parseInt(questionId), answer);
   }
 
   async getReport(reportId: string): Promise<any> {

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { User, UserSession } from '../types/user';
 import { SurveyVariant } from '../types/survey';
 import { LocalStorageService } from '../services/localStorage';
+import api from '../services/api';
 
 // Telegram Web Apps interface
 interface TelegramWebApp {
@@ -106,8 +107,18 @@ export function useUserSession() {
         return existingSession;
       }
       
-      // Create new session if none exists or previous was completed
+      // Create new session locally first
       const newSession = LocalStorageService.createNewSession(user.id, surveyVariant);
+      
+      // Try to create backend session asynchronously (don't block UI)
+      const telegramId = user.telegramId ? parseInt(user.telegramId) : undefined;
+      api.startSurvey(surveyVariant, telegramId).then(() => {
+        // Backend session created successfully
+        console.log('Backend session created for variant:', surveyVariant);
+      }).catch((error: any) => {
+        console.warn('Failed to create backend session, continuing with local session:', error);
+      });
+      
       setSession(newSession);
       return newSession;
     } catch (err) {
