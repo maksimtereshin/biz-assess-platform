@@ -6,9 +6,15 @@ if [ -z "$BACKEND_URL" ]; then
     export BACKEND_URL="http://localhost:3001"
 else
     # Ensure BACKEND_URL has protocol
-    if [[ $BACKEND_URL != http* ]]; then
-        export BACKEND_URL="https://$BACKEND_URL"
-    fi
+    case "$BACKEND_URL" in
+        http*)
+            # Already has protocol, use as-is
+            ;;
+        *)
+            # No protocol, add https://
+            export BACKEND_URL="https://$BACKEND_URL"
+            ;;
+    esac
 fi
 
 echo "Configuring nginx to proxy API requests to: $BACKEND_URL"
