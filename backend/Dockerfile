@@ -65,7 +65,11 @@ RUN apk add --no-cache \
     cairo-dev \
     jpeg-dev \
     pango-dev \
-    musl-dev
+    musl-dev \
+    giflib-dev \
+    pixman-dev \
+    libjpeg-turbo-dev \
+    freetype-dev
 
 # Create app user for security
 RUN addgroup -g 1001 -S nodejs
