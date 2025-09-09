@@ -98,7 +98,7 @@ export function QuestionScreen({
     <div className="min-h-screen bg-slate-100 flex flex-col">
       {/* Header */}
       <div className="bg-slate-400 text-white px-4 py-2 text-center relative">
-        <h2 className="text-sm">ШАГ {stepNumber}: {category.name}</h2>
+        <h2 className="text-lg">ШАГ {stepNumber}: {category.name}</h2>
         <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
           <SyncIndicator 
             isOnline={syncStatus.isOnline}
@@ -118,6 +118,9 @@ export function QuestionScreen({
               </svg>
             </div>
             <div className="flex-1">
+              <p className="text-blue-800 leading-relaxed text-[20px]">
+                {question.subcategory}
+              </p>
 
               <p className="text-blue-800 leading-relaxed text-[16px]">
                 {question.text}
