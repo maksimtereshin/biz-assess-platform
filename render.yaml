@@ -38,14 +38,11 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: FRONTEND_URL
-        fromService:
-          type: web
-          name: bizass-frontend
-          property: host
+        value: "https://bizass-frontend.onrender.com"
       - key: TELEGRAM_BOT_TOKEN
         sync: false # Set manually in Render dashboard
       - key: DB_SYNC
-        value: "true" # Enable database schema sync for initial deployment - DISABLE after first successful deployment
+        value: "false" # Database schema sync disabled after initial deployment
     healthCheckPath: /health
 
   # Frontend Service
@@ -57,10 +54,7 @@ services:
     dockerContext: ./
     envVars:
       - key: BACKEND_URL
-        fromService:
-          type: web
-          name: bizass-backend
-          property: host
+        value: "https://bizass-backend.onrender.com"
 
 databases:
   - name: bizass-postgres
