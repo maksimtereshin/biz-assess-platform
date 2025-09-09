@@ -53,5 +53,4 @@ services:
 databases:
   - name: bizass-postgres
     databaseName: bizass_platform
-    user: postgres
     plan: starter
