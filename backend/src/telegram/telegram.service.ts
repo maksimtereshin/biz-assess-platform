@@ -5,6 +5,15 @@ import { AuthService } from '../auth/auth.service';
 import { SurveyService } from '../survey/survey.service';
 import { PaymentService } from '../payment/payment.service';
 
+interface InlineKeyboardMarkup {
+  inline_keyboard: Array<Array<{
+    text: string;
+    callback_data?: string;
+    web_app?: { url: string };
+    pay?: boolean;
+  }>>;
+}
+
 @Injectable()
 export class TelegramService {
   private readonly logger = new Logger(TelegramService.name);
@@ -19,6 +28,28 @@ export class TelegramService {
   ) {
     this.botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
     this.webAppUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+  }
+
+  private getMainKeyboard(): InlineKeyboardMarkup {
+    return {
+      inline_keyboard: [
+        [{ text: '🚀 Начать ЧЕК АП', callback_data: 'start_checkup' }],
+        [{ text: '📊 Мои результаты', callback_data: 'my_results' }],
+        [{ text: '👥 Реферальная программа', callback_data: 'referral' }],
+        [{ text: 'ℹ️ О проекте', callback_data: 'about' }],
+        [{ text: '❓ Помощь', callback_data: 'help' }],
+      ]
+    };
+  }
+
+  private getSurveyTypeKeyboard(): InlineKeyboardMarkup {
+    return {
+      inline_keyboard: [
+        [{ text: '⚡ Экспресс версия (15 мин)', callback_data: 'survey_EXPRESS' }],
+        [{ text: '📈 Полная версия (20 мин)', callback_data: 'survey_FULL' }],
+        [{ text: '⬅️ Назад в главное меню', callback_data: 'back_to_main' }],
+      ]
+    };
   }
 
   async handleWebhook(payload: TelegramWebhookPayload): Promise<void> {
@@ -61,7 +92,19 @@ export class TelegramService {
 
     this.logger.log(`Received callback query from ${user.id}: ${data}`);
 
-    if (data.startsWith('survey_')) {
+    if (data === 'start_checkup') {
+      await this.handleStartCheckup(chatId);
+    } else if (data === 'my_results') {
+      await this.handleReportsCommand(chatId, user.id);
+    } else if (data === 'referral') {
+      await this.handleReferralCommand(chatId, user.id);
+    } else if (data === 'about') {
+      await this.handleAboutCommand(chatId);
+    } else if (data === 'help') {
+      await this.handleHelpCommand(chatId);
+    } else if (data === 'back_to_main') {
+      await this.handleStartCommand(chatId, user);
+    } else if (data.startsWith('survey_')) {
       const surveyType = data.split('_')[1] as SurveyType;
       await this.handleSurveySelection(chatId, user.id, surveyType);
     } else if (data.startsWith('report_free_')) {
@@ -84,32 +127,65 @@ export class TelegramService {
 
   private async handleStartCommand(chatId: number, user: any): Promise<void> {
     const welcomeMessage = `
-🎯 *Welcome to Business Assessment Platform!*
+🎯 Добро пожаловать в ЧЕК АП Экспертный бизнес, ${user.first_name || 'Friend'}!
+  
+Это профессиональный опросник для экспертов помогающих профессий.
 
-I'll help you evaluate your business across key areas like Product, Marketing, Sales, HR, and more.
+✅ Всего 15-20 минут вашего времени
+📊 Персональный отчет с результатами
+🎯 Детальный план действий по выбранным категориям
 
-Ready to assess your business? Choose a survey type below:
+Выберите действие из меню ниже:
     `;
 
-    // Use Web App buttons with direct routes
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { 
-            text: '⚡ Экспресс версия (15 мин)', 
-            web_app: { url: `${this.webAppUrl}/express` }
-          }
-        ],
-        [
-          { 
-            text: '📈 Полная версия (20 мин)', 
-            web_app: { url: `${this.webAppUrl}/full` }
-          }
-        ]
-      ]
-    };
+    await this.sendMessageWithKeyboard(chatId, welcomeMessage, this.getMainKeyboard());
+  }
 
-    await this.sendMessageWithKeyboard(chatId, welcomeMessage, keyboard);
+  private async handleStartCheckup(chatId: number): Promise<void> {
+    const message = `
+🚀 *Выберите тип ЧЕК АПа*
+
+*⚡ Экспресс версия (15 мин)*
+• 25 ключевых вопросов
+• Быстрая оценка основных сфер бизнеса
+• Базовые рекомендации
+
+*📈 Полная версия (20 мин)*
+• 61 детальный вопрос
+• Глубокий анализ всех аспектов
+• Подробный план развития
+
+Выберите подходящий вариант:
+    `;
+
+    await this.sendMessageWithKeyboard(chatId, message, this.getSurveyTypeKeyboard());
+  }
+
+  private async handleAboutCommand(chatId: number): Promise<void> {
+    const aboutMessage = `
+ℹ️ *О проекте ЧЕК АП Экспертный бизнес*
+
+Это профессиональный инструмент для диагностики и развития бизнеса экспертов помогающих профессий.
+
+*🎯 Наша миссия:*
+Помочь экспертам построить устойчивый и прибыльный бизнес
+
+*✨ Что вы получите:*
+• Детальный анализ текущего состояния бизнеса
+• Персональные рекомендации по развитию
+• Конкретный план действий
+• Выявление скрытых возможностей
+
+*📊 Методология:*
+Основана на проверенных бизнес-практиках и многолетнем опыте работы с экспертами
+
+*👥 Для кого:*
+Психологи, коучи, консультанты, тренеры и другие эксперты помогающих профессий
+
+Готовы узнать больше о своем бизнесе? Нажмите "🚀 Начать ЧЕК АП"!
+    `;
+
+    await this.sendMessage(chatId, aboutMessage);
   }
 
   private async handleHelpCommand(chatId: number): Promise<void> {
