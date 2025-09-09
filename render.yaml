@@ -3,7 +3,7 @@ services:
   - type: web
     name: bizass-backend
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./
     envVars:
@@ -43,7 +43,7 @@ services:
   - type: web
     name: bizass-frontend
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./frontend/Dockerfile
     dockerContext: ./
     envVars:
@@ -53,4 +53,4 @@ services:
 databases:
   - name: bizass-postgres
     databaseName: bizass_platform
-    plan: starter
+    plan: free
