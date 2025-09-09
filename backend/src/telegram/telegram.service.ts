@@ -45,8 +45,18 @@ export class TelegramService {
   private getSurveyTypeKeyboard(): InlineKeyboardMarkup {
     return {
       inline_keyboard: [
-        [{ text: '⚡ Экспресс версия (15 мин)', callback_data: 'survey_EXPRESS' }],
-        [{ text: '📈 Полная версия (20 мин)', callback_data: 'survey_FULL' }],
+        [
+          { 
+            text: '⚡ Экспресс версия (15 мин)', 
+            web_app: { url: `${this.webAppUrl}/express` }
+          }
+        ],
+        [
+          { 
+            text: '📈 Полная версия (20 мин)', 
+            web_app: { url: `${this.webAppUrl}/full` }
+          }
+        ],
         [{ text: '⬅️ Назад в главное меню', callback_data: 'back_to_main' }],
       ]
     };
