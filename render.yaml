@@ -44,6 +44,8 @@ services:
           property: host
       - key: TELEGRAM_BOT_TOKEN
         sync: false # Set manually in Render dashboard
+      - key: DB_SYNC
+        value: "true" # Enable database schema sync for initial deployment
     healthCheckPath: /health
 
   # Frontend Service

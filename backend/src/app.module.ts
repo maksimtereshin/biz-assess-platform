@@ -29,7 +29,7 @@ import { seedSurveys } from './data/seed-surveys';
       password: process.env.DB_PASSWORD || 'password',
       database: process.env.DB_NAME || 'bizass_platform',
       entities: Object.values(entities),
-      synchronize: process.env.NODE_ENV !== 'production', // Only in development
+      synchronize: process.env.NODE_ENV !== 'production' || process.env.DB_SYNC === 'true', // Allow sync in production if explicitly enabled
       logging: process.env.NODE_ENV === 'development',
     }),
     
