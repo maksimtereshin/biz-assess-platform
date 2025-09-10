@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Play, RotateCcw, Eye, CreditCard } from 'lucide-react';
 import { useSurvey } from '../hooks/useSurvey';
 import { useUserSession } from '../hooks/useUserSession';
 import { QuestionScreen } from '../components/QuestionScreen';
 import { ResultsScreen } from '../components/ResultsScreen';
+import { LocalStorageService } from '../services/localStorage';
 
 export function FullPage() {
   const navigate = useNavigate();
   const { hasCompletedSurvey } = useUserSession();
-  
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const {
     surveyVariant,
     surveyState,
@@ -72,6 +73,21 @@ export function FullPage() {
 
   const handleBackToVariantFromResults = () => {
     hideSurveyResults();
+  };
+
+  const handleResetData = () => {
+    setShowResetConfirm(true);
+  };
+
+  const confirmReset = () => {
+    LocalStorageService.clearAllData();
+    setShowResetConfirm(false);
+    // Перезагружаем страницу для полного сброса состояния
+    window.location.reload();
+  };
+
+  const cancelReset = () => {
+    setShowResetConfirm(false);
   };
 
   // Handle navigation based on survey state
@@ -144,7 +160,17 @@ export function FullPage() {
       <div className="flex-1 p-6">
         <div className="max-w-md mx-auto">
           {/* Survey Info */}
-          <div className="bg-white rounded-lg p-6 mb-6 border">
+          <div className="bg-white rounded-lg p-6 mb-6 border relative">
+            {/* TODO: Remove after development is done (with relative) */}
+            <button
+              onClick={handleResetData}
+              className="absolute right-4 transform -translate-y-1/2 hover:text-red-200 transition-colors"
+              title="Сбросить все данные для повторного тестирования"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
             <div className="text-center mb-4">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-pink-100 rounded-full mb-3">
                 <span className="text-2xl">📊</span>
@@ -278,6 +304,40 @@ export function FullPage() {
                     )}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+          
+          {showResetConfirm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
+                <div className="text-center">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Сбросить все данные?
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-6">
+                    Это действие удалит все сохраненные ответы и прогресс. Вы сможете пройти опрос заново.
+                  </p>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={cancelReset}
+                      className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                    >
+                      Отмена
+                    </button>
+                    <button
+                      onClick={confirmReset}
+                      className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 transition-colors"
+                    >
+                      Сбросить
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

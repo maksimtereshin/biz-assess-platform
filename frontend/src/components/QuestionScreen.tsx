@@ -292,7 +292,7 @@ export function QuestionScreen({
           <div className="bg-pink-400 rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-white text-sm font-medium">
-                {question.subcategory}
+                Текущий прогресс
               </span>
               <span className="text-white text-sm font-medium">
                 {currentQuestionIndex + 1} / {category.totalQuestions}

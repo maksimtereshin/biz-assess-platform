@@ -29,9 +29,10 @@ export function SurveySelectionScreen() {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
       {/* Header */}
-      <div className="bg-slate-400 text-white p-4 text-center">
+      <div className="bg-slate-400 text-white p-4 text-center relative">
         <h1 className="font-medium">Выберите формат опроса</h1>
 
+        {/* TODO: Remove after development is done (with relative) */}
         <button
           onClick={handleResetData}
           className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-red-200 transition-colors"
