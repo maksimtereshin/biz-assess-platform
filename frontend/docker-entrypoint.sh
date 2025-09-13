@@ -21,11 +21,18 @@ echo "Configuring nginx to proxy API requests to: $BACKEND_URL"
 
 # Test backend connectivity before starting nginx
 echo "Testing backend connectivity..."
-if wget --spider --timeout=10 "$BACKEND_URL/api/health" 2>/dev/null; then
+echo "Attempting to reach: $BACKEND_URL/api/health"
+
+# Test with verbose curl for better debugging
+if curl --fail --silent --show-error --connect-timeout 15 --max-time 30 "$BACKEND_URL/api/health" > /tmp/backend_test.log 2>&1; then
     echo "✅ Backend is reachable at $BACKEND_URL"
+    echo "Backend response: $(cat /tmp/backend_test.log)"
 else
     echo "❌ Backend is not reachable at $BACKEND_URL"
-    echo "This may cause 502 errors. Check backend service status."
+    echo "Error details: $(cat /tmp/backend_test.log)"
+    echo "DNS resolution test:"
+    nslookup $(echo $BACKEND_URL | sed 's|https://||' | sed 's|http://||') || echo "DNS resolution failed"
+    echo "This may cause 502/503 errors. Check backend service status."
 fi
 
 # Replace template variables and create final nginx config
