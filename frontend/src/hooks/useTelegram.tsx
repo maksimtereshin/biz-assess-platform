@@ -1,94 +1,5 @@
 import { useEffect, useState } from 'react';
 
-interface TelegramUser {
-  id: number;
-  first_name: string;
-  last_name?: string;
-  username?: string;
-  language_code?: string;
-  is_premium?: boolean;
-}
-
-interface WebApp {
-  initData: string;
-  initDataUnsafe: {
-    user?: TelegramUser;
-    auth_date: number;
-    hash: string;
-  };
-  themeParams: {
-    bg_color?: string;
-    text_color?: string;
-    hint_color?: string;
-    link_color?: string;
-    button_color?: string;
-    button_text_color?: string;
-    secondary_bg_color?: string;
-  };
-  isExpanded: boolean;
-  viewportHeight: number;
-  viewportStableHeight: number;
-  MainButton: {
-    text: string;
-    color: string;
-    textColor: string;
-    isVisible: boolean;
-    isProgressVisible: boolean;
-    isActive: boolean;
-    show(): void;
-    hide(): void;
-    enable(): void;
-    disable(): void;
-    showProgress(leaveActive?: boolean): void;
-    hideProgress(): void;
-    setText(text: string): void;
-    onClick(callback: () => void): void;
-    offClick(callback: () => void): void;
-  };
-  BackButton: {
-    isVisible: boolean;
-    show(): void;
-    hide(): void;
-    onClick(callback: () => void): void;
-    offClick(callback: () => void): void;
-  };
-  HapticFeedback: {
-    impactOccurred(style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft'): void;
-    notificationOccurred(type: 'error' | 'success' | 'warning'): void;
-    selectionChanged(): void;
-  };
-  ready(): void;
-  expand(): void;
-  close(): void;
-  enableClosingConfirmation(): void;
-  disableClosingConfirmation(): void;
-  showPopup(params: {
-    title?: string;
-    message: string;
-    buttons?: Array<{
-      id?: string;
-      type?: 'default' | 'ok' | 'close' | 'cancel' | 'destructive';
-      text?: string;
-    }>;
-  }, callback?: (buttonId: string) => void): void;
-  showAlert(message: string, callback?: () => void): void;
-  showConfirm(message: string, callback?: (confirmed: boolean) => void): void;
-  openLink(url: string): void;
-  openTelegramLink(url: string): void;
-  openInvoice(url: string, callback?: (status: string) => void): void;
-  sendData(data: string): void;
-  setHeaderColor(color: string): void;
-  setBackgroundColor(color: string): void;
-}
-
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp: WebApp;
-    };
-  }
-}
-
 export function useTelegram() {
   const [isReady, setIsReady] = useState(false);
   const tg = window.Telegram?.WebApp;
@@ -102,82 +13,108 @@ export function useTelegram() {
 
   const user = tg?.initDataUnsafe?.user;
 
-  // Создаем заглушки для демо-режима
-  const createStub = (name: string) => ({
-    show: () => console.log(`${name}.show()`),
-    hide: () => console.log(`${name}.hide()`),
-    onClick: (callback: () => void) => console.log(`${name}.onClick()`),
-    offClick: (callback: () => void) => console.log(`${name}.offClick()`),
+  // Create stubs for demo mode
+  const createMainButtonStub = () => ({
+    text: 'Main Button',
+    color: '#2481cc',
+    textColor: '#ffffff',
     isVisible: false,
     isProgressVisible: false,
-    isActive: false,
-    text: '',
-    color: '',
-    textColor: '',
-    enable: () => {},
-    disable: () => {},
-    showProgress: () => {},
-    hideProgress: () => {},
-    setText: () => {},
+    isActive: true,
+    show: () => console.log('MainButton.show()'),
+    hide: () => console.log('MainButton.hide()'),
+    enable: () => console.log('MainButton.enable()'),
+    disable: () => console.log('MainButton.disable()'),
+    showProgress: (leaveActive?: boolean) => console.log('MainButton.showProgress()', leaveActive),
+    hideProgress: () => console.log('MainButton.hideProgress()'),
+    setText: (text: string) => console.log('MainButton.setText()', text),
+    onClick: (_callback: () => void) => console.log('MainButton.onClick()'),
+    offClick: (_callback: () => void) => console.log('MainButton.offClick()'),
+  });
+
+  const createBackButtonStub = () => ({
+    isVisible: false,
+    show: () => console.log('BackButton.show()'),
+    hide: () => console.log('BackButton.hide()'),
+    onClick: (_callback: () => void) => console.log('BackButton.onClick()'),
+    offClick: (_callback: () => void) => console.log('BackButton.offClick()'),
   });
 
   const createHapticStub = () => ({
-    impact: (style: 'light' | 'medium' | 'heavy' = 'light') => {
+    impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
       console.log(`Haptic impact: ${style}`);
     },
-    notification: (type: 'error' | 'success' | 'warning') => {
+    notificationOccurred: (type: 'error' | 'success' | 'warning') => {
       console.log(`Haptic notification: ${type}`);
     },
-    selection: () => {
+    selectionChanged: () => {
       console.log('Haptic selection');
     },
   });
 
-  const createPopupStub = () => ({
-    showPopup: (title: string, message: string, buttons?: any[]) => {
-      console.log(`Popup: ${title} - ${message}`);
-      return Promise.resolve('ok');
-    },
-    showAlert: (message: string, callback?: () => void) => {
-      console.log(`Alert: ${message}`);
-      if (callback) callback();
-    },
-    showConfirm: (message: string, callback?: (confirmed: boolean) => void) => {
-      console.log(`Confirm: ${message}`);
-      if (callback) callback(true);
-    },
-  });
 
   return {
     tg: tg || {
       initData: '',
       initDataUnsafe: { user: undefined, auth_date: 0, hash: '' },
-      themeParams: {},
+      themeParams: {
+        bg_color: '#ffffff',
+        text_color: '#000000',
+        hint_color: '#999999',
+        link_color: '#2481cc',
+        button_color: '#2481cc',
+        button_text_color: '#ffffff',
+        secondary_bg_color: '#f1f1f1',
+      },
       isExpanded: false,
-      viewportHeight: 0,
-      viewportStableHeight: 0,
-      MainButton: createStub('MainButton'),
-      BackButton: createStub('BackButton'),
+      viewportHeight: window.innerHeight || 600,
+      viewportStableHeight: window.innerHeight || 600,
+      MainButton: createMainButtonStub(),
+      BackButton: createBackButtonStub(),
       HapticFeedback: createHapticStub(),
-      ready: () => {},
-      expand: () => {},
-      close: () => {},
-      enableClosingConfirmation: () => {},
-      disableClosingConfirmation: () => {},
-      showPopup: () => {},
-      showAlert: () => {},
-      showConfirm: () => {},
-      openLink: () => {},
-      openTelegramLink: () => {},
-      openInvoice: () => {},
-      sendData: () => {},
-      setHeaderColor: () => {},
-      setBackgroundColor: () => {},
+      ready: () => console.log('Telegram WebApp ready'),
+      expand: () => console.log('Telegram WebApp expand'),
+      close: () => console.log('Telegram WebApp close'),
+      enableClosingConfirmation: () => console.log('Telegram WebApp enableClosingConfirmation'),
+      disableClosingConfirmation: () => console.log('Telegram WebApp disableClosingConfirmation'),
+      showPopup: (params: any, callback?: (buttonId: string) => void) => {
+        console.log('Telegram WebApp showPopup', params);
+        if (callback) callback('ok');
+      },
+      showAlert: (message: string, callback?: () => void) => {
+        console.log('Telegram WebApp showAlert', message);
+        if (callback) callback();
+      },
+      showConfirm: (message: string, callback?: (confirmed: boolean) => void) => {
+        console.log('Telegram WebApp showConfirm', message);
+        if (callback) callback(true);
+      },
+      openLink: (url: string) => {
+        console.log('Telegram WebApp openLink', url);
+        window.open(url, '_blank');
+      },
+      openTelegramLink: (url: string) => {
+        console.log('Telegram WebApp openTelegramLink', url);
+        window.open(url, '_blank');
+      },
+      openInvoice: (url: string, callback?: (status: string) => void) => {
+        console.log('Telegram WebApp openInvoice', url);
+        if (callback) callback('paid');
+      },
+      sendData: (data: string) => {
+        console.log('Telegram WebApp sendData', data);
+      },
+      setHeaderColor: (color: string) => {
+        console.log('Telegram WebApp setHeaderColor', color);
+      },
+      setBackgroundColor: (color: string) => {
+        console.log('Telegram WebApp setBackgroundColor', color);
+      },
     },
     user,
     isReady,
     
-    // Удобные методы
+    // Convenience methods
     showMainButton: (text: string, onClick: () => void) => {
       if (!tg) return;
       tg.MainButton.setText(text);
@@ -210,7 +147,7 @@ export function useTelegram() {
     },
     
     haptic: {
-      impact: (style: 'light' | 'medium' | 'heavy' = 'light') => {
+      impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'light') => {
         if (tg?.HapticFeedback) {
           tg.HapticFeedback.impactOccurred(style);
         } else {
@@ -242,11 +179,11 @@ export function useTelegram() {
               message,
               buttons: buttons || [{ type: 'ok', text: 'OK' }],
             },
-            (buttonId) => resolve(buttonId)
+            (buttonId: string) => resolve(buttonId)
           );
         });
       }
-      // Демо-реализация
+      // Demo implementation
       return new Promise<string>((resolve) => {
         const confirmed = window.confirm(`${title}\n\n${message}`);
         resolve(confirmed ? 'ok' : 'cancel');
@@ -256,10 +193,10 @@ export function useTelegram() {
     showConfirm: (message: string) => {
       if (tg?.showConfirm) {
         return new Promise<boolean>((resolve) => {
-          tg.showConfirm(message, (confirmed) => resolve(confirmed));
+          tg.showConfirm(message, (confirmed: boolean) => resolve(confirmed));
         });
       }
-      // Демо-реализация
+      // Demo implementation
       return Promise.resolve(window.confirm(message));
     },
     

@@ -4,38 +4,6 @@ import { SurveyVariant } from '../types/survey';
 import { LocalStorageService } from '../services/localStorage';
 import api from '../services/api';
 
-// Telegram Web Apps interface
-interface TelegramWebApp {
-  initData: string;
-  initDataUnsafe: {
-    user?: {
-      id: number;
-      first_name?: string;
-      last_name?: string;
-      username?: string;
-      language_code?: string;
-    };
-    start_param?: string;
-  };
-  ready: () => void;
-  close: () => void;
-  expand: () => void;
-  MainButton: {
-    text: string;
-    show: () => void;
-    hide: () => void;
-    onClick: (callback: () => void) => void;
-  };
-}
-
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp: TelegramWebApp;
-    };
-  }
-}
-
 export function useUserSession() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<UserSession | null>(null);
@@ -114,7 +82,6 @@ export function useUserSession() {
       const telegramId = user.telegramId ? parseInt(user.telegramId) : undefined;
       api.startSurvey(surveyVariant, telegramId).then(() => {
         // Backend session created successfully
-        console.log('Backend session created for variant:', surveyVariant);
       }).catch((error: any) => {
         console.warn('Failed to create backend session, continuing with local session:', error);
       });

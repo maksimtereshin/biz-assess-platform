@@ -18,7 +18,7 @@ export function SurveySelectionScreen() {
   const confirmReset = () => {
     LocalStorageService.clearAllData();
     setShowResetConfirm(false);
-    // Перезагружаем страницу для полного сброса состояния
+    // Reload page for complete state reset
     window.location.reload();
   };
 

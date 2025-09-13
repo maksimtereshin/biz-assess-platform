@@ -5,6 +5,7 @@ import { useUserSession } from './useUserSession';
 import api from '../services/api';
 import { SessionSyncService } from '../services/sessionSync';
 import { LocalStorageService } from '../services/localStorage';
+import ErrorHandler from '../utils/errorHandler';
 
 interface SurveyState {
   responses: Record<string, number>;
@@ -62,7 +63,7 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
                   // Update local session with restored data
                   const updatedSession = {
                     ...variantSession,
-                    id: restoredSession.surveyId,
+                    id: restoredSession.id,
                   };
                   LocalStorageService.setCurrentSession(updatedSession);
                   
@@ -79,7 +80,12 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
                 }
               }
             } catch (error) {
-              console.warn('Failed to restore session from database:', error);
+              ErrorHandler.warn('Failed to restore session from database', {
+                component: 'useSurvey',
+                operation: 'restoreSession',
+                sessionId: session?.id,
+                additionalData: { error }
+              });
             }
           }
           
@@ -104,42 +110,32 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
         ...prev,
         responses: savedResponses
       }));
-
-      // Calculate categories with questions and progress
-      const categoriesWithQuestions = categoriesData.map(category => {
-        const categoryQuestions = questionsData.filter(q => q.category === category.name);
-        const completedQuestions = categoryQuestions.filter(q => savedResponses[q.id] !== undefined).length;
-        
-        return {
-          ...category,
-          questions: categoryQuestions,
-          completedQuestions,
-          totalQuestions: categoryQuestions.length
-        };
-      });
-
-      setCategoriesWithProgress(categoriesWithQuestions);
     }
-  }, [session, surveyVariant, categoriesData, questionsData]);
+  }, [session, surveyVariant]);
 
-  // Update categories progress when responses change
+  // Memoized categories with progress calculation
+  const categoriesWithProgressMemo = useMemo(() => {
+    if (!surveyVariant || categoriesData.length === 0) return [];
+
+    return categoriesData.map(category => {
+      const categoryQuestions = questionsData.filter(q => q.category === category.name);
+      const completedQuestions = categoryQuestions.filter(q =>
+        surveyState.responses[q.id] !== undefined
+      ).length;
+
+      return {
+        ...category,
+        questions: categoryQuestions,
+        completedQuestions,
+        totalQuestions: categoryQuestions.length
+      };
+    });
+  }, [surveyVariant, categoriesData, questionsData, surveyState.responses]);
+
+  // Update categoriesWithProgress when memoized value changes
   useEffect(() => {
-    if (surveyVariant && categoriesData.length > 0) {
-      const updatedCategories = categoriesData.map(category => {
-        const categoryQuestions = questionsData.filter(q => q.category === category.name);
-        const completedQuestions = categoryQuestions.filter(q => surveyState.responses[q.id] !== undefined).length;
-        
-        return {
-          ...category,
-          questions: categoryQuestions,
-          completedQuestions,
-          totalQuestions: categoryQuestions.length
-        };
-      });
-
-      setCategoriesWithProgress(updatedCategories);
-    }
-  }, [surveyState.responses, surveyVariant, categoriesData, questionsData]);
+    setCategoriesWithProgress(categoriesWithProgressMemo);
+  }, [categoriesWithProgressMemo]);
 
   const selectSurveyVariant = useCallback((variant: SurveyVariant | null) => {
     setSurveyVariant(variant);
@@ -224,7 +220,12 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
         await api.saveAnswer(session.id, questionId, value);
       }
     } catch (error) {
-      console.warn('Failed to save answer to database:', error);
+      ErrorHandler.warn('Failed to save answer to database', {
+        component: 'useSurvey',
+        operation: 'saveAnswer',
+        sessionId: session?.id,
+        additionalData: { questionId, value, error }
+      });
       // Continue with localStorage only - this ensures the app works offline
     }
   }, [surveyState.responses, session]);
@@ -506,7 +507,12 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
           }
         }
       } catch (error) {
-        console.warn('Failed to check for newer session:', error);
+        ErrorHandler.warn('Failed to check for newer session', {
+          component: 'useSurvey',
+          operation: 'checkForUpdates',
+          sessionId: session?.id,
+          additionalData: { error }
+        });
       }
     };
 

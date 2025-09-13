@@ -1,6 +1,7 @@
 import { SurveyVariant } from '../types/survey';
 import { LocalStorageService } from './localStorage';
 import api from './api';
+import ErrorHandler from '../utils/errorHandler';
 
 export interface SyncedSession {
   surveyId: string;
@@ -46,7 +47,11 @@ export class SessionSyncService {
           await api.saveAnswer(sessionId, questionId, answer);
           return true;
         } catch (error) {
-          console.warn(`Failed to sync answer ${questionId}:`, error);
+          ErrorHandler.warn(`Failed to sync answer ${questionId}`, {
+            component: 'SessionSyncService',
+            operation: 'syncAnswersToBackend',
+            additionalData: { questionId, answer: responses[questionId], error }
+          });
           return false;
         }
       });
@@ -54,12 +59,20 @@ export class SessionSyncService {
       const results = await Promise.allSettled(syncPromises);
       const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
       
-      console.log(`Synced ${successCount}/${Object.keys(responses).length} answers to backend`);
+      ErrorHandler.info(`Synced ${successCount}/${Object.keys(responses).length} answers to backend`, {
+        component: 'SessionSyncService',
+        operation: 'syncAnswersToBackend',
+        additionalData: { successCount, totalCount: Object.keys(responses).length }
+      });
       
       this.statusCallbacks.onSyncComplete?.();
       return successCount > 0;
     } catch (error) {
-      console.error('Failed to sync session to backend:', error);
+      ErrorHandler.log(error, {
+        component: 'SessionSyncService',
+        operation: 'syncAnswersToBackend',
+        additionalData: { sessionId }
+      }, 'error');
       this.statusCallbacks.onSyncError?.(error as Error);
       return false;
     }
@@ -86,14 +99,18 @@ export class SessionSyncService {
       };
 
       return {
-        surveyId: restoredSession.surveyId,
-        version: restoredSession.version,
+        surveyId: restoredSession.id,
+        version: restoredSession.surveyType === 'EXPRESS' ? 'express' : 'full',
         answers: mergedAnswers,
-        startedAt: restoredSession.startedAt,
+        startedAt: restoredSession.createdAt,
         lastActivityAt: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('Failed to restore session from backend:', error);
+      ErrorHandler.log(error, {
+        component: 'SessionSyncService',
+        operation: 'restoreFromBackend',
+        additionalData: { userId, version }
+      }, 'error');
       return null;
     }
   }
@@ -147,12 +164,16 @@ export class SessionSyncService {
         return false;
       }
 
-      const backendLastActivity = new Date(backendSession.startedAt).getTime();
+      const backendLastActivity = new Date(backendSession.createdAt).getTime();
       const localLastActivityTime = new Date(localLastActivity).getTime();
 
       return backendLastActivity > localLastActivityTime;
     } catch (error) {
-      console.warn('Failed to check for newer session:', error);
+      ErrorHandler.warn('Failed to check for newer session', {
+        component: 'SessionSyncService',
+        operation: 'hasNewerSession',
+        additionalData: { userId, localLastActivity, error }
+      });
       return false;
     }
   }

@@ -107,7 +107,7 @@ class ApiClient {
     return response.data;
   }
 
-  async restoreSurveySession(userId: string, version: 'express' | 'full'): Promise<SurveySession | null> {
+  async restoreSurveySession(_userId: string, _version: 'express' | 'full'): Promise<SurveySession | null> {
     // Try to get the current session if we have a token
     if (this.sessionToken) {
       try {
@@ -120,7 +120,7 @@ class ApiClient {
     return null;
   }
 
-  async saveAnswer(surveyId: string, questionId: string, answer: number): Promise<void> {
+  async saveAnswer(_surveyId: string, questionId: string, answer: number): Promise<void> {
     // Use the submitAnswer method which expects questionId as a number
     await this.submitAnswer(parseInt(questionId), answer);
   }
