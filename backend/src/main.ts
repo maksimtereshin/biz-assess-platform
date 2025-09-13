@@ -30,7 +30,13 @@ async function bootstrap() {
     process.env.STAGING_DOMAIN && `http://${process.env.STAGING_DOMAIN}`,
   ].filter(Boolean);
 
-  const allowedOrigins = [...frontendUrls, ...productionOrigins];
+  // Render.com specific origins - always allow these in production
+  const renderOrigins = [
+    "https://bizass-frontend.onrender.com",
+    "https://bizass-backend.onrender.com",
+  ];
+
+  const allowedOrigins = [...frontendUrls, ...productionOrigins, ...renderOrigins];
 
   app.enableCors({
     origin: (origin, callback) => {
@@ -49,8 +55,14 @@ async function bootstrap() {
         return callback(null, true);
       }
 
-      // Log blocked origins for debugging (but don't log health checks)
-      if (!origin.includes("localhost") || process.env.DEBUG_CORS === "true") {
+      // Special handling for Render.com health checks and internal services
+      if (origin.includes(".onrender.com") && process.env.NODE_ENV === "production") {
+        Logger.log(`Allowing Render.com origin: ${origin}`, "CORS");
+        return callback(null, true);
+      }
+
+      // Log blocked origins for debugging (but reduce noise from health checks)
+      if (process.env.DEBUG_CORS === "true" || (!origin.includes("localhost") && !origin.includes(".onrender.com"))) {
         Logger.warn(`CORS blocked origin: ${origin}`, "CORS");
       }
 
