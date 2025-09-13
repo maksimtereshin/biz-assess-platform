@@ -39,7 +39,7 @@ services:
       DB_USERNAME: postgres
       DB_PASSWORD: password
       DB_NAME: bizass_platform
-      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      JWT_SECRET: ${JWT_SECRET:-U+EiJRZ+PrsuUnmnocqipOjKT53J4TvL5YUXnrrrFvk=}
       FRONTEND_URL: http://localhost:3000
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-your-telegram-bot-token-here}
     ports:

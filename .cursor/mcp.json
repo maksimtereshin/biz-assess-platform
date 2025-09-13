@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "nautex": {
+      "command": "uvx",
+      "args": [
+        "nautex",
+        "mcp"
+      ],
+      "cwd": "/Users/maksim/Projects/BizAssPlatform"
+    }
+  }
+}

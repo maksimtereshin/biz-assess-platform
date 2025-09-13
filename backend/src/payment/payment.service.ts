@@ -1,9 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Payment, SurveySession, Report } from '../entities';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 
 @Injectable()
 export class PaymentService {
@@ -121,7 +122,17 @@ export class PaymentService {
         return false;
       }
 
-      // Update payment status
+      // Verify payment with Telegram API
+      const isValidPayment = await this.verifyPaymentWithTelegram(chargeId, payment);
+
+      if (!isValidPayment) {
+        this.logger.error(`Payment verification failed with Telegram API: ${chargeId}`);
+        payment.status = 'FAILED';
+        await this.paymentRepository.save(payment);
+        return false;
+      }
+
+      // Update payment status only after successful verification
       payment.telegram_charge_id = chargeId;
       payment.status = 'SUCCESSFUL';
       await this.paymentRepository.save(payment);
@@ -133,6 +144,53 @@ export class PaymentService {
       return true;
     } catch (error) {
       this.logger.error('Error verifying payment:', error);
+      return false;
+    }
+  }
+
+  private async verifyPaymentWithTelegram(chargeId: string, payment: Payment): Promise<boolean> {
+    try {
+      // Call Telegram API to verify the payment
+      const response = await axios.post(
+        `https://api.telegram.org/bot${this.botToken}/getUpdates`,
+        {
+          offset: -1,
+          limit: 100,
+          allowed_updates: ['successful_payment'],
+        }
+      );
+
+      if (!response.data.ok) {
+        this.logger.error('Failed to fetch updates from Telegram API');
+        return false;
+      }
+
+      // Look for successful payment with matching charge ID
+      const updates = response.data.result;
+      const paymentUpdate = updates.find((update: any) =>
+        update.message?.successful_payment?.telegram_payment_charge_id === chargeId &&
+        update.message?.successful_payment?.invoice_payload === `payment_${payment.id}`
+      );
+
+      if (!paymentUpdate) {
+        this.logger.error(`No matching payment found in Telegram updates for charge: ${chargeId}`);
+        return false;
+      }
+
+      const successfulPayment = paymentUpdate.message.successful_payment;
+
+      // Verify payment details match our records
+      if (
+        successfulPayment.currency !== payment.currency ||
+        successfulPayment.total_amount !== payment.amount
+      ) {
+        this.logger.error('Payment details mismatch with Telegram data');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      this.logger.error('Error verifying payment with Telegram API:', error);
       return false;
     }
   }

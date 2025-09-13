@@ -1,11 +1,9 @@
-import { Controller, Post, Body, Get, Query, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SurveyType } from 'bizass-shared';
-
-export interface AuthenticateDto {
-  token: string;
-  surveyType: SurveyType;
-}
+import { AuthenticateDto } from './dto/authenticate.dto';
+import { LoginDto } from './dto/login.dto';
+import { ValidateTokenDto } from './dto/validate-token.dto';
+import { DevelopmentOnlyGuard } from '../common/guards/development-only.guard';
 
 export interface AuthResponse {
   session: any;
@@ -30,8 +28,8 @@ export class AuthController {
   }
 
   @Get('validate')
-  async validateToken(@Query('token') token: string) {
-    const result = this.authService.validateSessionToken(token);
+  async validateToken(@Query() query: ValidateTokenDto) {
+    const result = this.authService.validateSessionToken(query.token);
     if (!result) {
       throw new UnauthorizedException('Invalid or expired token');
     }
@@ -39,8 +37,9 @@ export class AuthController {
   }
 
   @Post('generate-token')
-  async generateToken(@Body() body: { telegramId: number }) {
+  @UseGuards(DevelopmentOnlyGuard)
+  async generateToken(@Body() loginDto: LoginDto) {
     // This endpoint is for testing purposes - in production, this would be called by the Telegram bot
-    return this.authService.generateAuthToken(body.telegramId);
+    return this.authService.generateAuthToken(loginDto.telegramId);
   }
 }

@@ -1,15 +1,17 @@
 import { DataSource } from 'typeorm';
 import { Survey } from '../entities';
+import { Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 
 export async function seedSurveys(dataSource: DataSource) {
+  const logger = new Logger('SeedSurveys');
   const surveyRepository = dataSource.getRepository(Survey);
 
   // Check if surveys already exist
   const existingSurveys = await surveyRepository.count();
   if (existingSurveys > 0) {
-    console.log('Surveys already seeded, skipping...');
+    logger.log('Surveys already seeded, skipping...');
     return;
   }
 
@@ -28,5 +30,5 @@ export async function seedSurveys(dataSource: DataSource) {
   });
 
   await surveyRepository.save(surveys);
-  console.log('Surveys seeded successfully');
+  logger.log(`Successfully seeded ${surveys.length} surveys`);
 }
