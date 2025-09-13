@@ -25,6 +25,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/throttler": "^6.4.0",
     "@nestjs/typeorm": "^10.0.0",
+    "axios": "^1.6.0",
     "bizass-shared": "file:../shared",
     "canvas": "^3.2.0",
     "chart.js": "^4.5.0",
