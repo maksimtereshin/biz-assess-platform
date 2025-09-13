@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { AuthToken, SurveySession } from 'bizass-shared';
-import { SurveyService } from '../survey/survey.service';
-import { SurveyType } from 'bizass-shared';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { AuthToken, SurveySession } from "bizass-shared";
+import { SurveyService } from "../survey/survey.service";
+import { SurveyType } from "bizass-shared";
 
 @Injectable()
 export class AuthService {
@@ -48,32 +48,38 @@ export class AuthService {
   ): Promise<{ session: SurveySession; sessionToken: string }> {
     const authData = this.validateToken(token);
     if (!authData) {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException("Invalid or expired token");
     }
 
     const { telegramId } = authData;
 
     // Check if user has an existing in-progress session
     const canStartNew = await this.surveyService.canStartNewSurvey(telegramId);
-    
+
     let session: SurveySession;
     if (canStartNew) {
       // Create new session
-      session = await this.surveyService.createNewSession(telegramId, surveyType);
+      session = await this.surveyService.createNewSession(
+        telegramId,
+        surveyType,
+      );
     } else {
       // Get existing session (for resume functionality)
       // For now, we'll create a new session - in production, you'd want to retrieve the existing one
-      session = await this.surveyService.createNewSession(telegramId, surveyType);
+      session = await this.surveyService.createNewSession(
+        telegramId,
+        surveyType,
+      );
     }
 
     // Generate a longer-lived session token for API calls
     const sessionToken = this.jwtService.sign(
-      { 
-        telegramId, 
+      {
+        telegramId,
         sessionId: session.id,
-        type: 'session'
+        type: "session",
       },
-      { expiresIn: '24h' }
+      { expiresIn: "24h" },
     );
 
     return { session, sessionToken };
@@ -82,15 +88,17 @@ export class AuthService {
   /**
    * Validates a session token and extracts session information
    */
-  validateSessionToken(token: string): { telegramId: number; sessionId: string } | null {
+  validateSessionToken(
+    token: string,
+  ): { telegramId: number; sessionId: string } | null {
     try {
       const payload = this.jwtService.verify(token);
-      if (payload.type !== 'session') {
+      if (payload.type !== "session") {
         return null;
       }
-      return { 
-        telegramId: payload.telegramId, 
-        sessionId: payload.sessionId 
+      return {
+        telegramId: payload.telegramId,
+        sessionId: payload.sessionId,
       };
     } catch (error) {
       return null;

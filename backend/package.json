@@ -88,5 +88,13 @@
     "moduleNameMapping": {
       "^bizass-shared$": "<rootDir>/../shared/src/index.ts"
     }
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "types": "./dist/main.d.ts"
 }

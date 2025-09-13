@@ -1,11 +1,25 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { SurveyType, SurveySession, Survey, SessionStatus } from 'bizass-shared';
-import { Survey as SurveyEntity, SurveySession as SurveySessionEntity, Answer, User } from '../entities';
-import * as fs from 'fs';
-import * as path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import {
+  SurveyType,
+  SurveySession,
+  Survey,
+  SessionStatus,
+} from "bizass-shared";
+import {
+  Survey as SurveyEntity,
+  SurveySession as SurveySessionEntity,
+  Answer,
+  User,
+} from "../entities";
+import * as fs from "fs";
+import * as path from "path";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class SurveyService {
@@ -20,13 +34,18 @@ export class SurveyService {
     private userRepository: Repository<User>,
   ) {}
 
-  async createNewSession(userId: number, type: SurveyType): Promise<SurveySession> {
+  async createNewSession(
+    userId: number,
+    type: SurveyType,
+  ): Promise<SurveySession> {
     // Check if user exists, create if not
-    let user = await this.userRepository.findOne({ where: { telegram_id: userId } });
+    let user = await this.userRepository.findOne({
+      where: { telegram_id: userId },
+    });
     if (!user) {
       user = this.userRepository.create({
         telegram_id: userId,
-        first_name: 'Unknown', // Will be updated from Telegram data
+        first_name: "Unknown", // Will be updated from Telegram data
       });
       await this.userRepository.save(user);
     }
@@ -57,14 +76,22 @@ export class SurveyService {
     };
   }
 
-  async saveAnswer(sessionId: string, questionId: number, score: number): Promise<void> {
+  async saveAnswer(
+    sessionId: string,
+    questionId: number,
+    score: number,
+  ): Promise<void> {
     // Validate score range
     if (!Number.isInteger(score) || score < 1 || score > 10) {
-      throw new BadRequestException('Score must be an integer between 1 and 10');
+      throw new BadRequestException(
+        "Score must be an integer between 1 and 10",
+      );
     }
 
     // Check if session exists
-    const session = await this.sessionRepository.findOne({ where: { id: sessionId } });
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+    });
     if (!session) {
       throw new NotFoundException(`Session ${sessionId} not found`);
     }
@@ -92,9 +119,9 @@ export class SurveyService {
   async getSurveyStructure(type: string): Promise<Survey> {
     // For now, read from hardcoded JSON file
     // TODO: Move to database in future iterations
-    const dataPath = path.join(__dirname, '../data/survey-data.json');
-    const surveyData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    
+    const dataPath = path.join(__dirname, "../data/survey-data.json");
+    const surveyData = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+
     const survey = surveyData[type.toUpperCase()];
     if (!survey) {
       throw new NotFoundException(`Survey type ${type} not found`);
@@ -106,7 +133,7 @@ export class SurveyService {
   async getSession(sessionId: string): Promise<SurveySession> {
     const session = await this.sessionRepository.findOne({
       where: { id: sessionId },
-      relations: ['answers'],
+      relations: ["answers"],
     });
 
     if (!session) {
@@ -115,7 +142,7 @@ export class SurveyService {
 
     // Convert answers to the expected format
     const answers: Record<number, number> = {};
-    session.answers.forEach(answer => {
+    session.answers.forEach((answer) => {
       answers[answer.question_id] = answer.score;
     });
 
@@ -130,9 +157,9 @@ export class SurveyService {
   }
 
   async completeSession(sessionId: string): Promise<any> {
-    const session = await this.sessionRepository.findOne({ 
+    const session = await this.sessionRepository.findOne({
       where: { id: sessionId },
-      relations: ['answers', 'survey']
+      relations: ["answers", "survey"],
     });
     if (!session) {
       throw new NotFoundException(`Session ${sessionId} not found`);
@@ -145,29 +172,29 @@ export class SurveyService {
     // Generate free report automatically
     try {
       // Import ReportService dynamically to avoid circular dependency
-      const { ReportService } = await import('../report/report.service');
+      const { ReportService } = await import("../report/report.service");
       const reportService = new ReportService(
-        this.sessionRepository.manager.getRepository('Report'),
+        this.sessionRepository.manager.getRepository("Report"),
         this.sessionRepository,
         this.answerRepository,
         null, // AnalyticsCalculator - will be injected properly in module
-        null  // PdfGenerator - will be injected properly in module
+        null, // PdfGenerator - will be injected properly in module
       );
-      
+
       const report = await reportService.generateReport(sessionId, false);
-      
-      return { 
-        message: 'Session completed successfully', 
+
+      return {
+        message: "Session completed successfully",
         sessionId,
         reportId: report.id,
-        reportUrl: report.storage_url
+        reportUrl: report.storage_url,
       };
     } catch (error) {
-      console.error('Error generating report:', error);
-      return { 
-        message: 'Session completed successfully', 
+      console.error("Error generating report:", error);
+      return {
+        message: "Session completed successfully",
         sessionId,
-        note: 'Report generation failed, but session was completed'
+        note: "Report generation failed, but session was completed",
       };
     }
   }
@@ -198,18 +225,21 @@ export class SurveyService {
   async getUserSessions(userId: number): Promise<SurveySessionEntity[]> {
     return await this.sessionRepository.find({
       where: { user_telegram_id: userId },
-      relations: ['survey'],
-      order: { created_at: 'DESC' },
+      relations: ["survey"],
+      order: { created_at: "DESC" },
     });
   }
 
-  async generateReport(sessionId: string, isPaid: boolean = false): Promise<any> {
+  async generateReport(
+    sessionId: string,
+    isPaid: boolean = false,
+  ): Promise<any> {
     // This method will be implemented when we integrate with the ReportService
     // For now, return a mock report
     return {
       id: uuidv4(),
       session_id: sessionId,
-      payment_status: isPaid ? 'PAID' : 'FREE',
+      payment_status: isPaid ? "PAID" : "FREE",
       storage_url: `/uploads/report_${sessionId}.pdf`,
       created_at: new Date().toISOString(),
     };

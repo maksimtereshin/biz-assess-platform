@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { AnalyticsCalculator } from '../common/utils/analytics-calculator.util';
-import { PdfGenerator } from '../common/utils/pdf-generator.util';
-import { Report, SurveySession, Answer } from '../entities';
-import { AnalyticsResult, PaymentStatus } from 'bizass-shared';
-import { v4 as uuidv4 } from 'uuid';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { AnalyticsCalculator } from "../common/utils/analytics-calculator.util";
+import { PdfGenerator } from "../common/utils/pdf-generator.util";
+import { Report, SurveySession, Answer } from "../entities";
+import { AnalyticsResult, PaymentStatus } from "bizass-shared";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class ReportService {
@@ -20,11 +20,14 @@ export class ReportService {
     private readonly analyticsCalculator: AnalyticsCalculator,
   ) {}
 
-  async generateReport(sessionId: string, isPaid: boolean = false): Promise<Report> {
+  async generateReport(
+    sessionId: string,
+    isPaid: boolean = false,
+  ): Promise<Report> {
     // Get session with answers
     const session = await this.sessionRepository.findOne({
       where: { id: sessionId },
-      relations: ['answers', 'survey'],
+      relations: ["answers", "survey"],
     });
 
     if (!session) {
@@ -32,16 +35,19 @@ export class ReportService {
     }
 
     // Calculate analytics
-    const answers = session.answers.map(answer => ({
+    const answers = session.answers.map((answer) => ({
       questionId: answer.question_id,
       score: answer.score,
     }));
 
-    const analytics = this.calculateDetailedAnalytics(answers, session.survey.structure);
+    const analytics = this.calculateDetailedAnalytics(
+      answers,
+      session.survey.structure,
+    );
 
     // Generate PDF
     const pdfBuffer = await this.pdfGenerator.createPdf(analytics, isPaid);
-    
+
     // Save PDF to storage (for now, we'll store it locally)
     const fileName = `report_${sessionId}_${Date.now()}.pdf`;
     const storageUrl = await this.savePdfToStorage(pdfBuffer, fileName);
@@ -58,25 +64,31 @@ export class ReportService {
     return await this.reportRepository.save(report);
   }
 
-  private calculateDetailedAnalytics(answers: Array<{ questionId: number; score: number }>, surveyStructure: any): AnalyticsResult {
+  private calculateDetailedAnalytics(
+    answers: Array<{ questionId: number; score: number }>,
+    surveyStructure: any,
+  ): AnalyticsResult {
     // Use the AnalyticsCalculator with the survey structure for proper category/subcategory calculations
     return this.analyticsCalculator.calculateScores(answers, surveyStructure);
   }
 
-  private async savePdfToStorage(pdfBuffer: Buffer, fileName: string): Promise<string> {
+  private async savePdfToStorage(
+    pdfBuffer: Buffer,
+    fileName: string,
+  ): Promise<string> {
     // For now, save to local storage
     // In production, this would upload to S3 or similar
-    const fs = require('fs');
-    const path = require('path');
-    
-    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const fs = require("fs");
+    const path = require("path");
+
+    const uploadsDir = path.join(process.cwd(), "uploads");
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
-    
+
     const filePath = path.join(uploadsDir, fileName);
     fs.writeFileSync(filePath, pdfBuffer);
-    
+
     // Return the URL (in production, this would be the S3 URL)
     return `/uploads/${fileName}`;
   }
@@ -84,7 +96,7 @@ export class ReportService {
   async getReport(reportId: string): Promise<Report> {
     const report = await this.reportRepository.findOne({
       where: { id: reportId },
-      relations: ['session'],
+      relations: ["session"],
     });
 
     if (!report) {
@@ -96,10 +108,10 @@ export class ReportService {
 
   async getUserReports(userId: number): Promise<Report[]> {
     return await this.reportRepository
-      .createQueryBuilder('report')
-      .leftJoinAndSelect('report.session', 'session')
-      .where('session.user_telegram_id = :userId', { userId })
-      .orderBy('report.created_at', 'DESC')
+      .createQueryBuilder("report")
+      .leftJoinAndSelect("report.session", "session")
+      .where("session.user_telegram_id = :userId", { userId })
+      .orderBy("report.created_at", "DESC")
       .getMany();
   }
 }

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { Injectable } from "@nestjs/common";
+import { DataSource } from "typeorm";
 
 @Injectable()
 export class HealthService {
@@ -8,18 +8,18 @@ export class HealthService {
   async check() {
     try {
       // Check database connection
-      await this.dataSource.query('SELECT 1');
-      
+      await this.dataSource.query("SELECT 1");
+
       return {
-        status: 'ok',
+        status: "ok",
         timestamp: new Date().toISOString(),
-        database: 'connected',
+        database: "connected",
       };
     } catch (error) {
       return {
-        status: 'error',
+        status: "error",
         timestamp: new Date().toISOString(),
-        database: 'disconnected',
+        database: "disconnected",
         error: error.message,
       };
     }

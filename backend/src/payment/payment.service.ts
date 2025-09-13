@@ -1,10 +1,15 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import { Payment, SurveySession, Report } from '../entities';
-import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { ConfigService } from "@nestjs/config";
+import { Payment, SurveySession, Report } from "../entities";
+import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
 
 @Injectable()
 export class PaymentService {
@@ -20,7 +25,7 @@ export class PaymentService {
     private reportRepository: Repository<Report>,
     private configService: ConfigService,
   ) {
-    this.botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
+    this.botToken = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
   }
 
   async createPayment(userId: number, sessionId: string): Promise<any> {
@@ -28,20 +33,20 @@ export class PaymentService {
       // Verify session exists and belongs to user
       const session = await this.sessionRepository.findOne({
         where: { id: sessionId, user_telegram_id: userId },
-        relations: ['survey'],
+        relations: ["survey"],
       });
 
       if (!session) {
-        throw new NotFoundException('Session not found');
+        throw new NotFoundException("Session not found");
       }
 
       // Check if user already has a paid report for this session
       const existingPaidReport = await this.reportRepository.findOne({
-        where: { session_id: sessionId, payment_status: 'PAID' },
+        where: { session_id: sessionId, payment_status: "PAID" },
       });
 
       if (existingPaidReport) {
-        throw new Error('User already has a paid report for this session');
+        throw new Error("User already has a paid report for this session");
       }
 
       // Create payment record
@@ -50,22 +55,24 @@ export class PaymentService {
         user_telegram_id: userId,
         survey_session_id: sessionId,
         amount: 999, // $9.99 in cents
-        currency: 'USD',
-        status: 'PENDING',
+        currency: "USD",
+        status: "PENDING",
       });
 
       const savedPayment = await this.paymentRepository.save(payment);
 
       // Create Telegram invoice
       const invoice = {
-        title: 'Business Assessment - Full Report',
-        description: `Comprehensive business analysis report for your ${session.survey?.type || 'survey'} assessment`,
+        title: "Business Assessment - Full Report",
+        description: `Comprehensive business analysis report for your ${session.survey?.type || "survey"} assessment`,
         payload: `payment_${savedPayment.id}`,
-        provider_token: this.configService.get<string>('TELEGRAM_PAYMENT_PROVIDER_TOKEN'),
-        currency: 'USD',
+        provider_token: this.configService.get<string>(
+          "TELEGRAM_PAYMENT_PROVIDER_TOKEN",
+        ),
+        currency: "USD",
         prices: [
           {
-            label: 'Full Report',
+            label: "Full Report",
             amount: 999, // $9.99 in cents
           },
         ],
@@ -76,17 +83,18 @@ export class PaymentService {
           receipt: {
             items: [
               {
-                description: 'Business Assessment Full Report',
-                quantity: '1',
+                description: "Business Assessment Full Report",
+                quantity: "1",
                 amount: {
-                  value: '9.99',
-                  currency: 'USD',
+                  value: "9.99",
+                  currency: "USD",
                 },
               },
             ],
           },
         }),
-        photo_url: 'https://via.placeholder.com/400x400/4F46E5/FFFFFF?text=Business+Assessment',
+        photo_url:
+          "https://via.placeholder.com/400x400/4F46E5/FFFFFF?text=Business+Assessment",
         photo_size: 400,
         photo_width: 400,
         photo_height: 400,
@@ -104,7 +112,7 @@ export class PaymentService {
         invoice,
       };
     } catch (error) {
-      this.logger.error('Error creating payment:', error);
+      this.logger.error("Error creating payment:", error);
       throw error;
     }
   }
@@ -114,7 +122,7 @@ export class PaymentService {
       // Find the payment record
       const payment = await this.paymentRepository.findOne({
         where: { id: paymentId },
-        relations: ['survey_session'],
+        relations: ["survey_session"],
       });
 
       if (!payment) {
@@ -123,18 +131,23 @@ export class PaymentService {
       }
 
       // Verify payment with Telegram API
-      const isValidPayment = await this.verifyPaymentWithTelegram(chargeId, payment);
+      const isValidPayment = await this.verifyPaymentWithTelegram(
+        chargeId,
+        payment,
+      );
 
       if (!isValidPayment) {
-        this.logger.error(`Payment verification failed with Telegram API: ${chargeId}`);
-        payment.status = 'FAILED';
+        this.logger.error(
+          `Payment verification failed with Telegram API: ${chargeId}`,
+        );
+        payment.status = "FAILED";
         await this.paymentRepository.save(payment);
         return false;
       }
 
       // Update payment status only after successful verification
       payment.telegram_charge_id = chargeId;
-      payment.status = 'SUCCESSFUL';
+      payment.status = "SUCCESSFUL";
       await this.paymentRepository.save(payment);
 
       // Generate paid report
@@ -143,12 +156,15 @@ export class PaymentService {
       this.logger.log(`Payment verified successfully: ${paymentId}`);
       return true;
     } catch (error) {
-      this.logger.error('Error verifying payment:', error);
+      this.logger.error("Error verifying payment:", error);
       return false;
     }
   }
 
-  private async verifyPaymentWithTelegram(chargeId: string, payment: Payment): Promise<boolean> {
+  private async verifyPaymentWithTelegram(
+    chargeId: string,
+    payment: Payment,
+  ): Promise<boolean> {
     try {
       // Call Telegram API to verify the payment
       const response = await axios.post(
@@ -156,24 +172,29 @@ export class PaymentService {
         {
           offset: -1,
           limit: 100,
-          allowed_updates: ['successful_payment'],
-        }
+          allowed_updates: ["successful_payment"],
+        },
       );
 
       if (!response.data.ok) {
-        this.logger.error('Failed to fetch updates from Telegram API');
+        this.logger.error("Failed to fetch updates from Telegram API");
         return false;
       }
 
       // Look for successful payment with matching charge ID
       const updates = response.data.result;
-      const paymentUpdate = updates.find((update: any) =>
-        update.message?.successful_payment?.telegram_payment_charge_id === chargeId &&
-        update.message?.successful_payment?.invoice_payload === `payment_${payment.id}`
+      const paymentUpdate = updates.find(
+        (update: any) =>
+          update.message?.successful_payment?.telegram_payment_charge_id ===
+            chargeId &&
+          update.message?.successful_payment?.invoice_payload ===
+            `payment_${payment.id}`,
       );
 
       if (!paymentUpdate) {
-        this.logger.error(`No matching payment found in Telegram updates for charge: ${chargeId}`);
+        this.logger.error(
+          `No matching payment found in Telegram updates for charge: ${chargeId}`,
+        );
         return false;
       }
 
@@ -184,13 +205,13 @@ export class PaymentService {
         successfulPayment.currency !== payment.currency ||
         successfulPayment.total_amount !== payment.amount
       ) {
-        this.logger.error('Payment details mismatch with Telegram data');
+        this.logger.error("Payment details mismatch with Telegram data");
         return false;
       }
 
       return true;
     } catch (error) {
-      this.logger.error('Error verifying payment with Telegram API:', error);
+      this.logger.error("Error verifying payment with Telegram API:", error);
       return false;
     }
   }
@@ -202,7 +223,7 @@ export class PaymentService {
       const report = this.reportRepository.create({
         id: uuidv4(),
         session_id: sessionId,
-        payment_status: 'PAID',
+        payment_status: "PAID",
         storage_url: `/uploads/paid_report_${sessionId}.pdf`,
         analytics_summary: {},
       });
@@ -210,7 +231,7 @@ export class PaymentService {
       await this.reportRepository.save(report);
       this.logger.log(`Paid report generated for session: ${sessionId}`);
     } catch (error) {
-      this.logger.error('Error generating paid report:', error);
+      this.logger.error("Error generating paid report:", error);
       throw error;
     }
   }
@@ -220,6 +241,6 @@ export class PaymentService {
       where: { id: paymentId },
     });
 
-    return payment?.status || 'NOT_FOUND';
+    return payment?.status || "NOT_FOUND";
   }
 }

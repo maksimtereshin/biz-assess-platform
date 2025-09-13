@@ -1,49 +1,59 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
-import { User } from './user.entity';
-import { Survey } from './survey.entity';
-import { Answer } from './answer.entity';
-import { Report } from './report.entity';
-import { Payment } from './payment.entity';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+} from "typeorm";
+import { User } from "./user.entity";
+import { Survey } from "./survey.entity";
+import { Answer } from "./answer.entity";
+import { Report } from "./report.entity";
+import { Payment } from "./payment.entity";
 
-@Entity('survey_sessions')
+@Entity("survey_sessions")
 export class SurveySession {
-  @PrimaryColumn({ type: 'uuid' })
+  @PrimaryColumn({ type: "uuid" })
   id: string;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: "bigint" })
   user_telegram_id: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   survey_id: number;
 
-  @Column({ 
-    type: 'varchar', 
+  @Column({
+    type: "varchar",
     length: 50,
-    enum: ['IN_PROGRESS', 'COMPLETED']
+    enum: ["IN_PROGRESS", "COMPLETED"],
   })
   status: string;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: "timestamptz" })
   created_at: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
+  @UpdateDateColumn({ type: "timestamptz" })
   updated_at: Date;
 
   // Relations
-  @ManyToOne(() => User, user => user.survey_sessions)
-  @JoinColumn({ name: 'user_telegram_id' })
+  @ManyToOne(() => User, (user) => user.survey_sessions)
+  @JoinColumn({ name: "user_telegram_id" })
   user: User;
 
-  @ManyToOne(() => Survey, survey => survey.survey_sessions)
-  @JoinColumn({ name: 'survey_id' })
+  @ManyToOne(() => Survey, (survey) => survey.survey_sessions)
+  @JoinColumn({ name: "survey_id" })
   survey: Survey;
 
-  @OneToMany(() => Answer, answer => answer.session)
+  @OneToMany(() => Answer, (answer) => answer.session)
   answers: Answer[];
 
-  @OneToMany(() => Report, report => report.session)
+  @OneToMany(() => Report, (report) => report.session)
   reports: Report[];
 
-  @OneToMany(() => Payment, payment => payment.survey_session)
+  @OneToMany(() => Payment, (payment) => payment.survey_session)
   payments: Payment[];
 }
