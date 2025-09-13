@@ -648,4 +648,30 @@ Click the button below to pay:
     const authToken = this.authService.generateAuthToken(telegramId);
     return `${this.webAppUrl}/survey?token=${authToken.token}&type=${surveyType}`;
   }
+
+  async getBotInfo(): Promise<{ username: string; id: number; first_name: string }> {
+    try {
+      const response = await fetch(
+        `https://api.telegram.org/bot${this.botToken}/getMe`,
+      );
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        this.logger.error("Telegram getMe API error response:", errorBody);
+        throw new Error(
+          `Telegram getMe API error: ${response.statusText} - ${errorBody}`,
+        );
+      }
+
+      const data = await response.json();
+      return {
+        username: data.result.username,
+        id: data.result.id,
+        first_name: data.result.first_name,
+      };
+    } catch (error) {
+      this.logger.error("Error getting bot info:", error);
+      throw error;
+    }
+  }
 }

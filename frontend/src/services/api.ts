@@ -66,7 +66,7 @@ class ApiClient {
     this.sessionToken = null;
   }
 
-  private promptTelegramAuth() {
+  private async promptTelegramAuth() {
     // Check if we're running inside Telegram WebApp
     if (window.Telegram?.WebApp) {
       // Use Telegram WebApp's showAlert to prompt user
@@ -80,28 +80,47 @@ class ApiClient {
         }
       );
     } else {
-      // For web browsers, show a more detailed prompt
-      const shouldOpenTelegram = window.confirm(
-        'Для использования этого сервиса необходима авторизация через Telegram.\n\n' +
-        'Откройте приложение Telegram на вашем устройстве и:\n' +
-        '1. Найдите бота Business Assessment\n' +
-        '2. Нажмите "Начать" или отправьте /start\n' +
-        '3. Следуйте инструкциям для прохождения опроса\n\n' +
-        'Открыть Telegram?'
-      );
+      // For web browsers, automatically redirect to bot
+      try {
+        // Get bot info to construct proper deep link
+        let botUsername = import.meta.env.VITE_BOT_USERNAME;
 
-      if (shouldOpenTelegram) {
-        // Try to open Telegram app
-        const telegramAppUrl = 'tg://resolve';
-        const fallbackUrl = 'https://t.me/'; // Replace with your actual bot username
+        // If no bot username in env, try to get it from the backend
+        if (!botUsername) {
+          try {
+            const response = await this.client.get('/telegram/bot-info');
+            botUsername = response.data.username;
+          } catch (error) {
+            console.warn('Could not get bot username:', error);
+          }
+        }
 
-        // Try to open Telegram app
-        window.location.href = telegramAppUrl;
+        if (botUsername) {
+          // Direct deep link to specific bot with start command
+          const botUrl = `https://t.me/${botUsername}?start=webapp`;
+          const appUrl = `tg://resolve?domain=${botUsername}&start=webapp`;
 
-        // Fallback to web Telegram after a short delay
-        setTimeout(() => {
-          window.open(fallbackUrl, '_blank');
-        }, 1000);
+          // Try native app first
+          window.location.href = appUrl;
+
+          // Fallback to web version after short delay
+          setTimeout(() => {
+            window.open(botUrl, '_blank');
+          }, 1500);
+        } else {
+          // Generic Telegram opening as fallback
+          const telegramAppUrl = 'tg://';
+          const fallbackUrl = 'https://t.me/';
+
+          window.location.href = telegramAppUrl;
+          setTimeout(() => {
+            window.open(fallbackUrl, '_blank');
+          }, 1500);
+        }
+      } catch (error) {
+        console.error('Error opening Telegram:', error);
+        // Final fallback
+        window.open('https://t.me/', '_blank');
       }
     }
   }
