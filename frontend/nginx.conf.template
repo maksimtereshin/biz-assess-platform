@@ -98,8 +98,8 @@ http {
                 return 204;
             }
             
-            # Error handling for backend connectivity issues
-            proxy_intercept_errors on;
+            # Error handling for backend connectivity issues only (not auth errors)
+            proxy_intercept_errors off;
             error_page 502 503 504 = @backend_error;
         }
         

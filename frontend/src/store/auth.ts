@@ -107,30 +107,69 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      initDemo: () => {
-        // Создаем демо-пользователя для тестирования
-        const demoUser: User = {
-          id: 1,
-          telegramId: 123456789,
-          username: 'demo_user',
-          firstName: 'Демо',
-          lastName: 'Пользователь',
-          isAdmin: false,
-          stats: {
-            totalSurveys: 3,
-            paidReports: 1,
-            referrals: 0,
-          },
-        };
+      initDemo: async () => {
+        try {
+          // For demo mode, we need to bypass authentication since token generation is disabled in production
+          // Instead, we'll try to authenticate with Telegram WebApp or fallback to a basic demo mode
 
-        const demoToken = 'demo-token-' + Date.now();
+          // Check if we can authenticate through Telegram WebApp
+          if (window.Telegram?.WebApp?.initData) {
+            // Try Telegram authentication first
+            try {
+              const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/telegram`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initData: window.Telegram.WebApp.initData }),
+              });
 
-        set({
-          token: demoToken,
-          user: demoUser,
-          isAuthenticated: true,
-          isLoading: false,
-        });
+              if (response.ok) {
+                const { token, user } = await response.json();
+                set({
+                  token,
+                  user,
+                  isAuthenticated: true,
+                  isLoading: false,
+                });
+                return;
+              }
+            } catch (error) {
+              console.warn('Telegram auth failed in demo mode:', error);
+            }
+          }
+
+          // Fallback: create a local demo user without backend authentication
+          // Note: API calls will fail until proper authentication is implemented
+          const demoUser: User = {
+            id: 1,
+            telegramId: 123456789,
+            username: 'demo_user',
+            firstName: 'Демо',
+            lastName: 'Пользователь',
+            isAdmin: false,
+            stats: {
+              totalSurveys: 3,
+              paidReports: 1,
+              referrals: 0,
+            },
+          };
+
+          console.warn('Demo mode: Running without backend authentication. API calls will fail.');
+
+          set({
+            token: null, // No valid token in demo mode
+            user: demoUser,
+            isAuthenticated: false, // Not really authenticated
+            isLoading: false,
+          });
+        } catch (error) {
+          console.error('Demo initialization failed:', error);
+          set({
+            token: null,
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+        }
       },
 
       logout: () => {

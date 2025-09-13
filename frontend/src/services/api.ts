@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { Survey, SurveySession, SurveyType } from 'bizass-shared';
+import { useAuthStore } from '../store/auth';
 
 // API client configuration - use relative URLs for production, full URL for development
 const API_BASE_URL = import.meta.env.DEV 
@@ -21,8 +22,12 @@ class ApiClient {
 
     // Add request interceptor to include auth token
     this.client.interceptors.request.use((config) => {
-      if (this.sessionToken) {
-        config.headers.Authorization = `Bearer ${this.sessionToken}`;
+      // Get token from auth store first, fallback to sessionToken
+      const authToken = useAuthStore.getState().token;
+      const token = authToken || this.sessionToken;
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     });
@@ -31,7 +36,23 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
-        console.error('API Error:', error.response?.data || error.message);
+        if (error.response?.status === 401) {
+          console.warn('Authentication required - prompting user to login via Telegram');
+          this.clearSessionToken();
+          useAuthStore.getState().logout();
+
+          // Show user-friendly authentication prompt
+          this.promptTelegramAuth();
+        }
+
+        console.error('API Error:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers,
+        });
         return Promise.reject(error);
       }
     );
@@ -43,6 +64,46 @@ class ApiClient {
 
   clearSessionToken() {
     this.sessionToken = null;
+  }
+
+  private promptTelegramAuth() {
+    // Check if we're running inside Telegram WebApp
+    if (window.Telegram?.WebApp) {
+      // Use Telegram WebApp's showAlert to prompt user
+      window.Telegram.WebApp.showAlert(
+        'Для продолжения опроса необходимо войти через Telegram. Пожалуйста, откройте приложение Telegram и авторизуйтесь.',
+        () => {
+          // Redirect to main Telegram app or refresh
+          if (window.Telegram?.WebApp) {
+            window.Telegram.WebApp.close();
+          }
+        }
+      );
+    } else {
+      // For web browsers, show a more detailed prompt
+      const shouldOpenTelegram = window.confirm(
+        'Для использования этого сервиса необходима авторизация через Telegram.\n\n' +
+        'Откройте приложение Telegram на вашем устройстве и:\n' +
+        '1. Найдите бота Business Assessment\n' +
+        '2. Нажмите "Начать" или отправьте /start\n' +
+        '3. Следуйте инструкциям для прохождения опроса\n\n' +
+        'Открыть Telegram?'
+      );
+
+      if (shouldOpenTelegram) {
+        // Try to open Telegram app
+        const telegramAppUrl = 'tg://resolve';
+        const fallbackUrl = 'https://t.me/'; // Replace with your actual bot username
+
+        // Try to open Telegram app
+        window.location.href = telegramAppUrl;
+
+        // Fallback to web Telegram after a short delay
+        setTimeout(() => {
+          window.open(fallbackUrl, '_blank');
+        }, 1000);
+      }
+    }
   }
 
   // Authentication endpoints
