@@ -47,19 +47,31 @@ export class TelegramService {
     };
   }
 
-  private getSurveyTypeKeyboard(): InlineKeyboardMarkup {
+  private getSurveyTypeKeyboard(telegramId?: number): InlineKeyboardMarkup {
+    // Генерируем токен для авторизации если есть telegramId
+    let authToken = '';
+    if (telegramId) {
+      try {
+        const token = this.authService.generateAuthToken(telegramId);
+        authToken = `?token=${token.token}`;
+        console.log('🎫 Generated auth token for user:', telegramId);
+      } catch (error) {
+        console.warn('⚠️ Failed to generate auth token:', error);
+      }
+    }
+
     return {
       inline_keyboard: [
         [
           {
             text: "⚡ Экспресс версия (15 мин)",
-            web_app: { url: `${this.webAppUrl}/express` },
+            web_app: { url: `${this.webAppUrl}/express${authToken}` },
           },
         ],
         [
           {
             text: "📈 Полная версия (20 мин)",
-            web_app: { url: `${this.webAppUrl}/full` },
+            web_app: { url: `${this.webAppUrl}/full${authToken}` },
           },
         ],
         [{ text: "⬅️ Назад в главное меню", callback_data: "back_to_main" }],
@@ -183,7 +195,7 @@ export class TelegramService {
     await this.sendMessageWithKeyboard(
       chatId,
       message,
-      this.getSurveyTypeKeyboard(),
+      this.getSurveyTypeKeyboard(chatId),
     );
   }
 

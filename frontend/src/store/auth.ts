@@ -38,8 +38,65 @@ export const useAuthStore = create<AuthState>()(
 
       init: async () => {
         set({ isLoading: true });
-        
+
         try {
+          // Проверяем URL параметры на наличие токена
+          const urlParams = new URLSearchParams(window.location.search);
+          const urlToken = urlParams.get('token');
+          const tgWebAppData = urlParams.get('tgWebAppData');
+
+          console.log('🔍 URL параметры:', {
+            token: urlToken ? 'present' : 'absent',
+            tgWebAppData: tgWebAppData ? 'present' : 'absent',
+            allParams: Object.fromEntries(urlParams.entries())
+          });
+
+          // Если есть токен в URL, используем его для прямой авторизации
+          if (urlToken) {
+            console.log('🎫 Found token in URL, attempting direct authentication...');
+            try {
+              const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/verify`, {
+                headers: {
+                  'Authorization': `Bearer ${urlToken}`
+                }
+              });
+
+              if (response.ok) {
+                // Создаем пользователя из токена
+                const user = {
+                  id: 1,
+                  telegramId: 123456789, // Временно
+                  username: 'url_user',
+                  firstName: 'URL',
+                  lastName: 'User',
+                  isAdmin: false,
+                  stats: {
+                    totalSurveys: 0,
+                    paidReports: 0,
+                    referrals: 0,
+                  },
+                };
+
+                set({
+                  token: urlToken,
+                  user,
+                  isAuthenticated: true,
+                  isLoading: false,
+                });
+
+                // Очищаем URL от токена
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.delete('token');
+                window.history.replaceState({}, document.title, newUrl.toString());
+
+                console.log('✅ URL token authentication successful!');
+                return;
+              }
+            } catch (error) {
+              console.warn('❌ URL token authentication failed:', error);
+            }
+          }
+
           // Проверяем, есть ли уже сохраненный токен
           const currentToken = get().token;
           if (currentToken && !currentToken.startsWith('demo-token-')) {
@@ -68,6 +125,46 @@ export const useAuthStore = create<AuthState>()(
           console.log('🔍 Checking Telegram WebApp availability...');
           console.log('window.Telegram:', window.Telegram);
           console.log('window.Telegram?.WebApp:', window.Telegram?.WebApp);
+
+          // Проверяем альтернативные источники данных из URL
+          if (tgWebAppData) {
+            console.log('📱 Found tgWebAppData in URL, attempting authentication...');
+            try {
+              const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/telegram`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  initData: tgWebAppData,
+                }),
+              });
+
+              if (response.ok) {
+                const { token, user } = await response.json();
+                console.log('✅ tgWebAppData authentication successful!');
+
+                set({
+                  token,
+                  user,
+                  isAuthenticated: true,
+                  isLoading: false,
+                });
+
+                // Очищаем URL от параметров
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.delete('tgWebAppData');
+                window.history.replaceState({}, document.title, newUrl.toString());
+
+                return;
+              } else {
+                const errorText = await response.text();
+                console.error('❌ tgWebAppData authentication failed:', response.status, errorText);
+              }
+            } catch (error) {
+              console.error('❌ tgWebAppData authentication error:', error);
+            }
+          }
 
           if (window.Telegram?.WebApp) {
             const tg = window.Telegram.WebApp;

@@ -19,7 +19,13 @@ export class AuthService {
   async authenticateWithTelegram(initData: string): Promise<{ token: string; user: any }> {
     console.log('🔐 Starting Telegram authentication...');
     console.log('📱 Received initData length:', initData?.length || 0);
-    console.log('📱 Raw initData:', initData);
+    console.log('📱 Raw initData (first 200 chars):', initData?.substring(0, 200));
+
+    // Check if initData is empty or invalid
+    if (!initData || initData.trim() === '') {
+      console.error('❌ Empty or invalid initData received');
+      throw new UnauthorizedException('Empty initData received');
+    }
 
     try {
       // Parse initData
