@@ -11,6 +11,7 @@ import { AuthService } from "./auth.service";
 import { AuthenticateDto } from "./dto/authenticate.dto";
 import { LoginDto } from "./dto/login.dto";
 import { ValidateTokenDto } from "./dto/validate-token.dto";
+import { TelegramAuthDto } from "./dto/telegram-auth.dto";
 import { DevelopmentOnlyGuard } from "../common/guards/development-only.guard";
 
 export interface AuthResponse {
@@ -21,6 +22,13 @@ export interface AuthResponse {
 @Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post("telegram")
+  async authenticateWithTelegram(
+    @Body() telegramAuthDto: TelegramAuthDto,
+  ): Promise<{ token: string; user: any }> {
+    return this.authService.authenticateWithTelegram(telegramAuthDto.initData);
+  }
 
   @Post("authenticate")
   async authenticate(
@@ -36,6 +44,15 @@ export class AuthController {
       session,
       sessionToken,
     };
+  }
+
+  @Get("verify")
+  async verifyToken(@Query() query: ValidateTokenDto) {
+    const result = this.authService.validateToken(query.token);
+    if (!result) {
+      throw new UnauthorizedException("Invalid or expired token");
+    }
+    return result;
   }
 
   @Get("validate")

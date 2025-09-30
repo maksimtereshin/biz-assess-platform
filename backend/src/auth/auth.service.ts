@@ -3,6 +3,7 @@ import { JwtService } from "@nestjs/jwt";
 import { AuthToken, SurveySession } from "bizass-shared";
 import { SurveyService } from "../survey/survey.service";
 import { SurveyType } from "bizass-shared";
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -10,6 +11,87 @@ export class AuthService {
     private jwtService: JwtService,
     private surveyService: SurveyService,
   ) {}
+
+  /**
+   * Authenticates user with Telegram WebApp initData
+   * Validates the initData using HMAC-SHA256 signature
+   */
+  async authenticateWithTelegram(initData: string): Promise<{ token: string; user: any }> {
+    try {
+      // Parse initData
+      const urlParams = new URLSearchParams(initData);
+      const hash = urlParams.get('hash');
+      urlParams.delete('hash');
+
+      // Check if hash exists
+      if (!hash) {
+        throw new UnauthorizedException('No hash provided in initData');
+      }
+
+      // Get bot token from environment
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (!botToken) {
+        throw new UnauthorizedException('Bot token not configured');
+      }
+
+      // Create data string for verification
+      const dataCheckString = Array.from(urlParams.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, value]) => `${key}=${value}`)
+        .join('\n');
+
+      // Create secret key from bot token
+      const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
+
+      // Calculate expected hash
+      const expectedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+      // Verify hash
+      if (hash !== expectedHash) {
+        throw new UnauthorizedException('Invalid Telegram initData signature');
+      }
+
+      // Parse user data
+      const userParam = urlParams.get('user');
+      if (!userParam) {
+        throw new UnauthorizedException('No user data in initData');
+      }
+
+      const userData = JSON.parse(userParam);
+      const telegramId = userData.id;
+
+      if (!telegramId) {
+        throw new UnauthorizedException('No user ID in Telegram data');
+      }
+
+      // Generate auth token
+      const authToken = this.generateAuthToken(telegramId);
+
+      // Return user info as expected by frontend
+      const user = {
+        id: telegramId,
+        telegramId: telegramId,
+        username: userData.username,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        isAdmin: false,
+        stats: {
+          totalSurveys: 0,
+          paidReports: 0,
+          referrals: 0,
+        },
+      };
+
+      return {
+        token: authToken.token,
+        user
+      };
+
+    } catch (error) {
+      console.error('Telegram authentication error:', error);
+      throw new UnauthorizedException('Failed to authenticate with Telegram');
+    }
+  }
 
   /**
    * Generates a short-lived JWT token for Telegram user authentication
