@@ -47,17 +47,12 @@ http {
         
         # Proxy API requests to backend
         location /api {
-            # Use variables to prevent nginx from failing on startup if backend is not immediately resolvable
-            set $backend "${BACKEND_URL}";
-            
-            # Add error logging
-            error_log /var/log/nginx/api_error.log debug;
+            # Direct proxy to backend URL (resolved at nginx startup)
+            proxy_pass ${BACKEND_URL};
+
+            # Reduced error logging
+            error_log /var/log/nginx/api_error.log warn;
             access_log /var/log/nginx/api_access.log;
-            
-            # Log the backend URL being used
-            add_header X-Debug-Backend-URL $backend always;
-            
-            proxy_pass $backend;
             proxy_http_version 1.1;
             
             # Basic proxy settings without strict SSL
