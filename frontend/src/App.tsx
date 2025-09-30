@@ -2,6 +2,8 @@ import { Routes, Route } from 'react-router-dom';
 import { SurveySelectionScreen } from './components/SurveySelectionScreen';
 import { ExpressPage } from './pages/ExpressPage';
 import { FullPage } from './pages/FullPage';
+import ResultsPage from './pages/ResultsPage';
+import CategoryDetailPage from './pages/CategoryDetailPage';
 import { AuthLoader } from './components/AuthLoader';
 import { AuthPrompt } from './components/AuthPrompt';
 import { useAuthStore } from './store/auth';
@@ -41,8 +43,15 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<SurveySelectionScreen />} />
+      <Route path="/express/:sessionId" element={<ExpressPage />} />
+      <Route path="/full/:sessionId" element={<FullPage />} />
+      <Route path="/:surveyType/:sessionId/results" element={<ResultsPage />} />
+      <Route path="/:surveyType/:sessionId/results/category/:categoryName" element={<CategoryDetailPage />} />
+      {/* Keep old routes for backward compatibility temporarily */}
       <Route path="/express/*" element={<ExpressPage />} />
       <Route path="/full/*" element={<FullPage />} />
+      <Route path="/results/:sessionId" element={<ResultsPage />} />
+      <Route path="/results/:sessionId/category/:categoryName" element={<CategoryDetailPage />} />
     </Routes>
   );
 }

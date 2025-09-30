@@ -33,8 +33,10 @@ RUN npm ci
 # Copy backend source
 COPY ./backend/ ./
 
-# Ensure data files are in the correct location
-RUN mkdir -p dist/data && cp -r src/data/* dist/data/ 2>/dev/null || true
+# Ensure data files are in the correct location for both source and build
+RUN mkdir -p src/data/reports && mkdir -p dist/data/reports
+COPY ./backend/src/data/reports/*.csv ./src/data/reports/
+COPY ./backend/src/data/reports/*.csv ./dist/data/reports/
 
 # Expose port
 EXPOSE 3001

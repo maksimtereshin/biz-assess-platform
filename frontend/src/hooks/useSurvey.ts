@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getCategoriesForVariant, getQuestionsForVariant } from '../data/surveyData';
-import { SurveyVariant, Question, Category } from '../types/survey';
+import { SurveyVariant } from '../types/adapters';
+import { Question, Category } from '../types/survey';
+import { Survey as BackendSurvey } from 'bizass-shared';
 import { useUserSession } from './useUserSession';
 import api from '../services/api';
 import { SessionSyncService } from '../services/sessionSync';
@@ -13,7 +16,8 @@ interface SurveyState {
   currentQuestionIndex: number;
 }
 
-export function useSurvey(initialVariant?: SurveyVariant | null) {
+export function useSurvey(initialVariant?: SurveyVariant | null, sessionId?: string) {
+  const navigate = useNavigate();
   const { session, createSession, getOrCreateSession, updateSessionActivity, completeSession } = useUserSession();
   const [surveyVariant, setSurveyVariant] = useState<SurveyVariant | null>(initialVariant || null);
   const [surveyState, setSurveyState] = useState<SurveyState>({
@@ -22,18 +26,52 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
     responses: {}
   });
   const [showResults, setShowResults] = useState<boolean>(false);
+  const [backendSurvey, setBackendSurvey] = useState<BackendSurvey | null>(null);
+  const [isFetchingSurvey, setIsFetchingSurvey] = useState<boolean>(false);
 
   // Get categories for current variant
   const categoriesData = useMemo(() => {
     if (!surveyVariant) return [];
+
+    // Use backend data if available, otherwise fallback to local data
+    if (backendSurvey) {
+      return backendSurvey.structure.map(category => ({
+        id: category.id,
+        name: category.name,
+        subcategories: category.subcategories.map(sub => sub.name),
+        totalQuestions: category.subcategories.reduce((total, sub) => total + sub.questions.length, 0),
+        completedQuestions: 0
+      }));
+    }
+
     return getCategoriesForVariant(surveyVariant);
-  }, [surveyVariant]);
+  }, [surveyVariant, backendSurvey]);
 
   // Get questions for current variant
   const questionsData = useMemo(() => {
     if (!surveyVariant) return [];
+
+    // Use backend data if available, otherwise fallback to local data
+    if (backendSurvey) {
+      const questions: Question[] = [];
+      backendSurvey.structure.forEach(category => {
+        category.subcategories.forEach(subcategory => {
+          subcategory.questions.forEach(question => {
+            questions.push({
+              id: question.id.toString(), // Convert to string for compatibility
+              text: question.text,
+              category: category.name,
+              subcategory: subcategory.name,
+              answers: question.answers || []
+            });
+          });
+        });
+      });
+      return questions;
+    }
+
     return getQuestionsForVariant(surveyVariant);
-  }, [surveyVariant]);
+  }, [surveyVariant, backendSurvey]);
 
   // Categories with completion status
   const [categoriesWithProgress, setCategoriesWithProgress] = useState<(Category & { 
@@ -41,16 +79,81 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
     questions: Question[];
   })[]>([]);
 
+  // Fetch survey structure from backend
+  useEffect(() => {
+    const fetchSurveyStructure = async () => {
+      if (surveyVariant && !isFetchingSurvey && !backendSurvey) {
+        setIsFetchingSurvey(true);
+        try {
+          const survey = await api.getSurveyStructure(surveyVariant.toUpperCase());
+          setBackendSurvey(survey);
+        } catch (error) {
+          console.error('Failed to fetch survey structure:', error);
+          // Fallback to local data if backend fails
+          setBackendSurvey(null);
+        } finally {
+          setIsFetchingSurvey(false);
+        }
+      }
+    };
+
+    fetchSurveyStructure();
+  }, [surveyVariant, isFetchingSurvey, backendSurvey]);
+
   // Initialize survey when variant is set
   useEffect(() => {
     const initializeSurvey = async () => {
       if (surveyVariant) {
-        // Get or create session for this variant
-        const variantSession = getOrCreateSession(surveyVariant);
-        
-        if (variantSession) {
+        // Use provided sessionId or get/create session for this variant
+        let currentSessionId: string;
+        let variantSession;
+
+        if (sessionId) {
+          // Use the provided sessionId - load existing session from backend
+          currentSessionId = sessionId;
+
+          // Restore session token from localStorage first
+          const savedToken = LocalStorageService.getSessionToken(sessionId);
+          console.log('Restoring session token for session:', sessionId);
+          console.log('Found saved token:', savedToken ? `${savedToken.substring(0, 20)}...` : 'none');
+
+          if (savedToken) {
+            api.setSessionToken(savedToken);
+            console.log('Session token set in API client');
+          } else {
+            console.warn('No saved token found for session:', sessionId);
+          }
+
+          try {
+            const backendSession = await api.getCurrentSession(sessionId);
+            if (backendSession) {
+              // Create a UserSession from the backend session
+              variantSession = {
+                id: backendSession.id,
+                userId: backendSession.userId.toString(),
+                surveyVariant: initialVariant!,
+                startedAt: backendSession.createdAt,
+                lastActivityAt: new Date().toISOString(),
+                isCompleted: backendSession.status === 'COMPLETED',
+                currentQuestionIndex: 0
+              };
+              LocalStorageService.setCurrentSession(variantSession);
+            }
+          } catch (error) {
+            console.error('Failed to load session from backend:', error);
+            // If can't load from backend, redirect to selection
+            navigate('/');
+            return;
+          }
+        } else {
+          // Fallback to old behavior - get or create session for this variant
+          variantSession = getOrCreateSession(surveyVariant);
+          currentSessionId = variantSession?.id || '';
+        }
+
+        if (variantSession && currentSessionId) {
           // First, try to restore from database if localStorage is empty or session is new
-          const localResponses = LocalStorageService.getUserResponses(variantSession.id);
+          const localResponses = LocalStorageService.getUserResponses(currentSessionId);
           const hasLocalData = Object.keys(localResponses).length > 0;
           
           if (!hasLocalData) {
@@ -69,7 +172,7 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
                   
                   // Save restored answers to localStorage
                   Object.entries(restoredSession.answers).forEach(([questionId, answer]) => {
-                    LocalStorageService.saveUserResponse(updatedSession.id, questionId, answer as number);
+                    LocalStorageService.saveUserResponse(currentSessionId, questionId, answer as number);
                   });
                   
                   setSurveyState(prev => ({
@@ -99,7 +202,7 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
     };
 
     initializeSurvey();
-  }, [surveyVariant, getOrCreateSession]);
+  }, [surveyVariant, sessionId, initialVariant, getOrCreateSession, navigate]);
 
   // Load saved data when session or variant changes
   useEffect(() => {
@@ -211,24 +314,37 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
       responses: newResponses
     }));
 
-    // Save to localStorage immediately
+    // Save to localStorage immediately for UI state
     LocalStorageService.saveUserResponse(session.id, questionId, value);
 
-    // Save to database (async, don't block UI)
+    // Note: Backend save now happens only when user clicks "Next" in answerAndNext
+  }, [surveyState.responses, session]);
+
+  // Helper function to save answer to backend
+  const saveAnswerToBackend = useCallback(async (questionId: string, value: number) => {
+    if (!session?.id || session.id.startsWith('demo-')) return;
+
     try {
-      if (session.id && !session.id.startsWith('demo-')) {
-        await api.saveAnswer(session.id, questionId, value);
+      // Convert question ID to numeric for backend
+      const numericQuestionId = backendSurvey ?
+        parseInt(questionId) : // Backend survey already has numeric IDs
+        parseInt(questionId.replace(/^\w+_q/, '')); // Extract number from "express_q1" format
+
+      if (!isNaN(numericQuestionId)) {
+        await api.submitAnswer(numericQuestionId, value);
+      } else {
+        console.error('Invalid question ID format:', questionId);
       }
     } catch (error) {
       ErrorHandler.warn('Failed to save answer to database', {
         component: 'useSurvey',
-        operation: 'saveAnswer',
+        operation: 'saveAnswerToBackend',
         sessionId: session?.id,
         additionalData: { questionId, value, error }
       });
-      // Continue with localStorage only - this ensures the app works offline
+      // Don't throw - continue with localStorage only
     }
-  }, [surveyState.responses, session]);
+  }, [session, backendSurvey]);
 
   const answerAndNext = useCallback(async (questionId: string, value: number) => {
     if (!surveyState.currentCategory || !session) return;
@@ -239,8 +355,11 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
     const currentQuestion = category.questions[surveyState.currentQuestionIndex];
     if (!currentQuestion) return;
 
-    // Update the response (now async)
+    // Update the response (localStorage only)
     await answerQuestion(questionId, value);
+
+    // Save to backend when user clicks "Next"
+    await saveAnswerToBackend(questionId, value);
 
     // Calculate updated responses for checking completion
     const updatedResponses = { ...surveyState.responses, [questionId]: value };
@@ -268,13 +387,25 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
         }, 100);
       } else {
         // No more categories, survey completed
-        setTimeout(() => {
+        setTimeout(async () => {
           setSurveyState(prev => ({
             ...prev,
             currentCategory: null,
             currentQuestionIndex: 0
           }));
-          setShowResults(true);
+
+          try {
+            // Call backend API to complete session and get sessionId
+            const result = await api.completeSession();
+            // Navigate to new results page using the sessionId from backend
+            navigate(`/${surveyVariant}/${result.sessionId}/results`);
+          } catch (error) {
+            console.error('Error completing session:', error);
+            // Fallback to showing old results screen
+            setShowResults(true);
+          }
+
+          // Update local session state
           completeSession();
         }, 100);
       }
@@ -447,24 +578,9 @@ export function useSurvey(initialVariant?: SurveyVariant | null) {
     setShowResults(false);
   }, []);
 
-  // Set up automatic session synchronization
-  useEffect(() => {
-    if (!session?.id || session.id.startsWith('demo-')) {
-      return; // Skip sync for demo sessions
-    }
+  // Note: Auto-sync has been removed to prevent 429 rate limiting errors
+  // Answers are now saved immediately when users respond
 
-    // Start auto-sync every 30 seconds
-    const stopAutoSync = SessionSyncService.startAutoSync(session.id, 30000);
-    
-    // Set up visibility change sync
-    const stopVisibilitySync = SessionSyncService.setupVisibilitySync(session.id);
-
-    // Cleanup on unmount or session change
-    return () => {
-      stopAutoSync();
-      stopVisibilitySync();
-    };
-  }, [session?.id]);
 
   // Check for newer session on startup
   useEffect(() => {

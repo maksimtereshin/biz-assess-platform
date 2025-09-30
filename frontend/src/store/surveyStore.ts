@@ -80,18 +80,12 @@ export const useSurveyStore = create<SurveyState>((set, get) => ({
     }
   },
 
+  // DEPRECATED: loadSession is no longer used - using useSurvey hook instead
   loadSession: async () => {
     set({ isLoading: true, error: null });
-    try {
-      const session = await apiClient.getCurrentSession();
-      set({ session, isLoading: false });
-      get().setCurrentPositionFromAnswers();
-    } catch (error: any) {
-      set({ 
-        error: error.response?.data?.message || error.message || 'Failed to load session',
-        isLoading: false 
-      });
-    }
+    // This method is deprecated and not used
+    console.warn('loadSession is deprecated, use useSurvey hook instead');
+    set({ isLoading: false });
   },
 
   submitAnswer: async (questionId: number, score: number) => {

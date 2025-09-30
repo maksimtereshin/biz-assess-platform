@@ -2,109 +2,672 @@
   "EXPRESS": {
     "id": 1,
     "type": "EXPRESS",
-    "name": "Express Business Assessment",
+    "name": "Экспресс оценка бизнеса",
     "structure": [
       {
-        "id": "product",
-        "name": "Product",
+        "id": "продукт",
+        "name": "ПРОДУКТ",
         "subcategories": [
           {
-            "id": "product-line",
-            "name": "Product Line",
+            "id": "продуктовая-линейка",
+            "name": "Продуктовая линейка",
             "questions": [
               {
                 "id": 1,
-                "text": "How well-defined is your product or service offering?"
+                "text": "Насколько детально проработана структура вашей продуктовой линейки (консультации, групповые программы, курсы, корпоративные решения)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Слабо",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 2,
-                "text": "How unique is your product compared to competitors?"
+                "text": "Прописаны ли конкурентоспособные УТП для каждого продукта (услуги) в вашей линейке?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 3,
-                "text": "How well does your product solve the target customer's problem?"
+                "text": "Какой, по-вашему, потенциал масштабируемости бизнеса у текущей продуктовой линейки?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Низкий",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           },
           {
-            "id": "personal-brand",
-            "name": "Personal Brand",
+            "id": "личный-бренд",
+            "name": "Личный бренд",
             "questions": [
               {
                 "id": 4,
-                "text": "How strong is your personal brand in your industry?"
+                "text": "Есть ли у вас описаная концепция вашего экспертного позиционирования и понимание того, чем вы отличаетесь от других специалистов в вашей нише?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 5,
-                "text": "How well do you communicate your expertise to potential customers?"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "marketing",
-        "name": "Marketing",
-        "subcategories": [
-          {
-            "id": "monetization",
-            "name": "Monetization",
-            "questions": [
+                "text": "Ваша целевая аудитория понимает, какую ценность вы предлагаете и почему именно к вам стоит обратиться?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
               {
                 "id": 6,
-                "text": "How clear is your revenue model?"
+                "text": "Как вы оцениваете свое присутствие в ключевых медиаканалах (соцсети, статьи, видео, книги, выступления)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 7,
-                "text": "How well do you understand your pricing strategy?"
+                "text": "Состоите ли вы в профессиональных сообществах, ассоциациях и присутствуете ли на профессиональных платформах?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 8,
+                "text": "Насколько ваш личный бренд помогает вам в продаже услуг и повышении доверия клиентов?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           },
           {
-            "id": "customer-avatar",
-            "name": "Customer Avatar",
+            "id": "монетизация",
+            "name": "Монетизация",
             "questions": [
               {
-                "id": 8,
-                "text": "How well-defined is your ideal customer profile?"
+                "id": 9,
+                "text": "Есть ли у вас финансовая модель с расчетами планового дохода, прибыли и точек роста?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
-                "id": 9,
-                "text": "How well do you understand your customer's pain points?"
+                "id": 10,
+                "text": "Прописаны ли механизмы скидок, бонусов, программ лояльности?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 11,
+                "text": "Рассчитывается ли себестоимость и прибыльность каждого продукта?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           }
         ]
       },
       {
-        "id": "sales",
-        "name": "Sales",
+        "id": "маркетинг",
+        "name": "МАРКЕТИНГ",
         "subcategories": [
           {
-            "id": "strategy-funnels",
-            "name": "Strategy and Funnels",
+            "id": "аватар-клиента",
+            "name": "Аватар клиента",
             "questions": [
               {
-                "id": 10,
-                "text": "How well-defined is your sales process?"
+                "id": 12,
+                "text": "Разработаны ли аватары клиентов (описание болей, потребностей, возражений) и сформирован ли детализированный портрет целевого клиента?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
-                "id": 11,
-                "text": "How effective are your sales funnels?"
+                "id": 13,
+                "text": "Используются ли аналитические методы исследования клиентов, с регулярной актуализацией данных (CustDev, опросы, тесты)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 14,
+                "text": "Создана ли база с типовыми клиентскими запросами и решениями?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 15,
+                "text": "Есть ли персонализированные офферы для разных типов (сегментов) клиентов?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           },
           {
-            "id": "promotion-channels",
-            "name": "Promotion Channels",
+            "id": "стратегия-и-связки",
+            "name": "Стратегия и связки",
             "questions": [
               {
-                "id": 12,
-                "text": "How well do you utilize your marketing channels?"
+                "id": 16,
+                "text": "Внедрены ли у вас маркетинговые связки и мультиканальные автоворонки (например : лид - магнит + чат-бот + рассылка + консультация)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
-                "id": 13,
-                "text": "How effective are your promotional strategies?"
+                "id": 17,
+                "text": "Насколько у вас систематизирован процесс тестирования и внедрения маркетинговых гипотез?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 18,
+                "text": "Насколько связаны между собой ваши маркетинговые, продуктовые и бизнес - стратегии?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 19,
+                "text": "Как вы оцениваете уровень интеграции AI-технологий в свою маркетинговую деятельность?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "каналы-продвижения",
+            "name": "Каналы продвижения",
+            "questions": [
+              {
+                "id": 20,
+                "text": "Насколько предсказуем и стабилен поток клиентов из ваших текущих каналов?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 21,
+                "text": "Насколько ваша маркетинговая стратегия сбалансирована между органическим и платным трафиком?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 22,
+                "text": "Достаточно ли у вас ресурсов и компетенций для ведения всех маркетинговых направлений?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 23,
+                "text": "Работаете ли вы с внешними подрядчиками и специалистами?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да, регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           }
@@ -112,101 +675,1088 @@
       },
       {
         "id": "hr",
-        "name": "HR (Human Resources)",
+        "name": "HR",
         "subcategories": [
           {
-            "id": "delegation",
-            "name": "Delegation",
-            "questions": [
-              {
-                "id": 14,
-                "text": "How well do you delegate tasks to team members?"
-              },
-              {
-                "id": 15,
-                "text": "How effective is your team management?"
-              }
-            ]
-          },
-          {
-            "id": "economics",
-            "name": "Economics",
-            "questions": [
-              {
-                "id": 16,
-                "text": "How well do you understand your business economics?"
-              },
-              {
-                "id": 17,
-                "text": "How effective is your financial planning?"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "automation",
-        "name": "Automation and Technology",
-        "subcategories": [
-          {
-            "id": "sales-organization",
-            "name": "Sales Organization",
-            "questions": [
-              {
-                "id": 18,
-                "text": "How well-organized is your sales team?"
-              },
-              {
-                "id": 19,
-                "text": "How effective are your sales processes?"
-              }
-            ]
-          },
-          {
-            "id": "ai-technology",
-            "name": "AI Technology Implementation",
-            "questions": [
-              {
-                "id": 20,
-                "text": "How well do you leverage AI and technology in your business?"
-              },
-              {
-                "id": 21,
-                "text": "How effective are your automation strategies?"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "metrics",
-        "name": "Metrics and Analytics",
-        "subcategories": [
-          {
-            "id": "metrics-tracking",
-            "name": "Metrics",
-            "questions": [
-              {
-                "id": 22,
-                "text": "How well do you track key business metrics?"
-              },
-              {
-                "id": 23,
-                "text": "How effective is your data analysis?"
-              }
-            ]
-          },
-          {
-            "id": "professional",
-            "name": "Professional",
+            "id": "делегирование",
+            "name": "Делегирование",
             "questions": [
               {
                 "id": 24,
-                "text": "How professional is your business presentation?"
+                "text": "Соответствует ли текущая орг. структура и ваша команда задачам и масштабам бизнеса?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 25,
-                "text": "How well do you maintain professional standards?"
+                "text": "Есть ли у вас ассистент или менеджер для делегирования задач?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 26,
+                "text": "Вы удовлетворены системой контроля качества и отчетностью выполнения делегируемых задач?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 27,
+                "text": "Позволяет ли текущий уровень делегирования масштабировать бизнес?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "экономика",
+            "name": "Экономика",
+            "questions": [
+              {
+                "id": 28,
+                "text": "Вы привлекаете внешних подрядчиков (аутсорсинг) для выполнения ваших бизнес - задач?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 29,
+                "text": "Регулярно ли проводится аудит эффективности (KPI) сотрудников или внешних подрядчиков?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 30,
+                "text": "Контролируются ли затраты на персонал и внешних подрядчиков, так же деьально как ключевые бизнес метрики (выручка, рентабельность и др.)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "продажи",
+        "name": "ПРОДАЖИ",
+        "subcategories": [
+          {
+            "id": "организация-продаж",
+            "name": "Организация продаж",
+            "questions": [
+              {
+                "id": 31,
+                "text": "Проработана ли у вас схема организации продаж и насколько она соответствует текущим бизнес -целям?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 32,
+                "text": "Разработаны ли сценарии и стандарты общения с клиентами (скрипты) на разных этапах продаж?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 33,
+                "text": "У вас реализованы стратегии и механики повторных касаний, прогрева и допродаж?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 34,
+                "text": "Существует ли система планирования продаж и насколько предсказуем ваш объём продаж в месяц/квартал/год?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "воронка-продаж",
+            "name": "Воронка продаж",
+            "questions": [
+              {
+                "id": 35,
+                "text": "Насколько детально у вас прописана структура воронки продаж для разных типов клиентов и сценариев сделок?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 36,
+                "text": "Контролируете ли вы средний цикл сделки и КЭВ (ключевой этап воронки)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 37,
+                "text": "Используется ли CRM- система для управления клиентской базой?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 38,
+                "text": "Насколько автоматизирован ваш процесс продаж и допродаж (авторассылки, боты - квалификаторы, уведомления и др.)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "автоматизация-и-технологии",
+        "name": "АВТОМАТИЗАЦИЯ И ТЕХНОЛОГИИ",
+        "subcategories": [
+          {
+            "id": "автоматизация",
+            "name": "Автоматизация",
+            "questions": [
+              {
+                "id": 39,
+                "text": "Насколько у вас автоматизирован процесс взаимодействия с клиентами (CRM- система, платформы для автоматизации маркетинга и продаж)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 40,
+                "text": "Насколько оптимизированы и автоматизированы сервисы для внутренней работы (документооборот, планирование, командные коммуникации)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 41,
+                "text": "У вас внедрена система защиты ваших данных и интеллектуальной собственности (кибербезопасность)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "внедрение-ai-технологий",
+            "name": "Внедрение AI-технологий",
+            "questions": [
+              {
+                "id": 42,
+                "text": "Как вы оцениваете уровень внедрения AI- инструментов в ваши бизнес-процессы?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 43,
+                "text": "Оцениваете ли вы возможности AI-технологий для создания новых продуктов и бизнес направлений?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "метрики",
+            "name": "Метрики",
+            "questions": [
+              {
+                "id": 44,
+                "text": "Насколько регулярно вы замеряете ключевые бизнес -метрики (Revenue, CAC, ARPPU, ROMI, LTV, NPS и др.)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 45,
+                "text": "Насколько у вас прозрачная и автоматизированная система отчетности (РНП, PnL, ДДС, дашборды)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частичная",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Оптимальная",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "карта-компетенций",
+        "name": "КАРТА КОМПЕТЕНЦИЙ",
+        "subcategories": [
+          {
+            "id": "профессиональные",
+            "name": "Профессиональные",
+            "questions": [
+              {
+                "id": 46,
+                "text": "Подтверждены ли ваши профессиональные навыки и компетенции дипломами, сертификатами или отраслевыми кейсами?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 47,
+                "text": "Состоите ли вы в профессиональных сообществах, клубах и ассоциациях?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 48,
+                "text": "Вы выступаете в качестве спикера или эксперта на деловых и отраслевых мероприятиях (форумы, конференции)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да, регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 49,
+                "text": "Как вы оцениваете инвестиции в свое обучение, развитие компетенций и получение новых навыков?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "социальные",
+            "name": "Социальные",
+            "questions": [
+              {
+                "id": 50,
+                "text": "Насколько у вас развиты навыки нетворкинга и делового общения?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 51,
+                "text": "Насколько социальные связи и ваш личный бренд способствуют росту клиентской базы?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 52,
+                "text": "Есть ли у вас стратегия расширения влияния через выстраивание социальных связей?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 53,
+                "text": "Достаточно ли отзывов и кейсов для повышения доверия? Насколько ваши клиенты и партнеры готовы рекомендовать вас?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "личностные",
+            "name": "Личностные",
+            "questions": [
+              {
+                "id": 54,
+                "text": "Как вы оцениваете себя с точки зрения развития своих «мягких навыков » (soft skills)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Относительно",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Оптимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 55,
+                "text": "Удается ли вам поддерживать баланс между работой и личной жизнью?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 56,
+                "text": "Способны ли вы эффективно управлять стрессом и нагрузками?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 57,
+                "text": "Есть ли у вас стратегия саморазвития и личностного роста?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "управленческие",
+            "name": "Управленческие",
+            "questions": [
+              {
+                "id": 58,
+                "text": "Выберите свою характеристику - Стратег, Управленец, Созидатель?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Управленец",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Созидатель",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 59,
+                "text": "Как вы оцениваете свой навык эффективного управления ресурсами и процессами?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 60,
+                "text": "Насколько оптимизирован процесс постановки и контроля задач в вашем бизнесе?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           }
@@ -217,201 +1767,1143 @@
   "FULL": {
     "id": 2,
     "type": "FULL",
-    "name": "Full Business Assessment",
+    "name": "Полная оценка бизнеса",
     "structure": [
       {
-        "id": "product",
-        "name": "Product",
+        "id": "продукт",
+        "name": "ПРОДУКТ",
         "subcategories": [
           {
-            "id": "product-line",
-            "name": "Product Line",
+            "id": "продуктовая-линейка",
+            "name": "Продуктовая линейка",
             "questions": [
               {
                 "id": 1,
-                "text": "How well-defined is your product or service offering?"
+                "text": "Насколько детально проработана структура вашей продуктовой линейки (консультации, групповые программы, курсы, корпоративные решения)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 2,
-                "text": "How unique is your product compared to competitors?"
+                "text": "Прописана ли ролевая модель каждого продукта согласно стратегии вовлечения клиентов (лид-магнит, трипвайер, основной продукт, бандлы, максимизаторы прибыли и т. д.)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 3,
-                "text": "How well does your product solve the target customer's problem?"
+                "text": "Прописаны ли конкурентоспособные УТП для каждого продукта (услуги) в вашей линейке?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 4,
-                "text": "How well do you understand your product's value proposition?"
+                "text": "Ведется ли регулярный анализ продуктовой линейки и вносятся ли корректировки с учетом обратной связи клиентов и рыночной конъюнктуры?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 5,
-                "text": "How effective is your product development process?"
+                "text": "Какой, по-вашему, потенциал масштабируемости бизнеса у текущей продуктовой линейки?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Низкий",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           },
           {
-            "id": "personal-brand",
-            "name": "Personal Brand",
+            "id": "личный-бренд",
+            "name": "Личный бренд",
             "questions": [
               {
                 "id": 6,
-                "text": "How strong is your personal brand in your industry?"
+                "text": "Есть ли у вас описаная концепция вашего экспертного позиционирования и понимание того, чем вы отличаетесь от других специалистов в вашей нише?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 7,
-                "text": "How well do you communicate your expertise to potential customers?"
+                "text": "Ваша целевая аудитория понимает, какую ценность вы предлагаете и почему именно к вам стоит обратиться?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 8,
-                "text": "How consistent is your brand messaging across all channels?"
+                "text": "Как вы оцениваете свое присутствие в ключевых медиаканалах (соцсети, статьи, видео, книги, выступления)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 9,
-                "text": "How well do you build trust with your audience?"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "marketing",
-        "name": "Marketing",
-        "subcategories": [
-          {
-            "id": "monetization",
-            "name": "Monetization",
-            "questions": [
+                "text": "Состоите ли вы в профессиональных сообществах, ассоциациях и присутствуете ли на профессиональных платформах?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
               {
                 "id": 10,
-                "text": "How clear is your revenue model?"
+                "text": "Выстроена ли стратегия контент -маркетинга для продвижения личного бренда?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 11,
-                "text": "How well do you understand your pricing strategy?"
+                "text": "Работаете ли вы с PR-специалистами или медиа -экспертами для усиления узнаваемости?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 12,
-                "text": "How effective are your monetization strategies?"
-              },
-              {
-                "id": 13,
-                "text": "How well do you optimize for customer lifetime value?"
+                "text": "Насколько ваш личный бренд помогает вам в продаже услуг и повышении доверия клиентов?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           },
           {
-            "id": "customer-avatar",
-            "name": "Customer Avatar",
+            "id": "монетизация",
+            "name": "Монетизация",
             "questions": [
               {
+                "id": 13,
+                "text": "Есть ли у вас финансовая модель с расчетами планового дохода, прибыли и точек роста?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
                 "id": 14,
-                "text": "How well-defined is your ideal customer profile?"
+                "text": "Есть ли механизм A/B тестирования ценовых предложений для определения оптимальных стратегий (разовые продажи, подписки, пакеты, групповые программы)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 15,
-                "text": "How well do you understand your customer's pain points?"
+                "text": "Прописаны ли механизмы скидок, бонусов, программ лояльности?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 16,
-                "text": "How well do you know your customer's buying behavior?"
+                "text": "Есть ли у вас стратегия повышения среднего чека, включая персонализированные предложения и премиум -услуги?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 17,
-                "text": "How effective is your customer segmentation?"
-              }
-            ]
-          },
-          {
-            "id": "strategy-funnels",
-            "name": "Strategy and Funnels",
-            "questions": [
-              {
-                "id": 18,
-                "text": "How well-defined is your marketing strategy?"
-              },
-              {
-                "id": 19,
-                "text": "How effective are your marketing funnels?"
-              },
-              {
-                "id": 20,
-                "text": "How well do you optimize conversion rates?"
-              },
-              {
-                "id": 21,
-                "text": "How effective is your lead nurturing process?"
-              }
-            ]
-          },
-          {
-            "id": "promotion-channels",
-            "name": "Promotion Channels",
-            "questions": [
-              {
-                "id": 22,
-                "text": "How well do you utilize your marketing channels?"
-              },
-              {
-                "id": 23,
-                "text": "How effective are your promotional strategies?"
-              },
-              {
-                "id": 24,
-                "text": "How well do you integrate your marketing channels?"
-              },
-              {
-                "id": 25,
-                "text": "How effective is your content marketing strategy?"
+                "text": "Рассчитывается ли себестоимость и прибыльность каждого продукта?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           }
         ]
       },
       {
-        "id": "sales",
-        "name": "Sales",
+        "id": "маркетинг",
+        "name": "МАРКЕТИНГ",
         "subcategories": [
           {
-            "id": "sales-organization",
-            "name": "Sales Organization",
+            "id": "аватар-клиента",
+            "name": "Аватар клиента",
             "questions": [
               {
-                "id": 26,
-                "text": "How well-organized is your sales team?"
+                "id": 18,
+                "text": "Насколько глубоко сегментирована ваша клиентская база по ключевым параметрам (ценность, поведение, потребности)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
-                "id": 27,
-                "text": "How effective are your sales processes?"
+                "id": 19,
+                "text": "Разработаны ли аватары клиентов (описание болей, потребностей, возражений) и сформирован ли детализированный портрет целевого клиента?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
-                "id": 28,
-                "text": "How well do you train your sales team?"
+                "id": 20,
+                "text": "Используются ли аналитические методы исследования клиентов, с регулярной актуализацией данных (CustDev, опросы, тесты)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
-                "id": 29,
-                "text": "How effective is your sales management?"
+                "id": 21,
+                "text": "Создана ли база с типовыми клиентскими запросами и решениями?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 22,
+                "text": "Есть ли персонализированные офферы для разных типов (сегментов) клиентов?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           },
           {
-            "id": "sales-funnel",
-            "name": "Sales Funnel",
+            "id": "карта-пути-клиента",
+            "name": "Карта пути клиента",
             "questions": [
               {
-                "id": 30,
-                "text": "How well-defined is your sales funnel?"
+                "id": 23,
+                "text": "Вы используете принципы построения карты пути клиента в своем бизнесе?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
+                "id": 24,
+                "text": "Вы анализируете количество и качество точек касания с клиентом до закрытия сделки?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 25,
+                "text": "Понятны ли критерии (триггеры), по которым клиент принимает решение о покупке?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 26,
+                "text": "Есть ли стратегия управления жизненным циклом клиента (LTV), за счет переходов между продуктами и повторных продаж (Upsell, Cross- sell)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "стратегия-и-связки",
+            "name": "Стратегия и связки",
+            "questions": [
+              {
+                "id": 27,
+                "text": "Насколько у вас проработана комплексная маркетинговая стратегия с прописанной программой действий на 3/6/12 месяцев?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 28,
+                "text": "Внедрены ли у вас маркетинговые связки и мультиканальные автоворонки (например : лид - магнит + чат-бот + рассылка + консультация)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 29,
+                "text": "Насколько у вас систематизирован процесс тестирования и внедрения маркетинговых гипотез?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 30,
+                "text": "Насколько связаны между собой ваши маркетинговые, продуктовые и бизнес - стратегии?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "каналы-продвижения",
+            "name": "Каналы продвижения",
+            "questions": [
+              {
                 "id": 31,
-                "text": "How effective is your lead qualification process?"
+                "text": "Насколько предсказуем и стабилен поток клиентов из ваших текущих каналов?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 32,
-                "text": "How well do you handle objections in sales?"
+                "text": "Используется ли омниканальный подход в маркетинге (ССМ, email-маркетинг, event-маркетинг, СРМ-маркетинг, партнерства)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 33,
-                "text": "How effective is your closing process?"
+                "text": "Насколько ваша маркетинговая стратегия сбалансирована между органическим и платным трафиком?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 34,
+                "text": "Применяете ли вы методы ретаргетинга и ремаркетинга?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 35,
+                "text": "Достаточно ли у вас ресурсов и компетенций для ведения всех маркетинговых направлений?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 36,
+                "text": "Работаете ли вы с внешними подрядчиками и специалистами?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да, регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "инструменты",
+            "name": "Инструменты",
+            "questions": [
+              {
+                "id": 37,
+                "text": "Настроены ли у вас системы аналитики и отслеживания маркетинговых показателей?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 38,
+                "text": "Как вы оцениваете уровень внедрения инструментов и технологических решений в вашем маркетинге (СRМ, автоматизация сайта, контент -планирование, автопостинг и рассылки, чат-боты и т.д.)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 39,
+                "text": "Насколько регулярно проводится аудит и конкурентный анализ используемых маркетинговых инструментов?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 40,
+                "text": "Как вы оцениваете уровень интеграции AI-технологий в свою маркетинговую деятельность?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           }
@@ -419,177 +2911,1625 @@
       },
       {
         "id": "hr",
-        "name": "HR (Human Resources)",
+        "name": "HR",
         "subcategories": [
           {
-            "id": "delegation",
-            "name": "Delegation",
+            "id": "структура",
+            "name": "Структура",
             "questions": [
-              {
-                "id": 34,
-                "text": "How well do you delegate tasks to team members?"
-              },
-              {
-                "id": 35,
-                "text": "How effective is your team management?"
-              },
-              {
-                "id": 36,
-                "text": "How well do you empower your team members?"
-              },
-              {
-                "id": 37,
-                "text": "How effective is your performance management?"
-              }
-            ]
-          },
-          {
-            "id": "economics",
-            "name": "Economics",
-            "questions": [
-              {
-                "id": 38,
-                "text": "How well do you understand your business economics?"
-              },
-              {
-                "id": 39,
-                "text": "How effective is your financial planning?"
-              },
-              {
-                "id": 40,
-                "text": "How well do you manage cash flow?"
-              },
               {
                 "id": 41,
-                "text": "How effective is your cost management?"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "automation",
-        "name": "Automation and Technology",
-        "subcategories": [
-          {
-            "id": "automation",
-            "name": "Automation",
-            "questions": [
+                "text": "Соответствует ли текущая орг. структура и ваша команда задачам и масштабам бизнеса?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
               {
                 "id": 42,
-                "text": "How well do you automate repetitive tasks?"
+                "text": "Насколько прописаны бизнес-процессы, распределены роли и зоны ответственности в команде?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 43,
-                "text": "How effective are your automation workflows?"
+                "text": "Стратегия масштабирования команды – насколько это для вас актуально?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 44,
-                "text": "How well do you integrate your business systems?"
-              },
-              {
-                "id": 45,
-                "text": "How effective is your process optimization?"
+                "text": "Есть ли система подбора, адаптации и повышения квалификации кадров?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           },
           {
-            "id": "ai-technology",
-            "name": "AI Technology Implementation",
+            "id": "делегирование",
+            "name": "Делегирование",
             "questions": [
               {
+                "id": 45,
+                "text": "Есть ли у вас ассистент или менеджер для делегирования задач?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
                 "id": 46,
-                "text": "How well do you leverage AI and technology in your business?"
+                "text": "Вы привлекаете внешних подрядчиков (аутсорсинг) для выполнения ваших бизнес - задач?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 47,
-                "text": "How effective are your automation strategies?"
+                "text": "Насколько эффективно формируются и распределяются задачи внутри команды?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 48,
-                "text": "How well do you stay updated with technology trends?"
+                "text": "Вы удовлетворены системой контроля качества и отчетностью выполнения делегируемых задач?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 49,
-                "text": "How effective is your technology adoption process?"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "metrics",
-        "name": "Metrics and Analytics",
-        "subcategories": [
-          {
-            "id": "metrics-tracking",
-            "name": "Metrics",
-            "questions": [
-              {
-                "id": 50,
-                "text": "How well do you track key business metrics?"
-              },
-              {
-                "id": 51,
-                "text": "How effective is your data analysis?"
-              },
-              {
-                "id": 52,
-                "text": "How well do you use data for decision making?"
-              },
-              {
-                "id": 53,
-                "text": "How effective is your reporting system?"
+                "text": "Позволяет ли текущий уровень делегирования масштабировать бизнес?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           },
           {
-            "id": "professional",
-            "name": "Professional",
+            "id": "экономика",
+            "name": "Экономика",
             "questions": [
               {
-                "id": 54,
-                "text": "How professional is your business presentation?"
+                "id": 50,
+                "text": "Насколько детально прописана финансовая модель расходов на персонал?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
-                "id": 55,
-                "text": "How well do you maintain professional standards?"
+                "id": 51,
+                "text": "Можно ли назвать вашу систему мотивации сотрудников комплексной, с использованием всех ключевых инструментов (оклад / проценты / KPI / премии / опционы)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
-                "id": 56,
-                "text": "How effective is your professional development?"
+                "id": 52,
+                "text": "Регулярно ли проводится аудит эффективности (KPI) сотрудников?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
-                "id": 57,
-                "text": "How well do you build professional relationships?"
+                "id": 53,
+                "text": "Контролируются ли затраты на персонал так же деьально как ключевые бизнес метрики (выручка, рентабельность и др.)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           }
         ]
       },
       {
-        "id": "competency",
-        "name": "Competency Map",
+        "id": "продажи",
+        "name": "ПРОДАЖИ",
         "subcategories": [
           {
-            "id": "social",
-            "name": "Social",
+            "id": "организация-продаж",
+            "name": "Организация продаж",
             "questions": [
               {
-                "id": 58,
-                "text": "How well do you build and maintain professional networks?"
+                "id": 54,
+                "text": "Проработана ли у вас схема организации продаж и насколько она соответствует текущим бизнес -целям?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
+                "id": 55,
+                "text": "Разработаны ли сценарии и стандарты общения с клиентами (скрипты) на разных этапах продаж?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 56,
+                "text": "У вас реализованы стратегии и механики повторных касаний, прогрева и допродаж?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 57,
+                "text": "Ведётся ли систематизированный анализ причин отказов и разработаны ли стратегии их минимизации?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 58,
+                "text": "Насколько эффективно отдел продаж взаимодействует с маркетингом, сервисом и другими подразделениями?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "воронка-продаж",
+            "name": "Воронка продаж",
+            "questions": [
+              {
                 "id": 59,
-                "text": "How effective is your social media presence?"
+                "text": "Насколько детально у вас прописана структура воронки продаж для разных типов клиентов и сценариев сделок?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 60,
-                "text": "How well do you engage with your community?"
+                "text": "Оптимизированы ли точки входа и конверсии на каждом этапе воронки продаж?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               },
               {
                 "id": 61,
-                "text": "How effective is your social selling strategy?"
+                "text": "Контролируете ли вы средний цикл сделки и КЭВ (ключевой этап воронки)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Полностью",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 62,
+                "text": "Используется ли CRM- система для управления клиентской базой?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 63,
+                "text": "Насколько автоматизирован ваш процесс продаж и допродаж (авторассылки, боты - квалификаторы, уведомления и др.)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 64,
+                "text": "Как часто вы анализируете и перестраиваете воронку продаж?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "экономика",
+            "name": "Экономика",
+            "questions": [
+              {
+                "id": 65,
+                "text": "продажСуществует ли система планирования продаж и насколько предсказуем ваш объём продаж в месяц/квартал/год?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 66,
+                "text": "продажВедется ли учет реальной экономики продаж, аналитика маржинальности продуктов и ключевых метрик (CAC, LTV, ROMI)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 67,
+                "text": "продажКак часто вы проводите аудит и корректировку системы мотивации отдела продаж?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "автоматизация-и-технологии",
+        "name": "АВТОМАТИЗАЦИЯ И ТЕХНОЛОГИИ",
+        "subcategories": [
+          {
+            "id": "автоматизация",
+            "name": "Автоматизация",
+            "questions": [
+              {
+                "id": 68,
+                "text": "Насколько у вас автоматизирован процесс взаимодействия с клиентами (CRM- система, платформы для автоматизации маркетинга и продаж)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 69,
+                "text": "Насколько оптимизированы и автоматизированы сервисы для внутренней работы (документооборот, планирование, командные коммуникации)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 70,
+                "text": "У вас внедрена система защиты ваших данных и интеллектуальной собственности (кибербезопасность)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 71,
+                "text": "Вы ведете учет и планирование затрат на автоматизацию бизнес -процессов?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 72,
+                "text": "Как вы оцениваете уровень адаптации ваших сотрудников и бизнеса в целом к новым технологическим трендам?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "внедрение-ai-технологий",
+            "name": "Внедрение AI-технологий",
+            "questions": [
+              {
+                "id": 73,
+                "text": "Как вы оцениваете уровень внедрения AI- инструментов в ваши бизнес-процессы?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 74,
+                "text": "Вы прогнозировали или рассчитывали экономические эффекты от внедрения AI-технологий?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 75,
+                "text": "Оцениваете ли вы возможности AI-технологий для создания новых продуктов и бизнес направлений?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "метрики-и-аналитика",
+        "name": "МЕТРИКИ И АНАЛИТИКА",
+        "subcategories": [
+          {
+            "id": "метрики",
+            "name": "Метрики",
+            "questions": [
+              {
+                "id": 76,
+                "text": "Насколько регулярно вы замеряете ключевые бизнес -метрики (Revenue, CAC, ARPPU, ROMI, LTV, NPS и др.)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 77,
+                "text": "Как вы оцениваете свой уровень контроля эфф��ктивности маркетинга и продаж по ключевым метрикам (Revenue, CAC, ROMI, LTV, NPS и др.)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 78,
+                "text": "Как часто вы пересматриваете KPI и систему мотивации сотрудников?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "аналитика",
+            "name": "Аналитика",
+            "questions": [
+              {
+                "id": 79,
+                "text": "Насколько у вас прозрачная и автоматизированная система отчетности (РНП, PnL, ДДС, дашборды)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частичная",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Оптимальная",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 80,
+                "text": "Используется ли аналитика данных для планирования и создания прогнозной модели финансовых показателей бизнеса?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 81,
+                "text": "Как вы оцениваете уровень внедрения AI- инструментов для обработки и аналитики ваших данных?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "карта-компетенций",
+        "name": "КАРТА КОМПЕТЕНЦИЙ",
+        "subcategories": [
+          {
+            "id": "профессиональные",
+            "name": "Профессиональные",
+            "questions": [
+              {
+                "id": 82,
+                "text": "Подтверждены ли ваши профессиональные навыки и компетенции дипломами, сертификатами или отраслевыми кейсами?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 83,
+                "text": "Состоите ли вы в профессиональных сообществах, клубах и ассоциациях?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 84,
+                "text": "Вы выступаете в качестве спикера или эксперта на деловых и отраслевых мероприятиях (форумы, конференции)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Периодически",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да, регулярно",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 85,
+                "text": "Как вы оцениваете инвестиции в свое обучение, развитие компетенций и получение новых навыков?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "социальные",
+            "name": "Социальные",
+            "questions": [
+              {
+                "id": 86,
+                "text": "Насколько у вас развиты навыки нетворкинга и делового общения?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 87,
+                "text": "Насколько социальные связи и ваш личный бренд способствуют росту клиентской базы?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 88,
+                "text": "Есть ли у вас стратегия расширения влияния через выстраивание социальных связей?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 89,
+                "text": "Достаточно ли отзывов и кейсов для повышения доверия? Насколько ваши клиенты и партнеры готовы рекомендовать вас?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "личностные",
+            "name": "Личностные",
+            "questions": [
+              {
+                "id": 90,
+                "text": "Как вы оцениваете себя с точки зрения развития своих «мягких навыков » (soft skills)?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Относительно",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Оптимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 91,
+                "text": "Удается ли вам поддерживать баланс между работой и личной жизнью?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 92,
+                "text": "Способны ли вы эффективно управлять стрессом и нагрузками?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 93,
+                "text": "Есть ли у вас стратегия саморазвития и личностного роста?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Да",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "управленческие",
+            "name": "Управленческие",
+            "questions": [
+              {
+                "id": 94,
+                "text": "Выберите свою характеристику - Стратег, Управленец, Созидатель?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Управленец",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Созидатель",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 95,
+                "text": "Как вы оцениваете свой навык эффективного управления ресурсами и процессами?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Средний",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Высокий",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
+              },
+              {
+                "id": 96,
+                "text": "Насколько оптимизирован процесс постановки и контроля задач в вашем бизнесе?",
+                "answers": [
+                  {
+                    "id": 1,
+                    "text": "Нет",
+                    "value": 1,
+                    "color": "#eb2f06",
+                    "range": "1-3"
+                  },
+                  {
+                    "id": 2,
+                    "text": "Частично",
+                    "value": 2,
+                    "color": "#FFA500",
+                    "range": "4-7"
+                  },
+                  {
+                    "id": 3,
+                    "text": "Максимально",
+                    "value": 3,
+                    "color": "#16a085",
+                    "range": "8-10"
+                  }
+                ]
               }
             ]
           }

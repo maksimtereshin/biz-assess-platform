@@ -1,11 +1,12 @@
 import { User, UserSession, UserProgress } from '../types/user';
-import { SurveyVariant } from '../types/survey';
+import { SurveyVariant } from '../types/adapters';
 
 const STORAGE_KEYS = {
   CURRENT_USER: 'business_assessment_current_user',
   CURRENT_SESSION: 'business_assessment_current_session',
   USER_RESPONSES: 'business_assessment_user_responses',
   USER_PROGRESS: 'business_assessment_user_progress',
+  SESSION_TOKENS: 'business_assessment_session_tokens',
 } as const;
 
 export class LocalStorageService {
@@ -202,6 +203,41 @@ export class LocalStorageService {
     }
     
     return user;
+  }
+
+  // Session token management
+  static getSessionToken(sessionId: string): string | null {
+    try {
+      const allTokens = localStorage.getItem(STORAGE_KEYS.SESSION_TOKENS);
+      const tokens = allTokens ? JSON.parse(allTokens) : {};
+      return tokens[sessionId] || null;
+    } catch {
+      return null;
+    }
+  }
+
+  static setSessionToken(sessionId: string, token: string): void {
+    try {
+      const allTokens = localStorage.getItem(STORAGE_KEYS.SESSION_TOKENS);
+      const tokens = allTokens ? JSON.parse(allTokens) : {};
+      tokens[sessionId] = token;
+      localStorage.setItem(STORAGE_KEYS.SESSION_TOKENS, JSON.stringify(tokens));
+    } catch (error) {
+      console.error('Failed to save session token:', error);
+    }
+  }
+
+  static clearSessionToken(sessionId: string): void {
+    try {
+      const allTokens = localStorage.getItem(STORAGE_KEYS.SESSION_TOKENS);
+      const tokens = allTokens ? JSON.parse(allTokens) : {};
+      if (tokens[sessionId]) {
+        delete tokens[sessionId];
+        localStorage.setItem(STORAGE_KEYS.SESSION_TOKENS, JSON.stringify(tokens));
+      }
+    } catch (error) {
+      console.error('Failed to clear session token:', error);
+    }
   }
 
   // Clear all data

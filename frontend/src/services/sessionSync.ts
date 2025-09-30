@@ -1,4 +1,4 @@
-import { SurveyVariant } from '../types/survey';
+import { SurveyVariant } from '../types/adapters';
 import { LocalStorageService } from './localStorage';
 import api from './api';
 import ErrorHandler from '../utils/errorHandler';
@@ -20,62 +20,20 @@ export interface SyncStatusCallbacks {
 }
 
 export class SessionSyncService {
-  private static statusCallbacks: SyncStatusCallbacks = {};
+  // Note: Sync status callbacks are deprecated but kept for backwards compatibility
 
-  static setStatusCallbacks(callbacks: SyncStatusCallbacks) {
-    this.statusCallbacks = callbacks;
+  static setStatusCallbacks(_callbacks: SyncStatusCallbacks) {
+    // No-op: sync callbacks are no longer used
   }
 
   /**
-   * Sync local session data to the backend
+   * Sync local session data to the backend (DEPRECATED - answers are now saved immediately)
+   * This method is kept for backwards compatibility but does nothing
    */
-  static async syncToBackend(sessionId: string): Promise<boolean> {
-    this.statusCallbacks.onSyncStart?.();
-    
-    try {
-      const session = LocalStorageService.getCurrentSession();
-      const responses = LocalStorageService.getUserResponses(sessionId);
-      
-      if (!session || Object.keys(responses).length === 0) {
-        this.statusCallbacks.onSyncComplete?.();
-        return false;
-      }
-
-      // Sync each answer that hasn't been synced yet
-      const syncPromises = Object.entries(responses).map(async ([questionId, answer]) => {
-        try {
-          await api.saveAnswer(sessionId, questionId, answer);
-          return true;
-        } catch (error) {
-          ErrorHandler.warn(`Failed to sync answer ${questionId}`, {
-            component: 'SessionSyncService',
-            operation: 'syncAnswersToBackend',
-            additionalData: { questionId, answer: responses[questionId], error }
-          });
-          return false;
-        }
-      });
-
-      const results = await Promise.allSettled(syncPromises);
-      const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
-      
-      ErrorHandler.info(`Synced ${successCount}/${Object.keys(responses).length} answers to backend`, {
-        component: 'SessionSyncService',
-        operation: 'syncAnswersToBackend',
-        additionalData: { successCount, totalCount: Object.keys(responses).length }
-      });
-      
-      this.statusCallbacks.onSyncComplete?.();
-      return successCount > 0;
-    } catch (error) {
-      ErrorHandler.log(error, {
-        component: 'SessionSyncService',
-        operation: 'syncAnswersToBackend',
-        additionalData: { sessionId }
-      }, 'error');
-      this.statusCallbacks.onSyncError?.(error as Error);
-      return false;
-    }
+  static async syncToBackend(_sessionId: string): Promise<boolean> {
+    // No-op: answers are now saved immediately when users respond
+    // This prevents the 429 rate limiting errors
+    return true;
   }
 
   /**
@@ -116,42 +74,21 @@ export class SessionSyncService {
   }
 
   /**
-   * Auto-sync session data periodically
+   * Auto-sync session data periodically (DEPRECATED - no longer needed)
+   * This method is kept for backwards compatibility but does nothing
    */
-  static startAutoSync(sessionId: string, intervalMs: number = 30000): () => void {
-    const interval = setInterval(async () => {
-      await this.syncToBackend(sessionId);
-    }, intervalMs);
-
-    // Return cleanup function
-    return () => clearInterval(interval);
+  static startAutoSync(_sessionId: string, _intervalMs: number = 30000): () => void {
+    // No-op: answers are now saved immediately when users respond
+    return () => {}; // Return empty cleanup function
   }
 
   /**
-   * Handle app visibility change to sync when user switches tabs/apps
+   * Handle app visibility change to sync when user switches tabs/apps (DEPRECATED - no longer needed)
+   * This method is kept for backwards compatibility but does nothing
    */
-  static setupVisibilitySync(sessionId: string): () => void {
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'hidden') {
-        // App is being hidden, sync current state
-        await this.syncToBackend(sessionId);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Also sync before page unload
-    const handleBeforeUnload = async () => {
-      await this.syncToBackend(sessionId);
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    // Return cleanup function
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
+  static setupVisibilitySync(_sessionId: string): () => void {
+    // No-op: answers are now saved immediately when users respond
+    return () => {}; // Return empty cleanup function
   }
 
   /**

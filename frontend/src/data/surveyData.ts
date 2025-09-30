@@ -1,4 +1,5 @@
-import { Category, SurveyVariant, Question } from '../types/survey';
+import { Category, Question } from '../types/survey';
+import { SurveyVariant } from '../types/adapters';
 
 // Express survey questions (60 questions, 6 categories)
 const expressSurveyQuestions = [

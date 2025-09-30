@@ -62,4 +62,4 @@ export interface SurveyResponse {
   value: number;
 }
 
-export type SurveyVariant = 'express' | 'full';
+// SurveyVariant has been moved to adapters.ts to centralize type conversion

@@ -39,10 +39,18 @@ print_help() {
 case "$1" in
     up)
         echo -e "${GREEN}Starting development environment...${NC}"
+
+        # Check if .env.dev exists, if not copy from .env.example
+        if [ ! -f .env.dev ]; then
+            echo -e "${YELLOW}Creating .env.dev from .env.example...${NC}"
+            cp .env.example .env.dev
+            echo -e "${YELLOW}Please edit .env.dev with your development settings${NC}"
+        fi
+
         $DOCKER_COMPOSE -f $COMPOSE_FILE up -d
         echo -e "${GREEN}Services started!${NC}"
         echo ""
-        echo "Frontend: http://localhost:5173"
+        echo "Frontend: http://localhost:3000"
         echo "Backend:  http://localhost:3001"
         echo "Database: localhost:5432"
         ;;
@@ -94,10 +102,18 @@ case "$1" in
     
     tools)
         echo -e "${GREEN}Starting with additional tools...${NC}"
+
+        # Check if .env.dev exists, if not copy from .env.example
+        if [ ! -f .env.dev ]; then
+            echo -e "${YELLOW}Creating .env.dev from .env.example...${NC}"
+            cp .env.example .env.dev
+            echo -e "${YELLOW}Please edit .env.dev with your development settings${NC}"
+        fi
+
         $DOCKER_COMPOSE -f $COMPOSE_FILE --profile tools up -d
         echo -e "${GREEN}Services started with tools!${NC}"
         echo ""
-        echo "Frontend: http://localhost:5173"
+        echo "Frontend: http://localhost:3000"
         echo "Backend:  http://localhost:3001"
         echo "Adminer:  http://localhost:8080"
         echo "Database: localhost:5432"

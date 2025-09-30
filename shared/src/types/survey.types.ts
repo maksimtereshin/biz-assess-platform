@@ -25,10 +25,20 @@ export enum PaymentStatus {
   PAID = 'PAID',
 }
 
+// Represents an answer option for a survey question
+export interface AnswerOption {
+  id: number;
+  text: string;
+  value: number;
+  color: string;
+  range: string;
+}
+
 // Represents a single question within the survey structure
 export interface SurveyQuestion {
   id: number;
   text: string;
+  answers?: AnswerOption[];
 }
 
 // Represents a subcategory containing questions
@@ -208,4 +218,38 @@ export interface ValidationError {
   field: string;
   message: string;
   value?: any;
+}
+
+// Report generation interfaces
+
+export interface ReportEntry {
+  category: string;
+  subcategory: string;
+  titleSummary: string;
+  result: string;
+  resultDescription: string;
+  min: number;
+  max: number;
+  color: string;
+}
+
+export interface CategoryResult {
+  name: string;
+  score: number;
+  content: ReportEntry;
+  subcategories?: SubcategoryResult[];
+}
+
+export interface SubcategoryResult {
+  name: string;
+  score: number;
+  content: ReportEntry;
+}
+
+export interface SurveyResults {
+  sessionId: string;
+  surveyType: 'express' | 'full';
+  overallScore: number;
+  overallContent: ReportEntry;
+  categories: CategoryResult[];
 }

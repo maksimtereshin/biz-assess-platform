@@ -1,14 +1,64 @@
 import { useNavigate } from 'react-router-dom';
-import { SurveyVariant } from '../types/survey';
+import { SurveyType } from 'bizass-shared';
+import { surveyTypeToVariant } from '../types/adapters';
 import { useState } from 'react';
 import { LocalStorageService } from '../services/localStorage';
+import api from '../services/api';
 
 export function SurveySelectionScreen() {
   const navigate = useNavigate();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  
-  const handleSelectVariant = (variant: SurveyVariant) => {
-    navigate(`/${variant}`);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSelectVariant = async (variant: SurveyType) => {
+    // Convert SurveyType enum to local variant for API compatibility
+    const surveyVariant = surveyTypeToVariant(variant);
+
+    try {
+      setIsLoading(true);
+
+      // Clear any existing session data
+      LocalStorageService.clearCurrentSession();
+
+      // Get current user for telegram ID
+      const user = LocalStorageService.getCurrentUser();
+      const telegramId = user?.telegramId ? parseInt(user.telegramId) : undefined;
+      console.log('User:', user);
+      console.log('Telegram ID:', telegramId);
+
+      // Create new session via API
+      const response = await api.startSurvey(surveyVariant, telegramId);
+      console.log('Survey start response:', response);
+      console.log('Session:', response.session);
+      console.log('Session Token:', response.sessionToken);
+
+      const { session, sessionToken } = response;
+
+      // Create a UserSession object from the API session
+      const userSession = {
+        id: session.id,
+        userId: session.userId?.toString() || 'unknown', // Safe conversion with fallback
+        surveyVariant: surveyVariant,
+        startedAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString(),
+        isCompleted: false,
+        currentQuestionIndex: 0
+      };
+      console.log('User Session:', userSession);
+      // Store new session info
+      LocalStorageService.setCurrentSession(userSession);
+      api.setSessionToken(sessionToken);
+      LocalStorageService.setSessionToken(session.id, sessionToken);
+      console.log('Session Token saved for session:', session.id);
+      // Navigate to survey with session ID
+      navigate(`/${surveyVariant}/${session.id}`);
+    } catch (error) {
+      console.error('Error starting survey:', error);
+      // Fallback to old navigation if session creation fails
+      navigate(`/${surveyVariant}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleResetData = () => {
@@ -75,10 +125,11 @@ export function SurveySelectionScreen() {
             </div>
 
             <button
-              onClick={() => handleSelectVariant('express')}
-              className="w-full bg-teal-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-teal-600 transition-colors"
+              onClick={() => handleSelectVariant(SurveyType.EXPRESS)}
+              disabled={isLoading}
+              className="w-full bg-teal-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Выбрать экспресс-опрос
+              {isLoading ? 'Создание сессии...' : 'Выбрать экспресс-опрос'}
             </button>
           </div>
 
@@ -110,10 +161,11 @@ export function SurveySelectionScreen() {
             </div>
 
             <button
-              onClick={() => handleSelectVariant('full')}
-              className="w-full bg-pink-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-pink-600 transition-colors"
+              onClick={() => handleSelectVariant(SurveyType.FULL)}
+              disabled={isLoading}
+              className="w-full bg-pink-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Выбрать полный чек-ап
+              {isLoading ? 'Создание сессии...' : 'Выбрать полный чек-ап'}
             </button>
           </div>
 

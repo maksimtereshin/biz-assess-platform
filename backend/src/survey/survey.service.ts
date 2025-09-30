@@ -5,18 +5,14 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import {
-  SurveyType,
-  SurveySession,
-  Survey,
-  SessionStatus,
-} from "bizass-shared";
+import { SurveyType, SurveySession, Survey, SessionStatus, SurveyResults, CategoryResult } from "bizass-shared";
 import {
   Survey as SurveyEntity,
   SurveySession as SurveySessionEntity,
   Answer,
   User,
 } from "../entities";
+import { AnalyticsCalculator } from "../common/utils/analytics-calculator.util";
 import * as fs from "fs";
 import * as path from "path";
 import { v4 as uuidv4 } from "uuid";
@@ -32,12 +28,14 @@ export class SurveyService {
     private answerRepository: Repository<Answer>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private analyticsCalculator: AnalyticsCalculator,
   ) {}
 
   async createNewSession(
     userId: number,
-    type: SurveyType,
+    type: string,
   ): Promise<SurveySession> {
+
     // Check if user exists, create if not
     let user = await this.userRepository.findOne({
       where: { telegram_id: userId },
@@ -50,8 +48,10 @@ export class SurveyService {
       await this.userRepository.save(user);
     }
 
-    // Get survey by type
-    const survey = await this.surveyRepository.findOne({ where: { type } });
+    // Get survey by type (convert to uppercase for case-insensitive matching)
+    const survey = await this.surveyRepository.findOne({
+      where: { type: type.toUpperCase() }
+    });
     if (!survey) {
       throw new NotFoundException(`Survey type ${type} not found`);
     }
@@ -133,7 +133,7 @@ export class SurveyService {
   async getSession(sessionId: string): Promise<SurveySession> {
     const session = await this.sessionRepository.findOne({
       where: { id: sessionId },
-      relations: ["answers"],
+      relations: ["answers", "survey"],
     });
 
     if (!session) {
@@ -249,5 +249,74 @@ export class SurveyService {
     // This method will check if a paid report exists for the session
     // For now, return null (no paid reports exist)
     return null;
+  }
+
+  /**
+   * Gets comprehensive survey results with CSV content for display
+   * Implements clean architecture principles and leverages existing analytics
+   */
+  async getSurveyResults(sessionId: string): Promise<SurveyResults> {
+    // Get session with answers
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+      relations: ["answers", "survey"],
+    });
+
+    if (!session) {
+      throw new NotFoundException(`Session ${sessionId} not found`);
+    }
+
+    // Get survey structure
+    const surveyType = session.survey.type.toLowerCase() as 'express' | 'full';
+    const surveyStructure = await this.getSurveyStructure(surveyType);
+
+    // Convert answers to the format expected by analytics calculator
+    const answers = session.answers.map(answer => ({
+      questionId: answer.question_id,
+      score: answer.score
+    }));
+
+    // Use AnalyticsCalculator to compute comprehensive results
+    return this.analyticsCalculator.calculateSurveyResults(
+      sessionId,
+      answers,
+      surveyStructure,
+      surveyType
+    );
+  }
+
+  /**
+   * Gets detailed category results for category detail pages
+   * Follows single responsibility principle - delegates to AnalyticsCalculator
+   */
+  async getCategoryDetails(sessionId: string, categoryName: string): Promise<CategoryResult | null> {
+    // Get session with answers
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+      relations: ["answers", "survey"],
+    });
+
+    if (!session) {
+      throw new NotFoundException(`Session ${sessionId} not found`);
+    }
+
+    // Get survey structure
+    const surveyType = session.survey.type.toLowerCase() as 'express' | 'full';
+    const surveyStructure = await this.getSurveyStructure(surveyType);
+
+    // Convert answers to the format expected by analytics calculator
+    const answers = session.answers.map(answer => ({
+      questionId: answer.question_id,
+      score: answer.score
+    }));
+
+    // Use AnalyticsCalculator to get category details
+    return this.analyticsCalculator.getCategoryDetails(
+      sessionId,
+      categoryName,
+      answers,
+      surveyStructure,
+      surveyType
+    );
   }
 }

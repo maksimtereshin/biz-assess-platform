@@ -30,6 +30,8 @@ services:
       dockerfile: ./backend/Dockerfile.dev
     container_name: bizass-backend-dev
     restart: unless-stopped
+    env_file:
+      - .env.dev
     environment:
       NODE_ENV: development
       PORT: 3001
@@ -39,7 +41,7 @@ services:
       DB_PASSWORD: password
       DB_NAME: bizass_platform
       JWT_SECRET: dev-jwt-secret-key-not-for-production
-      FRONTEND_URL: https://0eb9c9021177.ngrok-free.app
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-your-telegram-bot-token-here}
       # Development specific
       DEBUG: "true"
@@ -54,9 +56,8 @@ services:
       - ./backend/tsconfig.json:/app/tsconfig.json
       - ./backend/nest-cli.json:/app/nest-cli.json
       - ./shared:/shared
-      # Persist node_modules and dist to avoid rebuilding
-      - backend_node_modules:/app/node_modules
-      - backend_dist:/app/dist
+      - ./.env.dev:/app/.env.dev:ro
+      # Persist uploads only, node_modules are built into the image
       - backend_uploads:/app/uploads
     depends_on:
       postgres:
@@ -76,14 +77,17 @@ services:
       dockerfile: ./frontend/Dockerfile.dev
     container_name: bizass-frontend-dev
     restart: unless-stopped
+    env_file:
+      - .env.dev
     environment:
-      VITE_API_URL: http://backend:3001
-      VITE_WS_URL: ws://backend:3001
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:3001}
+      VITE_PROXY_TARGET: http://backend:3001
       # Development specific
       NODE_ENV: development
       CHOKIDAR_USEPOLLING: "true"  # Enable polling for file watching in Docker
     ports:
-      - "5173:3000"  # Vite dev server (5173 is standard Vite port)
+      - "3000:3000"  # Vite dev server on port 3000
     volumes:
       # Mount source code for hot reloading
       - ./frontend/src:/app/src
@@ -96,8 +100,8 @@ services:
       - ./frontend/postcss.config.js:/app/postcss.config.js
       - ./frontend/tailwind.config.js:/app/tailwind.config.js
       - ./shared:/shared
-      # Persist node_modules to avoid rebuilding
-      - frontend_node_modules:/app/node_modules
+      - ./.env.dev:/app/.env.dev:ro
+      # node_modules are built into the image, no volume needed
     depends_on:
       - backend
     command: npm run dev -- --host 0.0.0.0
@@ -137,13 +141,7 @@ services:
 volumes:
   postgres_dev_data:
     driver: local
-  backend_node_modules:
-    driver: local
-  backend_dist:
-    driver: local
   backend_uploads:
-    driver: local
-  frontend_node_modules:
     driver: local
   redis_dev_data:
     driver: local

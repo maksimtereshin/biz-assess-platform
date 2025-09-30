@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User, UserSession } from '../types/user';
-import { SurveyVariant } from '../types/survey';
+import { SurveyVariant } from '../types/adapters';
 import { LocalStorageService } from '../services/localStorage';
 import api from '../services/api';
 

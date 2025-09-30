@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
 import { SurveySession } from "./survey-session.entity";
+import { SurveyCategory } from "bizass-shared";
 
 @Entity("surveys")
 export class Survey {
@@ -17,7 +18,7 @@ export class Survey {
   name: string;
 
   @Column({ type: "jsonb" })
-  structure: any; // JSON object holding all questions, categories, subcategories
+  structure: SurveyCategory[]; // JSON object holding all questions, categories, subcategories
 
   // Relations
   @OneToMany(() => SurveySession, (session) => session.survey)

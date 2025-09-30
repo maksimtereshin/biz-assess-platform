@@ -1,4 +1,4 @@
-import { SurveyVariant } from './survey';
+import { SurveyVariant } from './adapters';
 
 export interface User {
   id: string;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Play, RotateCcw, Eye, CreditCard } from 'lucide-react';
 import { useSurvey } from '../hooks/useSurvey';
 import { useUserSession } from '../hooks/useUserSession';
@@ -9,14 +9,26 @@ import { LocalStorageService } from '../services/localStorage';
 
 export function ExpressPage() {
   const navigate = useNavigate();
+  const { sessionId } = useParams<{ sessionId: string }>();
   const { hasCompletedSurvey } = useUserSession();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  console.log('Session ID:', sessionId);
+
+  // If no sessionId, redirect to survey selection
+  React.useEffect(() => {
+    console.log('Session ID in useEffect:', sessionId);
+    if (!sessionId) {
+      navigate('/');
+      return;
+    }
+  }, [sessionId, navigate]);
+
   const {
     surveyVariant,
     surveyState,
     categoriesData,
     showResults,
-    selectSurveyVariant,
     startSurvey,
     answerQuestion,
     answerAndNext,
@@ -33,15 +45,13 @@ export function ExpressPage() {
     isSurveyCompleted,
     showSurveyResults,
     hideSurveyResults
-  } = useSurvey('express');
-
+  } = useSurvey('express', sessionId);
+  console.log('Survey Variant:', surveyVariant);
+  console.log('Survey State:', surveyState);
+  console.log('Categories Data:', categoriesData);
+  console.log('Show Results:', showResults);
   const currentQuestion = getCurrentQuestion();
   const currentCategory = getCurrentCategory();
-  
-  // Initialize survey variant
-  React.useEffect(() => {
-    selectSurveyVariant('express');
-  }, [selectSurveyVariant]);
   
   // Определяем состояние опроса
   const hasAnsweredQuestions = categoriesData.some(cat => cat.completedQuestions > 0);

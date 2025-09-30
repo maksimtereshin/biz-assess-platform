@@ -14,11 +14,19 @@ export class AuthService {
   /**
    * Generates a short-lived JWT token for Telegram user authentication
    * Used for creating authenticated survey links
+   * In development mode, creates a longer-lived token
    */
   generateAuthToken(telegramId: number): AuthToken {
     const payload = { telegramId };
-    const token = this.jwtService.sign(payload);
-    const expiresAt = new Date(Date.now() + 60 * 1000).toISOString(); // 60 seconds
+
+    // Longer expiration in development for easier testing
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const expirationTime = isDevelopment ? 24 * 60 * 60 * 1000 : 60 * 1000; // 24 hours vs 60 seconds
+
+    const token = this.jwtService.sign(payload, {
+      expiresIn: isDevelopment ? '24h' : '60s'
+    });
+    const expiresAt = new Date(Date.now() + expirationTime).toISOString();
 
     return {
       token,

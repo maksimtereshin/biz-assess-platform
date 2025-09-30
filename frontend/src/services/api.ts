@@ -1,10 +1,11 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { Survey, SurveySession, SurveyType } from 'bizass-shared';
+import { Survey, SurveySession, SurveyType, SurveyResults, CategoryResult } from 'bizass-shared';
+import { SurveyVariant } from '../types/adapters';
 import { useAuthStore } from '../store/auth';
 
 // API client configuration - use relative URLs for production, full URL for development
-const API_BASE_URL = import.meta.env.DEV 
-  ? (import.meta.env.VITE_API_URL || 'http://localhost:3001')
+const API_BASE_URL = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api'
   : '/api'; // In production, nginx will proxy /api to backend
 
 class ApiClient {
@@ -22,13 +23,17 @@ class ApiClient {
 
     // Add request interceptor to include auth token
     this.client.interceptors.request.use((config) => {
-      // Get token from auth store first, fallback to sessionToken
+      // Prioritize sessionToken for survey operations, fallback to auth store
       const authToken = useAuthStore.getState().token;
-      const token = authToken || this.sessionToken;
+      const token = this.sessionToken || authToken;
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+
+      console.log('API Request:', config.method?.toUpperCase(), config.url);
+      console.log('Using token:', token ? `${token.substring(0, 20)}...` : 'none');
+
       return config;
     });
 
@@ -37,12 +42,21 @@ class ApiClient {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          console.warn('Authentication required - prompting user to login via Telegram');
-          this.clearSessionToken();
-          useAuthStore.getState().logout();
+          // In development mode, be more lenient with auth errors during initial setup
+          const isDevelopment = import.meta.env.DEV;
+          const { isLoading } = useAuthStore.getState();
 
-          // Show user-friendly authentication prompt
-          this.promptTelegramAuth();
+          if (isDevelopment && isLoading) {
+            // Auth might be in progress, don't logout immediately
+            console.warn('Authentication error during auth initialization in development mode');
+          } else {
+            console.warn('Authentication required - prompting user to login via Telegram');
+            this.clearSessionToken();
+            useAuthStore.getState().logout();
+
+            // Show user-friendly authentication prompt
+            this.promptTelegramAuth();
+          }
         }
 
         console.error('API Error:', {
@@ -145,8 +159,8 @@ class ApiClient {
     return response.data;
   }
 
-  async getCurrentSession(): Promise<SurveySession> {
-    const response: AxiosResponse<SurveySession> = await this.client.get('/surveys/session/current');
+  async getCurrentSession(sessionId: string): Promise<SurveySession> {
+    const response: AxiosResponse<SurveySession> = await this.client.get(`/surveys/session/${sessionId}`);
     return response.data;
   }
 
@@ -169,29 +183,33 @@ class ApiClient {
   }
 
   // Additional methods from BusinessAssessmentPlatform
-  async startSurvey(version: 'express' | 'full', telegramId?: number): Promise<{ session: SurveySession; sessionToken: string }> {
+  async startSurvey(version: SurveyVariant, telegramId?: number): Promise<{ session: SurveySession; sessionToken: string }> {
     // Use the authenticate method if we have a telegram ID, otherwise start a new session
     if (telegramId) {
       // Generate a token for the telegram user and authenticate
       const tokenResponse = await this.generateTestToken(telegramId);
-      return this.authenticate(tokenResponse.token, version as SurveyType);
+      // Convert variant to SurveyType for the authenticate method
+      const surveyType = version === 'express' ? SurveyType.EXPRESS : SurveyType.FULL;
+      return this.authenticate(tokenResponse.token, surveyType);
     }
     // For non-telegram users, start a session with a default ID
     const response = await this.client.post('/surveys/start', {
       telegramId: Date.now(), // Use timestamp as a temporary ID
-      surveyType: version
+      surveyType: version // Backend now handles case conversion
     });
     if (response.data.sessionToken) {
       this.setSessionToken(response.data.sessionToken);
     }
+
+    // Return the response directly - backend already returns { session, sessionToken }
     return response.data;
   }
 
-  async restoreSurveySession(_userId: string, _version: 'express' | 'full'): Promise<SurveySession | null> {
-    // Try to get the current session if we have a token
-    if (this.sessionToken) {
+  async restoreSurveySession(_userId: string, _version: SurveyVariant, sessionId?: string): Promise<SurveySession | null> {
+    // Try to get the specific session if we have both a token and session ID
+    if (this.sessionToken && sessionId) {
       try {
-        return await this.getCurrentSession();
+        return await this.getCurrentSession(sessionId);
       } catch (error) {
         console.error('Failed to restore session:', error);
         this.clearSessionToken();
@@ -207,6 +225,34 @@ class ApiClient {
 
   async getReport(reportId: string): Promise<any> {
     const response = await this.client.get(`/reports/${reportId}`);
+    return response.data;
+  }
+
+  // New results endpoints following clean architecture
+  async getSurveyResults(sessionId: string): Promise<SurveyResults> {
+    const response: AxiosResponse<SurveyResults> = await this.client.get(`/surveys/results/${sessionId}`);
+    return response.data;
+  }
+
+  async getCategoryDetails(categoryName: string, sessionId: string): Promise<CategoryResult> {
+    const response: AxiosResponse<CategoryResult> = await this.client.get(`/surveys/category/${categoryName}/${sessionId}`);
+    return response.data;
+  }
+
+  // PDF Report endpoints
+  async generateReport(sessionId: string): Promise<{ id: string; storage_url: string }> {
+    const response = await this.client.post(`/reports/generate/${sessionId}`);
+    return response.data;
+  }
+
+  async downloadReport(sessionId: string): Promise<Blob> {
+    // First generate the report to get the reportId
+    const report = await this.generateReport(sessionId);
+
+    // Then download the PDF using the reportId
+    const response = await this.client.get(`/reports/download/${report.id}`, {
+      responseType: 'blob'
+    });
     return response.data;
   }
 }

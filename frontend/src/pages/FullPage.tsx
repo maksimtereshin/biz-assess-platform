@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Play, RotateCcw, Eye, CreditCard } from 'lucide-react';
 import { useSurvey } from '../hooks/useSurvey';
 import { useUserSession } from '../hooks/useUserSession';
@@ -9,14 +9,22 @@ import { LocalStorageService } from '../services/localStorage';
 
 export function FullPage() {
   const navigate = useNavigate();
+  const { sessionId } = useParams<{ sessionId: string }>();
   const { hasCompletedSurvey } = useUserSession();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // If no sessionId, redirect to survey selection
+  React.useEffect(() => {
+    if (!sessionId) {
+      navigate('/');
+      return;
+    }
+  }, [sessionId, navigate]);
   const {
     surveyVariant,
     surveyState,
     categoriesData,
     showResults,
-    selectSurveyVariant,
     startSurvey,
     answerQuestion,
     answerAndNext,
@@ -33,15 +41,10 @@ export function FullPage() {
     isSurveyCompleted,
     showSurveyResults,
     hideSurveyResults
-  } = useSurvey('full');
+  } = useSurvey('full', sessionId);
 
   const currentQuestion = getCurrentQuestion();
   const currentCategory = getCurrentCategory();
-  
-  // Initialize survey variant
-  React.useEffect(() => {
-    selectSurveyVariant('full');
-  }, [selectSurveyVariant]);
   
   // Определяем состояние опроса
   const hasAnsweredQuestions = categoriesData.some(cat => cat.completedQuestions > 0);
