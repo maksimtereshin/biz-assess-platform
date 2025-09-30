@@ -17,20 +17,39 @@ export class AuthService {
    * Validates the initData using HMAC-SHA256 signature
    */
   async authenticateWithTelegram(initData: string): Promise<{ token: string; user: any }> {
+    console.log('🔐 Starting Telegram authentication...');
+    console.log('📱 Received initData length:', initData?.length || 0);
+    console.log('📱 Raw initData:', initData);
+
     try {
       // Parse initData
       const urlParams = new URLSearchParams(initData);
+      console.log('📊 Parsed URL params count:', urlParams.size);
+
+      // Log all parameters for debugging
+      const params = {};
+      for (const [key, value] of urlParams.entries()) {
+        params[key] = value;
+        console.log(`📄 Param ${key}:`, value);
+      }
+
       const hash = urlParams.get('hash');
+      console.log('🔗 Hash from initData:', hash);
       urlParams.delete('hash');
 
       // Check if hash exists
       if (!hash) {
+        console.error('❌ No hash provided in initData');
         throw new UnauthorizedException('No hash provided in initData');
       }
 
       // Get bot token from environment
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      console.log('🤖 Bot token configured:', !!botToken);
+      console.log('🤖 Bot token length:', botToken?.length || 0);
+
       if (!botToken) {
+        console.error('❌ Bot token not configured');
         throw new UnauthorizedException('Bot token not configured');
       }
 
@@ -40,32 +59,51 @@ export class AuthService {
         .map(([key, value]) => `${key}=${value}`)
         .join('\n');
 
+      console.log('📝 Data check string:', dataCheckString);
+
       // Create secret key from bot token
       const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
+      console.log('🔑 Secret key generated (length):', secretKey.length);
 
       // Calculate expected hash
       const expectedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+      console.log('🔍 Expected hash:', expectedHash);
+      console.log('🔍 Received hash:', hash);
 
       // Verify hash
       if (hash !== expectedHash) {
+        console.error('❌ Hash verification failed!');
+        console.error('❌ Expected:', expectedHash);
+        console.error('❌ Received:', hash);
         throw new UnauthorizedException('Invalid Telegram initData signature');
       }
 
+      console.log('✅ Hash verification successful!');
+
       // Parse user data
       const userParam = urlParams.get('user');
+      console.log('👤 User param from initData:', userParam);
+
       if (!userParam) {
+        console.error('❌ No user data in initData');
         throw new UnauthorizedException('No user data in initData');
       }
 
       const userData = JSON.parse(userParam);
+      console.log('👤 Parsed user data:', userData);
+
       const telegramId = userData.id;
+      console.log('🆔 Telegram ID:', telegramId);
 
       if (!telegramId) {
+        console.error('❌ No user ID in Telegram data');
         throw new UnauthorizedException('No user ID in Telegram data');
       }
 
       // Generate auth token
+      console.log('🎫 Generating auth token...');
       const authToken = this.generateAuthToken(telegramId);
+      console.log('🎫 Auth token generated successfully');
 
       // Return user info as expected by frontend
       const user = {
@@ -82,13 +120,16 @@ export class AuthService {
         },
       };
 
+      console.log('✅ Authentication successful for user:', telegramId);
+      console.log('👤 Returning user object:', user);
+
       return {
         token: authToken.token,
         user
       };
 
     } catch (error) {
-      console.error('Telegram authentication error:', error);
+      console.error('❌ Telegram authentication error:', error);
       throw new UnauthorizedException('Failed to authenticate with Telegram');
     }
   }

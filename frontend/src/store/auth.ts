@@ -65,13 +65,27 @@ export const useAuthStore = create<AuthState>()(
           }
 
           // Пытаемся аутентифицироваться через Telegram
+          console.log('🔍 Checking Telegram WebApp availability...');
+          console.log('window.Telegram:', window.Telegram);
+          console.log('window.Telegram?.WebApp:', window.Telegram?.WebApp);
+
           if (window.Telegram?.WebApp) {
             const tg = window.Telegram.WebApp;
+            console.log('📱 Telegram WebApp object:', tg);
+            console.log('📱 Telegram WebApp version:', (tg as any).version);
+            console.log('📱 Telegram WebApp platform:', (tg as any).platform);
+            console.log('📱 Raw initData:', tg.initData);
+            console.log('📱 initData length:', tg.initData?.length || 0);
+
             const telegramInitData = tg.initData;
-            
-            if (telegramInitData) {
+
+            if (telegramInitData && telegramInitData.trim()) {
+              console.log('✅ InitData available, attempting authentication...');
               try {
-                const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/telegram`, {
+                const apiUrl = `${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/telegram`;
+                console.log('📡 API URL:', apiUrl);
+
+                const response = await fetch(apiUrl, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -81,9 +95,14 @@ export const useAuthStore = create<AuthState>()(
                   }),
                 });
 
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
                 if (response.ok) {
                   const { token, user } = await response.json();
-                  
+                  console.log('✅ Telegram authentication successful!');
+                  console.log('👤 User:', user);
+
                   set({
                     token,
                     user,
@@ -91,11 +110,29 @@ export const useAuthStore = create<AuthState>()(
                     isLoading: false,
                   });
                   return;
+                } else {
+                  const errorText = await response.text();
+                  console.error('❌ Authentication failed:', response.status, errorText);
                 }
               } catch (error) {
-                console.warn('Telegram authentication failed:', error);
+                console.error('❌ Telegram authentication error:', error);
               }
+            } else {
+              console.warn('⚠️ No initData available in Telegram WebApp');
+              console.log('📱 Checking if we need to wait for WebApp to be ready...');
+
+              // Попробуем подождать и повторить
+              setTimeout(async () => {
+                const retryInitData = tg.initData;
+                console.log('🔄 Retry - initData after timeout:', retryInitData);
+                if (retryInitData && retryInitData.trim()) {
+                  console.log('🔄 Retrying authentication with delayed initData...');
+                  await get().init(); // Recursive retry
+                }
+              }, 1000);
             }
+          } else {
+            console.warn('⚠️ Telegram WebApp not available');
           }
 
           // В режиме разработки, если Telegram недоступен, попробуем создать тестовый токен
