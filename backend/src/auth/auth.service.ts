@@ -150,10 +150,10 @@ export class AuthService {
 
     // Longer expiration in development for easier testing
     const isDevelopment = process.env.NODE_ENV === 'development';
-    const expirationTime = isDevelopment ? 24 * 60 * 60 * 1000 : 60 * 1000; // 24 hours vs 60 seconds
+    const expirationTime = isDevelopment ? 24 * 60 * 60 * 1000 : 5 * 60 * 1000; // 24 hours vs 5 minutes
 
     const token = this.jwtService.sign(payload, {
-      expiresIn: isDevelopment ? '24h' : '60s'
+      expiresIn: isDevelopment ? '24h' : '5m'
     });
     const expiresAt = new Date(Date.now() + expirationTime).toISOString();
 

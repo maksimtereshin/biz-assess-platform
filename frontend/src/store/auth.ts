@@ -54,14 +54,42 @@ export const useAuthStore = create<AuthState>()(
           // Если есть токен в URL, используем его для прямой авторизации
           if (urlToken) {
             console.log('🎫 Found token in URL, attempting direct authentication...');
-            try {
-              const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/verify`, {
-                headers: {
-                  'Authorization': `Bearer ${urlToken}`
-                }
-              });
 
-              if (response.ok) {
+            // Retry logic for 503 errors
+            const verifyTokenWithRetry = async (retries = 3, delay = 1000): Promise<Response | null> => {
+              for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                  console.log(`🔄 Token verification attempt ${attempt}/${retries}`);
+                  const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/verify`, {
+                    headers: {
+                      'Authorization': `Bearer ${urlToken}`
+                    }
+                  });
+
+                  if (response.ok || response.status !== 503) {
+                    return response;
+                  }
+
+                  if (attempt < retries) {
+                    console.log(`⏳ Backend unavailable (503), retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; // Exponential backoff
+                  }
+                } catch (error) {
+                  console.warn(`⚠️ Attempt ${attempt} failed:`, error);
+                  if (attempt < retries) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                  }
+                }
+              }
+              return null;
+            };
+
+            try {
+              const response = await verifyTokenWithRetry();
+
+              if (response?.ok) {
                 // Создаем пользователя из токена
                 const user = {
                   id: 1,
@@ -91,6 +119,10 @@ export const useAuthStore = create<AuthState>()(
 
                 console.log('✅ URL token authentication successful!');
                 return;
+              } else if (response?.status === 401) {
+                console.warn('❌ Token expired or invalid');
+              } else {
+                console.warn('❌ Backend service unavailable after retries');
               }
             } catch (error) {
               console.warn('❌ URL token authentication failed:', error);
@@ -100,20 +132,51 @@ export const useAuthStore = create<AuthState>()(
           // Проверяем, есть ли уже сохраненный токен
           const currentToken = get().token;
           if (currentToken && !currentToken.startsWith('demo-token-')) {
-            // Проверяем валидность токена
-            try {
-              const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/verify`, {
-                headers: {
-                  'Authorization': `Bearer ${currentToken}`
+            // Проверяем валидность токена с retry логикой
+            const verifyStoredTokenWithRetry = async (retries = 3, delay = 1000): Promise<Response | null> => {
+              for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                  console.log(`🔄 Stored token verification attempt ${attempt}/${retries}`);
+                  const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/verify`, {
+                    headers: {
+                      'Authorization': `Bearer ${currentToken}`
+                    }
+                  });
+
+                  if (response.ok || response.status !== 503) {
+                    return response;
+                  }
+
+                  if (attempt < retries) {
+                    console.log(`⏳ Backend unavailable (503), retrying stored token in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                  }
+                } catch (error) {
+                  console.warn(`⚠️ Stored token attempt ${attempt} failed:`, error);
+                  if (attempt < retries) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                  }
                 }
-              });
-              
-              if (response.ok) {
+              }
+              return null;
+            };
+
+            try {
+              const response = await verifyStoredTokenWithRetry();
+
+              if (response?.ok) {
                 set({
                   isAuthenticated: true,
                   isLoading: false,
                 });
                 return;
+              } else if (response?.status === 401) {
+                console.warn('🗑️ Stored token expired, clearing...');
+                // Token expired, clear it and continue to re-authenticate
+              } else {
+                console.warn('❌ Backend service unavailable for stored token verification');
               }
             } catch (error) {
               console.warn('Token validation failed:', error);
@@ -242,6 +305,16 @@ export const useAuthStore = create<AuthState>()(
           
         } catch (error: any) {
           console.error('Auth error:', error);
+
+          // Определяем тип ошибки для лучшего логирования
+          if (error?.message?.includes('503') || error?.message?.includes('Service Unavailable')) {
+            console.error('🚨 Backend service is unavailable. Please try again later.');
+          } else if (error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+            console.error('🔑 Authentication failed. Token may be expired.');
+          } else {
+            console.error('🔥 Unexpected authentication error:', error?.message || error);
+          }
+
           // При ошибке также инициализируем демо-режим
           get().initDemo();
         }
