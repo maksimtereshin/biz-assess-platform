@@ -41,7 +41,9 @@ export class ReportDataService implements OnModuleInit {
   }
 
   private async parseCSV(filename: string): Promise<ReportEntry[]> {
-    const filePath = join(process.cwd(), 'src', 'data', 'reports', filename);
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const basePath = isDevelopment ? 'src' : 'dist';
+    const filePath = join(process.cwd(), basePath, 'data', 'reports', filename);
 
     try {
       const fileContent = readFileSync(filePath, 'utf-8');

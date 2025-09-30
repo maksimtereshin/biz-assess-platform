@@ -33,9 +33,9 @@ http {
         root /usr/share/nginx/html;
         index index.html;
         
-        # DNS resolver for backend URL resolution with IPv6 support
-        resolver 8.8.8.8 8.8.4.4 [2001:4860:4860::8888] [2001:4860:4860::8844] valid=300s ipv6=off;
-        resolver_timeout 10s;
+        # DNS resolver for backend URL resolution - use Docker's internal DNS
+        resolver 127.0.0.11 valid=30s ipv6=off;
+        resolver_timeout 5s;
         
         # Security headers
         add_header X-Frame-Options "SAMEORIGIN" always;

@@ -1,5 +1,5 @@
-# Docker Compose configuration for local development environment
-# Based on TRD-109 and TRD-112 requirements
+# Docker Compose configuration for production environment
+# Uses pre-built production images
 
 version: '3.8'
 
@@ -7,12 +7,12 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: bizass-postgres
+    container_name: bizass-postgres-prod
     restart: unless-stopped
     environment:
       POSTGRES_DB: bizass_platform
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     ports:
       - "5432:5432"
     volumes:
@@ -24,30 +24,25 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backend API Service
+  # Backend API Service (Production)
   backend:
-    build:
-      context: .
-      dockerfile: ./backend/Dockerfile.dev
-    container_name: bizass-backend
+    image: bizass-backend:prod
+    container_name: bizass-backend-prod
     restart: unless-stopped
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3001
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USERNAME: postgres
-      DB_PASSWORD: password
+      DB_PASSWORD: ${DB_PASSWORD:-password}
       DB_NAME: bizass_platform
       JWT_SECRET: ${JWT_SECRET:-U+EiJRZ+PrsuUnmnocqipOjKT53J4TvL5YUXnrrrFvk=}
-      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL: http://localhost
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-your-telegram-bot-token-here}
     ports:
       - "3001:3001"
     volumes:
-      - ./backend:/app
-      - ./shared:/shared
-      - /app/node_modules
       - backend_uploads:/app/uploads
     depends_on:
       postgres:
@@ -59,25 +54,17 @@ services:
       retries: 3
       start_period: 40s
 
-  # Frontend Service (for development)
+  # Frontend Service (Production with nginx)
   frontend:
-    build:
-      context: .
-      dockerfile: ./frontend/Dockerfile.dev
-    container_name: bizass-frontend
+    image: bizass-frontend:prod
+    container_name: bizass-frontend-prod
     restart: unless-stopped
     environment:
-      VITE_API_URL: http://localhost:3001
+      BACKEND_URL: http://bizass-backend-prod:3001
     ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - ./shared:/shared
-      - /app/node_modules
+      - "80:80"
     depends_on:
       - backend
-    profiles:
-      - dev
 
 volumes:
   postgres_data:
@@ -87,4 +74,4 @@ volumes:
 
 networks:
   default:
-    name: bizass-network
+    name: bizass-prod-network
