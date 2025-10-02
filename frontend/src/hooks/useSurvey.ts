@@ -413,14 +413,11 @@ export function useSurvey(initialVariant?: SurveyVariant | null, sessionId?: str
           }));
 
           try {
-            // Call backend API to complete session and get sessionId
-            const result = await api.completeSession();
-            // Navigate to new results page using the sessionId from backend
-            navigate(`/${surveyVariant}/${result.sessionId}/results`);
+            // Call backend API to complete session
+            await api.completeSession();
+            // Don't navigate - let user click "View Results" button instead
           } catch (error) {
             console.error('Error completing session:', error);
-            // Fallback to showing old results screen
-            setShowResults(true);
           }
 
           // Update local session state

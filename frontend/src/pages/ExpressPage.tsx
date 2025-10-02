@@ -159,7 +159,13 @@ export function ExpressPage() {
   };
 
   const handleViewResults = () => {
-    showSurveyResults();
+    // Navigate to results page with sessionId
+    if (sessionId) {
+      navigate(`/express/${sessionId}/results`);
+    } else {
+      // Fallback to old results screen if no sessionId
+      showSurveyResults();
+    }
   };
 
   const handleBackToVariantPage = () => {
@@ -355,15 +361,6 @@ export function ExpressPage() {
                 <Play className="w-5 h-5" />
                 Начать чекап
               </button>
-            )}
-
-            {/* Если есть завершённый опрос - показать информацию */}
-            {surveyStatus?.hasCompleted && !hasAnsweredQuestions && (
-              <div className="text-center p-4 bg-slate-100 rounded-lg">
-                <p className="text-sm text-slate-600">
-                  Вы уже проходили этот опрос ранее. Для повторного прохождения свяжитесь с нами.
-                </p>
-              </div>
             )}
 
             {/* Если опрос завершен */}
