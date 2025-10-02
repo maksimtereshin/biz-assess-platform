@@ -166,6 +166,26 @@ export function FullPage() {
     setShowResetConfirm(false);
   };
 
+  // Auto-start survey when sessionId is present and session is loaded
+  React.useEffect(() => {
+    // Only auto-start if:
+    // 1. We have a sessionId in URL
+    // 2. We're not already in a survey (currentCategory is null)
+    // 3. Categories data is loaded
+    // 4. Survey is not completed
+    if (sessionId && !surveyState.currentCategory && categoriesData.length > 0 && !isSurveyCompleted()) {
+      console.log('Auto-starting survey for session:', sessionId);
+      const firstIncompleteCategory = categoriesData.find(category =>
+        category.completedQuestions < category.totalQuestions
+      );
+
+      if (firstIncompleteCategory) {
+        console.log('Starting first incomplete category:', firstIncompleteCategory.name);
+        startSurvey(firstIncompleteCategory.id);
+      }
+    }
+  }, [sessionId, surveyState.currentCategory, categoriesData, isSurveyCompleted, startSurvey]);
+
   // Handle navigation based on survey state
   React.useEffect(() => {
     if (surveyState.currentCategory && currentQuestion && currentCategory) {
