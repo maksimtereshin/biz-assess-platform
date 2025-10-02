@@ -115,7 +115,6 @@ export function FullPage() {
   // Определяем состояние опроса
   const hasAnsweredQuestions = categoriesData.some(cat => cat.completedQuestions > 0);
   const hasIncompleteSurvey = hasAnsweredQuestions && !isSurveyCompleted();
-  const hasCompletedFullSurvey = hasCompletedSurvey('full');
 
   // Load survey results when survey is completed
   React.useEffect(() => {
@@ -174,16 +173,6 @@ export function FullPage() {
 
   const handleBackToHome = () => {
     navigate('/');
-  };
-
-  const handleViewResults = () => {
-    // Navigate to results page with sessionId
-    if (sessionId) {
-      navigate(`/full/${sessionId}/results`);
-    } else {
-      // Fallback to old results screen if no sessionId
-      showSurveyResults();
-    }
   };
 
   const handleBackToVariantPage = () => {

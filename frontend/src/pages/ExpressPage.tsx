@@ -121,7 +121,6 @@ export function ExpressPage() {
   // Определяем состояние опроса
   const hasAnsweredQuestions = categoriesData.some(cat => cat.completedQuestions > 0);
   const hasIncompleteSurvey = hasAnsweredQuestions && !isSurveyCompleted();
-  const hasCompletedExpressSurvey = hasCompletedSurvey('express');
 
   // Load survey results when survey is completed
   React.useEffect(() => {
@@ -180,16 +179,6 @@ export function ExpressPage() {
 
   const handleBackToHome = () => {
     navigate('/');
-  };
-
-  const handleViewResults = () => {
-    // Navigate to results page with sessionId
-    if (sessionId) {
-      navigate(`/express/${sessionId}/results`);
-    } else {
-      // Fallback to old results screen if no sessionId
-      showSurveyResults();
-    }
   };
 
   const handleBackToVariantPage = () => {
