@@ -109,6 +109,7 @@ export function FullPage() {
       // Create new session via API
       const { session, sessionToken } = await api.startSurvey('full', parseInt(user.telegramId));
       api.setSessionToken(sessionToken);
+      LocalStorageService.setSessionToken(session.id, sessionToken);
 
       // Redirect to new session
       navigate(`/full/${session.id}`, { replace: true });

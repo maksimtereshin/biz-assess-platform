@@ -115,6 +115,7 @@ export function ExpressPage() {
       // Create new session via API
       const { session, sessionToken } = await api.startSurvey('express', parseInt(user.telegramId));
       api.setSessionToken(sessionToken);
+      LocalStorageService.setSessionToken(session.id, sessionToken);
 
       // Redirect to new session
       navigate(`/express/${session.id}`, { replace: true });
