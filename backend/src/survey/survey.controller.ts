@@ -15,12 +15,15 @@ import { JwtService } from "@nestjs/jwt";
 import { SurveyService } from "./survey.service";
 import { StartSessionDto, SubmitAnswerDto, SurveyResults, CategoryResult } from "bizass-shared";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { GetSessionTokenDto } from "./dto/get-session-token.dto";
+import { AuthService } from "../auth/auth.service";
 
 @Controller("surveys")
 export class SurveyController {
   constructor(
     private readonly surveyService: SurveyService,
     private readonly jwtService: JwtService,
+    private readonly authService: AuthService,
   ) {}
 
   @Post("start")
@@ -60,12 +63,14 @@ export class SurveyController {
   }
 
   @Post("session/:sessionId/token")
-  @UseGuards(JwtAuthGuard)
   async getSessionToken(
     @Param("sessionId") sessionId: string,
-    @Request() req: any
+    @Body() dto: GetSessionTokenDto
   ) {
-    // Get session to validate it exists and belongs to user
+    // Validate Telegram initData (cryptographic verification)
+    const { user } = await this.authService.authenticateWithTelegram(dto.initData);
+
+    // Get session to validate it exists
     const session = await this.surveyService.getSession(sessionId);
 
     if (!session) {
@@ -75,16 +80,17 @@ export class SurveyController {
     // Normalize both userId values for comparison
     // Handle both formats: number (113961571) and string ("tg_113961571")
     const sessionUserIdStr = String(session.userId).replace(/^tg_/, '');
-    const requestUserIdStr = String(req.user.telegramId);
+    const authenticatedUserIdStr = String(user.telegramId);
 
-    if (sessionUserIdStr !== requestUserIdStr) {
+    // Verify that the session belongs to the authenticated user
+    if (sessionUserIdStr !== authenticatedUserIdStr) {
       throw new ForbiddenException("Access denied to this session");
     }
 
     // Generate session token for this session
     const sessionToken = this.jwtService.sign(
       {
-        telegramId: req.user.telegramId,
+        telegramId: user.telegramId,
         sessionId: session.id,
         type: "session",
       },

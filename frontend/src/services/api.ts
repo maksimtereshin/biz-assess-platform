@@ -168,7 +168,18 @@ class ApiClient {
   }
 
   async getSessionToken(sessionId: string): Promise<string> {
-    const response = await this.client.post(`/surveys/session/${sessionId}/token`);
+    // Get fresh initData from Telegram WebApp
+    const initData = (window as any).Telegram?.WebApp?.initData || '';
+
+    if (!initData) {
+      console.error('Telegram WebApp initData not available');
+      throw new Error('Telegram WebApp context required');
+    }
+
+    console.log('Getting session token with Telegram initData authentication');
+    const response = await this.client.post(`/surveys/session/${sessionId}/token`, {
+      initData
+    });
     return response.data.sessionToken;
   }
 

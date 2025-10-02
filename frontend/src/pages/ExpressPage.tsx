@@ -47,7 +47,7 @@ export function ExpressPage() {
           console.log('Found active session:', status.express.activeSessionId);
 
           try {
-            // Get session token using auth token
+            // Get session token using Telegram initData
             console.log('Fetching session token for active session...');
             const sessionToken = await api.getSessionToken(status.express.activeSessionId);
 
@@ -56,9 +56,20 @@ export function ExpressPage() {
             api.setSessionToken(sessionToken);
 
             console.log('✓ Session token obtained and saved for active session');
-          } catch (tokenError) {
+          } catch (tokenError: any) {
             console.error('Failed to get session token:', tokenError);
-            // Continue anyway, useSurvey will try to fetch it
+
+            // Check if running in Telegram WebApp context
+            if (!(window as any).Telegram?.WebApp?.initData) {
+              console.error('Not running in Telegram WebApp context');
+              console.warn('Session token cannot be obtained outside Telegram');
+              // Redirect to home - user needs to open via Telegram
+              navigate('/');
+              return;
+            }
+
+            // Other errors - continue anyway, useSurvey will try to fetch it
+            console.warn('Continuing to session page, useSurvey will retry token fetch');
           }
 
           navigate(`/express/${status.express.activeSessionId}`, { replace: true });
