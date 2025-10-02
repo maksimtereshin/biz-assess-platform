@@ -117,9 +117,27 @@ export function useSurvey(initialVariant?: SurveyVariant | null, sessionId?: str
           console.log('Survey variant:', initialVariant);
 
           // Restore session token from localStorage first
-          const savedToken = LocalStorageService.getSessionToken(sessionId);
+          let savedToken = LocalStorageService.getSessionToken(sessionId);
           console.log('Attempting to restore token from localStorage...');
           console.log('Found saved token:', savedToken ? `${savedToken.substring(0, 30)}...` : 'NULL');
+
+          if (!savedToken) {
+            // Fallback: Try to fetch session token using auth token
+            console.warn('⚠️ No saved token found for session:', sessionId);
+            console.log('Attempting to fetch session token from backend...');
+
+            try {
+              const fetchedToken = await api.getSessionToken(sessionId);
+              LocalStorageService.setSessionToken(sessionId, fetchedToken);
+              savedToken = fetchedToken;
+              console.log('✓ Session token fetched and saved successfully');
+            } catch (error) {
+              console.error('Failed to fetch session token:', error);
+              console.error('Redirecting to home page...');
+              navigate('/');
+              return;
+            }
+          }
 
           if (savedToken) {
             // Decode JWT to see what's inside
@@ -139,9 +157,6 @@ export function useSurvey(initialVariant?: SurveyVariant | null, sessionId?: str
             api.setSessionToken(savedToken);
             console.log('✓ Session token set in API client');
             console.log('Token length:', savedToken.length);
-          } else {
-            console.warn('⚠️ No saved token found for session:', sessionId);
-            console.warn('This will likely cause authentication failure!');
           }
 
           try {

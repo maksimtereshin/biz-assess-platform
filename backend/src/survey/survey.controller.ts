@@ -59,6 +59,37 @@ export class SurveyController {
     );
   }
 
+  @Post("session/:sessionId/token")
+  @UseGuards(JwtAuthGuard)
+  async getSessionToken(
+    @Param("sessionId") sessionId: string,
+    @Request() req: any
+  ) {
+    // Get session to validate it exists and belongs to user
+    const session = await this.surveyService.getSession(sessionId);
+
+    if (!session) {
+      throw new NotFoundException("Session not found");
+    }
+
+    // Verify session belongs to authenticated user
+    if (session.userId !== req.user.telegramId) {
+      throw new ForbiddenException("Access denied to this session");
+    }
+
+    // Generate session token for this session
+    const sessionToken = this.jwtService.sign(
+      {
+        telegramId: req.user.telegramId,
+        sessionId: session.id,
+        type: "session",
+      },
+      { expiresIn: "24h" }
+    );
+
+    return { sessionToken };
+  }
+
   @Get("session/:sessionId")
   @UseGuards(JwtAuthGuard)
   async getSession(@Param("sessionId") sessionId: string, @Request() req: any) {

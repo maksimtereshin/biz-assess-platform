@@ -167,6 +167,11 @@ class ApiClient {
     return response.data;
   }
 
+  async getSessionToken(sessionId: string): Promise<string> {
+    const response = await this.client.post(`/surveys/session/${sessionId}/token`);
+    return response.data.sessionToken;
+  }
+
   async getCurrentSession(sessionId: string): Promise<SurveySession> {
     const response: AxiosResponse<SurveySession> = await this.client.get(`/surveys/session/${sessionId}`);
     return response.data;

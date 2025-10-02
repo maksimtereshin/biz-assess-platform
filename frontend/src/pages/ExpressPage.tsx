@@ -42,9 +42,25 @@ export function ExpressPage() {
         const status = await api.getUserSurveysStatus(parseInt(user.telegramId));
         setSurveyStatus(status.express);
 
-        // If there's an active session - redirect to it
+        // If there's an active session - get session token and redirect
         if (status.express.activeSessionId) {
           console.log('Found active session:', status.express.activeSessionId);
+
+          try {
+            // Get session token using auth token
+            console.log('Fetching session token for active session...');
+            const sessionToken = await api.getSessionToken(status.express.activeSessionId);
+
+            // Save session token to localStorage
+            LocalStorageService.setSessionToken(status.express.activeSessionId, sessionToken);
+            api.setSessionToken(sessionToken);
+
+            console.log('✓ Session token obtained and saved for active session');
+          } catch (tokenError) {
+            console.error('Failed to get session token:', tokenError);
+            // Continue anyway, useSurvey will try to fetch it
+          }
+
           navigate(`/express/${status.express.activeSessionId}`, { replace: true });
         }
       } catch (error) {
