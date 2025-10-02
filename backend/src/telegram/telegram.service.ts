@@ -1,9 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 import { TelegramWebhookPayload, SurveyType } from "bizass-shared";
 import { AuthService } from "../auth/auth.service";
 import { SurveyService } from "../survey/survey.service";
 import { PaymentService } from "../payment/payment.service";
+import { User } from "../entities";
 
 interface InlineKeyboardMarkup {
   inline_keyboard: Array<
@@ -27,6 +30,8 @@ export class TelegramService {
     private authService: AuthService,
     private surveyService: SurveyService,
     private paymentService: PaymentService,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {
     this.botToken = this.configService.get<string>("TELEGRAM_BOT_TOKEN");
     this.webAppUrl = this.configService.get<string>(
@@ -90,6 +95,48 @@ export class TelegramService {
       this.logger.error("Error handling webhook:", error);
       throw error;
     }
+  }
+
+  /**
+   * Ensures user exists in database, creates if not exists, updates if exists
+   */
+  private async ensureUserExists(
+    telegramId: number,
+    firstName: string,
+    username?: string,
+  ): Promise<User> {
+    let user = await this.userRepository.findOne({
+      where: { telegram_id: telegramId },
+    });
+
+    if (!user) {
+      // Create new user
+      this.logger.log(`Creating new user: ${telegramId}`);
+      user = this.userRepository.create({
+        telegram_id: telegramId,
+        first_name: firstName,
+        username: username,
+      });
+      await this.userRepository.save(user);
+      this.logger.log(`User created successfully: ${telegramId}`);
+    } else {
+      // Update existing user data if changed
+      let needsUpdate = false;
+      if (user.first_name !== firstName) {
+        user.first_name = firstName;
+        needsUpdate = true;
+      }
+      if (user.username !== username) {
+        user.username = username;
+        needsUpdate = true;
+      }
+      if (needsUpdate) {
+        this.logger.log(`Updating user data: ${telegramId}`);
+        await this.userRepository.save(user);
+      }
+    }
+
+    return user;
   }
 
   private async handleMessage(message: any): Promise<void> {
@@ -156,9 +203,12 @@ export class TelegramService {
   }
 
   private async handleStartCommand(chatId: number, user: any): Promise<void> {
+    // Ensure user exists in database
+    await this.ensureUserExists(user.id, user.first_name, user.username);
+
     const welcomeMessage = `
 🎯 Добро пожаловать в ЧЕК АП Экспертный бизнес, ${user.first_name || "Friend"}!
-  
+
 Это профессиональный опросник для экспертов помогающих профессий.
 
 ✅ Всего 15-20 минут вашего времени
