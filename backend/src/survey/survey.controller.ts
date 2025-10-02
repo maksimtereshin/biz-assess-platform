@@ -73,14 +73,19 @@ export class SurveyController {
     }
 
     // Verify session belongs to authenticated user
-    if (session.userId !== req.user.telegramId) {
+    const userTelegramId = req.user.telegramId;
+    const sessionUserId = typeof session.userId === 'string' 
+      ? parseInt(session.userId.replace('tg_', ''))  // "tg_113961571" → 113961571
+      : session.userId;  // Уже число
+
+    if (sessionUserId !== userTelegramId) {
       throw new ForbiddenException("Access denied to this session");
     }
 
     // Generate session token for this session
     const sessionToken = this.jwtService.sign(
       {
-        telegramId: req.user.telegramId,
+        telegramId: userTelegramId,
         sessionId: session.id,
         type: "session",
       },
