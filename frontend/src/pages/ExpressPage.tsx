@@ -3,7 +3,6 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronLeft, Play, RotateCcw } from 'lucide-react';
 import { SurveyResults } from 'bizass-shared';
 import { useSurvey } from '../hooks/useSurvey';
-import { useUserSession } from '../hooks/useUserSession';
 import { QuestionScreen } from '../components/QuestionScreen';
 import { ResultsScreen } from '../components/ResultsScreen';
 import { SurveyResultsOverview } from '../components/SurveyResultsOverview';
@@ -15,7 +14,6 @@ export function ExpressPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { sessionId } = useParams<{ sessionId: string }>();
-  const { hasCompletedSurvey } = useUserSession();
   const shouldAutoStart = location.state?.autoStart === true;
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [surveyStatus, setSurveyStatus] = useState<{
