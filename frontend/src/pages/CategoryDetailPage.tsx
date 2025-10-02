@@ -138,11 +138,12 @@ export default function CategoryDetailPage() {
 
   const handleBack = () => {
     haptic.selection();
-    if (surveyType) {
-      navigate(`/${surveyType}/${sessionId}/results`);
+    if (surveyType && sessionId) {
+      // Navigate back to survey page with results view
+      navigate(`/${surveyType}/${sessionId}`);
     } else {
-      // Fallback for old route pattern
-      navigate(`/results/${sessionId}`);
+      // Fallback to home
+      navigate('/');
     }
   };
 

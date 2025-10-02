@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { ChevronLeft, Play, RotateCcw, Eye, CreditCard } from 'lucide-react';
+import { ChevronLeft, Play, RotateCcw } from 'lucide-react';
+import { SurveyResults } from 'bizass-shared';
 import { useSurvey } from '../hooks/useSurvey';
 import { useUserSession } from '../hooks/useUserSession';
 import { QuestionScreen } from '../components/QuestionScreen';
 import { ResultsScreen } from '../components/ResultsScreen';
+import { SurveyResultsOverview } from '../components/SurveyResultsOverview';
+import { CategoryResultsList } from '../components/CategoryResultsList';
 import { LocalStorageService } from '../services/localStorage';
 import api from '../services/api';
 
@@ -20,6 +23,8 @@ export function ExpressPage() {
     activeSessionId: string | null;
   } | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [surveyResults, setSurveyResults] = useState<SurveyResults | null>(null);
+  const [isLoadingResults, setIsLoadingResults] = useState(false);
 
   console.log('Session ID:', sessionId);
 
@@ -117,6 +122,25 @@ export function ExpressPage() {
   const hasAnsweredQuestions = categoriesData.some(cat => cat.completedQuestions > 0);
   const hasIncompleteSurvey = hasAnsweredQuestions && !isSurveyCompleted();
   const hasCompletedExpressSurvey = hasCompletedSurvey('express');
+
+  // Load survey results when survey is completed
+  React.useEffect(() => {
+    const loadResults = async () => {
+      if (isSurveyCompleted() && sessionId && !surveyResults && !isLoadingResults) {
+        try {
+          setIsLoadingResults(true);
+          const data = await api.getSurveyResults(sessionId);
+          setSurveyResults(data);
+        } catch (error) {
+          console.error('Error loading survey results:', error);
+        } finally {
+          setIsLoadingResults(false);
+        }
+      }
+    };
+
+    loadResults();
+  }, [isSurveyCompleted(), sessionId, surveyResults, isLoadingResults]);
 
   const handleStartAssessment = async () => {
     // If we already have a sessionId, just start the survey
@@ -281,116 +305,112 @@ export function ExpressPage() {
       {/* Content */}
       <div className="flex-1 p-6">
         <div className="max-w-md mx-auto">
-          {/* Survey Info */}
-          <div className="bg-white rounded-lg p-6 mb-6 border relative">
-            {/* TODO: Remove after development is done (with relative) */}
-            <button
-              onClick={handleResetData}
-              className="absolute right-4 transform -translate-y-1/2 hover:text-red-200 transition-colors"
-              title="Сбросить все данные для повторного тестирования"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-            <div className="text-center mb-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-100 rounded-full mb-3">
-                <span className="text-2xl">⚡</span>
+          {/* Survey Results Overview or Survey Info */}
+          {isSurveyCompleted() && surveyResults ? (
+            <SurveyResultsOverview results={surveyResults} surveyType="express" />
+          ) : (
+            <div className="bg-white rounded-lg p-6 mb-6 border relative">
+              {/* TODO: Remove after development is done (with relative) */}
+              <button
+                onClick={handleResetData}
+                className="absolute right-4 transform -translate-y-1/2 hover:text-red-200 transition-colors"
+                title="Сбросить все данные для повторного тестирования"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+              <div className="text-center mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-100 rounded-full mb-3">
+                  <span className="text-2xl">⚡</span>
+                </div>
+                <h2 className="text-lg font-medium text-slate-800 mb-2">Экспресс-опрос</h2>
+                <p className="text-sm text-slate-600">
+                  Полная оценка всех аспектов бизнеса в стандартном формате
+                </p>
               </div>
-              <h2 className="text-lg font-medium text-slate-800 mb-2">Экспресс-опрос</h2>
-              <p className="text-sm text-slate-600">
-                Полная оценка всех аспектов бизнеса в стандартном формате
-              </p>
-            </div>
-            
-            <div className="space-y-2 mb-6">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Время прохождения:</span>
-                <span className="font-medium">10-15 минут</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Количество вопросов:</span>
-                <span className="font-medium">60 вопросов</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Категории:</span>
-                <span className="font-medium">6 категорий</span>
-              </div>
-            </div>
 
-            {/* Progress Indicator */}
-            {hasAnsweredQuestions && (
-              <div className="mb-6">
-                <div className="flex justify-between text-sm text-slate-600 mb-2">
-                  <span>Прогресс:</span>
-                  <span>
-                    {categoriesData.reduce((acc, cat) => acc + cat.completedQuestions, 0)} / {categoriesData.reduce((acc, cat) => acc + cat.totalQuestions, 0)}
-                  </span>
+              <div className="space-y-2 mb-6">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Время прохождения:</span>
+                  <span className="font-medium">10-15 минут</span>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-2">
-                  <div 
-                    className="bg-teal-500 h-2 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${(categoriesData.reduce((acc, cat) => acc + cat.completedQuestions, 0) / categoriesData.reduce((acc, cat) => acc + cat.totalQuestions, 0)) * 100}%`
-                    }}
-                  />
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Количество вопросов:</span>
+                  <span className="font-medium">60 вопросов</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Категории:</span>
+                  <span className="font-medium">6 категорий</span>
                 </div>
               </div>
-            )}
-          </div>
+
+              {/* Progress Indicator */}
+              {hasAnsweredQuestions && !isSurveyCompleted() && (
+                <div className="mb-6">
+                  <div className="flex justify-between text-sm text-slate-600 mb-2">
+                    <span>Прогресс:</span>
+                    <span>
+                      {categoriesData.reduce((acc, cat) => acc + cat.completedQuestions, 0)} / {categoriesData.reduce((acc, cat) => acc + cat.totalQuestions, 0)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div
+                      className="bg-teal-500 h-2 rounded-full transition-all duration-300"
+                      style={{
+                        width: `${(categoriesData.reduce((acc, cat) => acc + cat.completedQuestions, 0) / categoriesData.reduce((acc, cat) => acc + cat.totalQuestions, 0)) * 100}%`
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons */}
-          <div className="space-y-3">
-            {/* Если есть незавершенный опрос */}
-            {hasIncompleteSurvey && (
-              <button
-                onClick={handleStartAssessment}
-                className="w-full bg-amber-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <RotateCcw className="w-5 h-5" />
-                Продолжить с последнего места
-              </button>
-            )}
-
-            {/* Если опроса нет или он не начат */}
-            {!hasAnsweredQuestions && !surveyStatus?.hasCompleted && (
-              <button
-                onClick={handleStartAssessment}
-                className="w-full bg-teal-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-teal-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <Play className="w-5 h-5" />
-                Начать чекап
-              </button>
-            )}
-
-            {/* Если опрос завершен */}
-            {(isSurveyCompleted() || hasCompletedExpressSurvey) && (
-              <>
+          {!isSurveyCompleted() || !surveyResults ? (
+            <div className="space-y-3">
+              {/* Если есть незавершенный опрос */}
+              {hasIncompleteSurvey && (
                 <button
-                  onClick={handleViewResults}
-                  className="w-full bg-green-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                  onClick={handleStartAssessment}
+                  className="w-full bg-amber-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
                 >
-                  <Eye className="w-5 h-5" />
-                  Посмотреть результаты
+                  <RotateCcw className="w-5 h-5" />
+                  Продолжить с последнего места
                 </button>
-                
-                <button
-                  disabled
-                  className="w-full bg-slate-300 text-slate-600 py-3 px-4 rounded-lg font-medium cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <CreditCard className="w-5 h-5" />
-                  Новый чекап (требуется оплата)
-                </button>
-                
-                <p className="text-xs text-slate-500 text-center">
-                  Для прохождения нового чекапа требуется оплата. Свяжитесь с нами для получения доступа.
-                </p>
-              </>
-            )}
-          </div>
+              )}
 
-          {/* Categories Overview */}
-          {categoriesData.length > 0 && (
+              {/* Если опроса нет или он не начат */}
+              {!hasAnsweredQuestions && !surveyStatus?.hasCompleted && (
+                <button
+                  onClick={handleStartAssessment}
+                  className="w-full bg-teal-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-teal-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Play className="w-5 h-5" />
+                  Начать чекап
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <button
+                onClick={handleBackToHome}
+                className="w-full bg-slate-200 text-slate-700 py-3 px-4 rounded-lg font-medium hover:bg-slate-300 transition-colors flex items-center justify-center gap-2"
+              >
+                Назад на главную
+              </button>
+            </div>
+          )}
+
+          {/* Categories: Results or Overview */}
+          {isSurveyCompleted() && surveyResults && sessionId ? (
+            <CategoryResultsList
+              categories={surveyResults.categories}
+              sessionId={sessionId}
+              surveyType="express"
+            />
+          ) : categoriesData.length > 0 ? (
             <div className="mt-8">
               <h3 className="font-medium text-slate-800 mb-4">Категории оценки</h3>
               <div className="space-y-2">
@@ -416,7 +436,7 @@ export function ExpressPage() {
                         </p>
                       </div>
                     </div>
-                    
+
                     {category.completedQuestions === category.totalQuestions && (
                       <div className="text-green-500">
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -428,7 +448,7 @@ export function ExpressPage() {
                 ))}
               </div>
             </div>
-          )}
+          ) : null}
 
           {showResetConfirm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
