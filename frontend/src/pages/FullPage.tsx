@@ -6,19 +6,54 @@ import { useUserSession } from '../hooks/useUserSession';
 import { QuestionScreen } from '../components/QuestionScreen';
 import { ResultsScreen } from '../components/ResultsScreen';
 import { LocalStorageService } from '../services/localStorage';
+import api from '../services/api';
 
 export function FullPage() {
   const navigate = useNavigate();
   const { sessionId } = useParams<{ sessionId: string }>();
   const { hasCompletedSurvey } = useUserSession();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [surveyStatus, setSurveyStatus] = useState<{
+    hasCompleted: boolean;
+    activeSessionId: string | null;
+  } | null>(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
 
-  // If no sessionId, redirect to survey selection
+  // Initialize: load survey status if no sessionId
   React.useEffect(() => {
-    if (!sessionId) {
-      navigate('/');
-      return;
-    }
+    const init = async () => {
+      // If sessionId already in URL - use it
+      if (sessionId) {
+        setIsLoadingStatus(false);
+        return;
+      }
+
+      // Get telegramId from auth store
+      const user = LocalStorageService.getCurrentUser();
+      if (!user?.telegramId) {
+        console.warn('No user found, redirecting to home');
+        navigate('/');
+        return;
+      }
+
+      try {
+        // Load user surveys status
+        const status = await api.getUserSurveysStatus(parseInt(user.telegramId));
+        setSurveyStatus(status.full);
+
+        // If there's an active session - redirect to it
+        if (status.full.activeSessionId) {
+          console.log('Found active session:', status.full.activeSessionId);
+          navigate(`/full/${status.full.activeSessionId}`, { replace: true });
+        }
+      } catch (error) {
+        console.error('Failed to load survey status:', error);
+      } finally {
+        setIsLoadingStatus(false);
+      }
+    };
+
+    init();
   }, [sessionId, navigate]);
   const {
     surveyVariant,
@@ -51,14 +86,35 @@ export function FullPage() {
   const hasIncompleteSurvey = hasAnsweredQuestions && !isSurveyCompleted();
   const hasCompletedFullSurvey = hasCompletedSurvey('full');
 
-  const handleStartAssessment = () => {
-    // Найти первую незавершенную категорию
-    const firstIncompleteCategory = categoriesData.find(category => 
-      category.completedQuestions < category.totalQuestions
-    );
-    
-    if (firstIncompleteCategory) {
-      startSurvey(firstIncompleteCategory.id);
+  const handleStartAssessment = async () => {
+    // If we already have a sessionId, just start the survey
+    if (sessionId) {
+      const firstIncompleteCategory = categoriesData.find(category =>
+        category.completedQuestions < category.totalQuestions
+      );
+
+      if (firstIncompleteCategory) {
+        startSurvey(firstIncompleteCategory.id);
+      }
+      return;
+    }
+
+    // Create new session
+    const user = LocalStorageService.getCurrentUser();
+    if (!user?.telegramId) {
+      console.error('No user found');
+      return;
+    }
+
+    try {
+      // Create new session via API
+      const { session, sessionToken } = await api.startSurvey('full', parseInt(user.telegramId));
+      api.setSessionToken(sessionToken);
+
+      // Redirect to new session
+      navigate(`/full/${session.id}`, { replace: true });
+    } catch (error) {
+      console.error('Failed to start survey:', error);
     }
   };
 
@@ -234,7 +290,7 @@ export function FullPage() {
             )}
 
             {/* Если опроса нет или он не начат */}
-            {!hasAnsweredQuestions && (
+            {!hasAnsweredQuestions && !surveyStatus?.hasCompleted && (
               <button
                 onClick={handleStartAssessment}
                 className="w-full bg-pink-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-pink-600 transition-colors flex items-center justify-center gap-2"
@@ -242,6 +298,15 @@ export function FullPage() {
                 <Play className="w-5 h-5" />
                 Начать чекап
               </button>
+            )}
+
+            {/* Если есть завершённый опрос - показать информацию */}
+            {surveyStatus?.hasCompleted && !hasAnsweredQuestions && (
+              <div className="text-center p-4 bg-slate-100 rounded-lg">
+                <p className="text-sm text-slate-600">
+                  Вы уже проходили этот опрос ранее. Для повторного прохождения свяжитесь с нами.
+                </p>
+              </div>
             )}
 
             {/* Если опрос завершен */}

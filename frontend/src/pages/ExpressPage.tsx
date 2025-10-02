@@ -6,22 +6,56 @@ import { useUserSession } from '../hooks/useUserSession';
 import { QuestionScreen } from '../components/QuestionScreen';
 import { ResultsScreen } from '../components/ResultsScreen';
 import { LocalStorageService } from '../services/localStorage';
+import api from '../services/api';
 
 export function ExpressPage() {
   const navigate = useNavigate();
   const { sessionId } = useParams<{ sessionId: string }>();
   const { hasCompletedSurvey } = useUserSession();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [surveyStatus, setSurveyStatus] = useState<{
+    hasCompleted: boolean;
+    activeSessionId: string | null;
+  } | null>(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
 
   console.log('Session ID:', sessionId);
 
-  // If no sessionId, redirect to survey selection
+  // Initialize: load survey status if no sessionId
   React.useEffect(() => {
-    console.log('Session ID in useEffect:', sessionId);
-    if (!sessionId) {
-      navigate('/');
-      return;
-    }
+    const init = async () => {
+      // If sessionId already in URL - use it
+      if (sessionId) {
+        setIsLoadingStatus(false);
+        return;
+      }
+
+      // Get telegramId from auth store
+      const user = LocalStorageService.getCurrentUser();
+      if (!user?.telegramId) {
+        console.warn('No user found, redirecting to home');
+        navigate('/');
+        return;
+      }
+
+      try {
+        // Load user surveys status
+        const status = await api.getUserSurveysStatus(parseInt(user.telegramId));
+        setSurveyStatus(status.express);
+
+        // If there's an active session - redirect to it
+        if (status.express.activeSessionId) {
+          console.log('Found active session:', status.express.activeSessionId);
+          navigate(`/express/${status.express.activeSessionId}`, { replace: true });
+        }
+      } catch (error) {
+        console.error('Failed to load survey status:', error);
+      } finally {
+        setIsLoadingStatus(false);
+      }
+    };
+
+    init();
   }, [sessionId, navigate]);
 
   const {
@@ -58,14 +92,35 @@ export function ExpressPage() {
   const hasIncompleteSurvey = hasAnsweredQuestions && !isSurveyCompleted();
   const hasCompletedExpressSurvey = hasCompletedSurvey('express');
 
-  const handleStartAssessment = () => {
-    // Найти первую незавершенную категорию
-    const firstIncompleteCategory = categoriesData.find(category => 
-      category.completedQuestions < category.totalQuestions
-    );
-    
-    if (firstIncompleteCategory) {
-      startSurvey(firstIncompleteCategory.id);
+  const handleStartAssessment = async () => {
+    // If we already have a sessionId, just start the survey
+    if (sessionId) {
+      const firstIncompleteCategory = categoriesData.find(category =>
+        category.completedQuestions < category.totalQuestions
+      );
+
+      if (firstIncompleteCategory) {
+        startSurvey(firstIncompleteCategory.id);
+      }
+      return;
+    }
+
+    // Create new session
+    const user = LocalStorageService.getCurrentUser();
+    if (!user?.telegramId) {
+      console.error('No user found');
+      return;
+    }
+
+    try {
+      // Create new session via API
+      const { session, sessionToken } = await api.startSurvey('express', parseInt(user.telegramId));
+      api.setSessionToken(sessionToken);
+
+      // Redirect to new session
+      navigate(`/express/${session.id}`, { replace: true });
+    } catch (error) {
+      console.error('Failed to start survey:', error);
     }
   };
 
@@ -241,7 +296,7 @@ export function ExpressPage() {
             )}
 
             {/* Если опроса нет или он не начат */}
-            {!hasAnsweredQuestions && (
+            {!hasAnsweredQuestions && !surveyStatus?.hasCompleted && (
               <button
                 onClick={handleStartAssessment}
                 className="w-full bg-teal-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-teal-600 transition-colors flex items-center justify-center gap-2"
@@ -249,6 +304,15 @@ export function ExpressPage() {
                 <Play className="w-5 h-5" />
                 Начать чекап
               </button>
+            )}
+
+            {/* Если есть завершённый опрос - показать информацию */}
+            {surveyStatus?.hasCompleted && !hasAnsweredQuestions && (
+              <div className="text-center p-4 bg-slate-100 rounded-lg">
+                <p className="text-sm text-slate-600">
+                  Вы уже проходили этот опрос ранее. Для повторного прохождения свяжитесь с нами.
+                </p>
+              </div>
             )}
 
             {/* Если опрос завершен */}

@@ -43,6 +43,10 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<SurveySelectionScreen />} />
+      {/* Direct routes from Telegram (without sessionId) */}
+      <Route path="/express" element={<ExpressPage />} />
+      <Route path="/full" element={<FullPage />} />
+      {/* Routes with sessionId */}
       <Route path="/express/:sessionId" element={<ExpressPage />} />
       <Route path="/full/:sessionId" element={<FullPage />} />
       <Route path="/:surveyType/:sessionId/results" element={<ResultsPage />} />

@@ -230,6 +230,29 @@ export class SurveyService {
     });
   }
 
+  async getUserSurveysStatus(telegramId: number) {
+    const sessions = await this.getUserSessions(telegramId);
+
+    const expressSessions = sessions.filter(s => s.survey.type === 'EXPRESS');
+    const fullSessions = sessions.filter(s => s.survey.type === 'FULL');
+
+    return {
+      express: this.analyzeSurveyStatus(expressSessions),
+      full: this.analyzeSurveyStatus(fullSessions)
+    };
+  }
+
+  private analyzeSurveyStatus(sessions: SurveySessionEntity[]) {
+    const completedSessions = sessions.filter(s => s.status === 'COMPLETED');
+    const activeSessions = sessions.filter(s => s.status === 'IN_PROGRESS');
+
+    return {
+      hasCompleted: completedSessions.length > 0,
+      activeSessionId: activeSessions[0]?.id || null,
+      lastCompletedAt: completedSessions[0]?.updated_at?.toISOString() || null
+    };
+  }
+
   async generateReport(
     sessionId: string,
     isPaid: boolean = false,

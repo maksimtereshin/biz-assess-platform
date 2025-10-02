@@ -253,6 +253,15 @@ class ApiClient {
     });
     return response.data;
   }
+
+  // User surveys status
+  async getUserSurveysStatus(telegramId: number): Promise<{
+    express: { hasCompleted: boolean; activeSessionId: string | null; lastCompletedAt: string | null };
+    full: { hasCompleted: boolean; activeSessionId: string | null; lastCompletedAt: string | null };
+  }> {
+    const response = await this.client.get(`/surveys/user/${telegramId}/status`);
+    return response.data;
+  }
 }
 
 // Export singleton instance

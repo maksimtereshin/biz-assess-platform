@@ -106,6 +106,11 @@ export class SurveyController {
     return result;
   }
 
+  @Get("user/:telegramId/status")
+  async getUserSurveysStatus(@Param("telegramId") telegramId: string) {
+    return await this.surveyService.getUserSurveysStatus(parseInt(telegramId));
+  }
+
   @Get(":type")
   async getSurveyStructure(@Param("type") type: string) {
     return this.surveyService.getSurveyStructure(type);
