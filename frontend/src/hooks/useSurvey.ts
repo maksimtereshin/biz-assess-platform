@@ -178,6 +178,26 @@ export function useSurvey(initialVariant?: SurveyVariant | null, sessionId?: str
               };
               LocalStorageService.setCurrentSession(variantSession);
               console.log('✓ Session saved to localStorage');
+
+              // Save answers from backend to localStorage and state immediately
+              if (backendSession.answers && Object.keys(backendSession.answers).length > 0) {
+                console.log('✓ Saving answers from backend to localStorage:', backendSession.answers);
+                console.log(`Found ${Object.keys(backendSession.answers).length} answers in backend session`);
+
+                // Save each answer to localStorage
+                Object.entries(backendSession.answers).forEach(([questionId, score]) => {
+                  LocalStorageService.saveUserResponse(backendSession.id, questionId.toString(), score as number);
+                });
+
+                // Set answers in state immediately to prevent "flickering" of UI
+                setSurveyState(prev => ({
+                  ...prev,
+                  responses: backendSession.answers
+                }));
+
+                console.log(`✓ Saved ${Object.keys(backendSession.answers).length} answers to localStorage and state`);
+                return; // Exit early - no need to continue with restoration logic below
+              }
             }
           } catch (error: any) {
             console.error('=== FAILED TO LOAD SESSION FROM BACKEND ===');
@@ -197,53 +217,8 @@ export function useSurvey(initialVariant?: SurveyVariant | null, sessionId?: str
           currentSessionId = variantSession?.id || '';
         }
 
-        if (variantSession && currentSessionId) {
-          // First, try to restore from database if localStorage is empty or session is new
-          const localResponses = LocalStorageService.getUserResponses(currentSessionId);
-          const hasLocalData = Object.keys(localResponses).length > 0;
-          
-          if (!hasLocalData) {
-            // Try to restore from database
-            try {
-              const user = LocalStorageService.getCurrentUser();
-              if (user) {
-                const restoredSession = await api.restoreSurveySession(user.id, surveyVariant);
-                if (restoredSession) {
-                  // Update local session with restored data
-                  const updatedSession = {
-                    ...variantSession,
-                    id: restoredSession.id,
-                  };
-                  LocalStorageService.setCurrentSession(updatedSession);
-                  
-                  // Save restored answers to localStorage
-                  Object.entries(restoredSession.answers).forEach(([questionId, answer]) => {
-                    LocalStorageService.saveUserResponse(currentSessionId, questionId, answer as number);
-                  });
-                  
-                  setSurveyState(prev => ({
-                    ...prev,
-                    responses: restoredSession.answers
-                  }));
-                  return;
-                }
-              }
-            } catch (error) {
-              ErrorHandler.warn('Failed to restore session from database', {
-                component: 'useSurvey',
-                operation: 'restoreSession',
-                sessionId: session?.id,
-                additionalData: { error }
-              });
-            }
-          }
-          
-          // Use local data if available or start fresh
-          setSurveyState(prev => ({
-            ...prev,
-            responses: localResponses
-          }));
-        }
+        // No need for restoration logic here - answers are already saved above
+        // when sessionId is provided from URL (lines 182-199)
       }
     };
 
