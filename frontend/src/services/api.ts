@@ -174,32 +174,19 @@ class ApiClient {
     return response.data;
   }
 
-  // Utility method for generating test tokens (development only)
-  async generateTestToken(telegramId: number): Promise<{ token: string; expiresAt: string; telegramId: number }> {
-    const response = await this.client.post('/auth/generate-token', { telegramId });
-    return response.data;
-  }
-
   // Additional methods from BusinessAssessmentPlatform
   async startSurvey(version: SurveyVariant, telegramId?: number): Promise<{ session: SurveySession; sessionToken: string }> {
-    // Use the authenticate method if we have a telegram ID, otherwise start a new session
-    if (telegramId) {
-      // Generate a token for the telegram user and authenticate
-      const tokenResponse = await this.generateTestToken(telegramId);
-      // Convert variant to SurveyType for the authenticate method
-      const surveyType = version === 'express' ? SurveyType.EXPRESS : SurveyType.FULL;
-      return this.authenticate(tokenResponse.token, surveyType);
-    }
-    // For non-telegram users, start a session with a default ID
+    const surveyType = version.toUpperCase(); // 'express' → 'EXPRESS', 'full' → 'FULL'
+
     const response = await this.client.post('/surveys/start', {
-      telegramId: Date.now(), // Use timestamp as a temporary ID
-      surveyType: version // Backend now handles case conversion
+      telegramId: telegramId || Date.now(), // Fallback to timestamp if no telegramId
+      surveyType: surveyType
     });
+
     if (response.data.sessionToken) {
       this.setSessionToken(response.data.sessionToken);
     }
 
-    // Return the response directly - backend already returns { session, sessionToken }
     return response.data;
   }
 
