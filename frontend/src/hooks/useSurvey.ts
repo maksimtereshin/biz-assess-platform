@@ -105,12 +105,10 @@ export function useSurvey(initialVariant?: SurveyVariant | null, sessionId?: str
     const initializeSurvey = async () => {
       if (surveyVariant) {
         // Use provided sessionId or get/create session for this variant
-        let currentSessionId: string;
         let variantSession;
 
         if (sessionId) {
           // Use the provided sessionId - load existing session from backend
-          currentSessionId = sessionId;
 
           console.log('=== USESURVY HOOK - LOADING SESSION ===');
           console.log('Session ID from URL:', sessionId);
@@ -214,7 +212,6 @@ export function useSurvey(initialVariant?: SurveyVariant | null, sessionId?: str
         } else {
           // Fallback to old behavior - get or create session for this variant
           variantSession = getOrCreateSession(surveyVariant);
-          currentSessionId = variantSession?.id || '';
         }
 
         // No need for restoration logic here - answers are already saved above
