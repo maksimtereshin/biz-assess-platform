@@ -17,7 +17,6 @@ export function ExpressPage() {
     hasCompleted: boolean;
     activeSessionId: string | null;
   } | null>(null);
-  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
 
   console.log('Session ID:', sessionId);
 
@@ -26,7 +25,6 @@ export function ExpressPage() {
     const init = async () => {
       // If sessionId already in URL - use it
       if (sessionId) {
-        setIsLoadingStatus(false);
         return;
       }
 
@@ -50,8 +48,6 @@ export function ExpressPage() {
         }
       } catch (error) {
         console.error('Failed to load survey status:', error);
-      } finally {
-        setIsLoadingStatus(false);
       }
     };
 
