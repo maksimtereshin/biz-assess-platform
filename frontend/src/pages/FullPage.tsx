@@ -17,12 +17,13 @@ export function FullPage() {
     hasCompleted: boolean;
     activeSessionId: string | null;
   } | null>(null);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   // Initialize: load survey status if no sessionId
   React.useEffect(() => {
     const init = async () => {
-      // If sessionId already in URL - use it
-      if (sessionId) {
+      // If sessionId already in URL or creating session - skip
+      if (sessionId || isCreatingSession) {
         return;
       }
 
@@ -50,7 +51,7 @@ export function FullPage() {
     };
 
     init();
-  }, [sessionId, navigate]);
+  }, [sessionId, navigate, isCreatingSession]);
   const {
     surveyVariant,
     surveyState,
@@ -102,6 +103,8 @@ export function FullPage() {
       return;
     }
 
+    setIsCreatingSession(true);
+
     try {
       // Create new session via API
       const { session, sessionToken } = await api.startSurvey('full', parseInt(user.telegramId));
@@ -111,6 +114,7 @@ export function FullPage() {
       navigate(`/full/${session.id}`, { replace: true });
     } catch (error) {
       console.error('Failed to start survey:', error);
+      setIsCreatingSession(false);
     }
   };
 

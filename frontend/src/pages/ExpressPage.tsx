@@ -17,14 +17,15 @@ export function ExpressPage() {
     hasCompleted: boolean;
     activeSessionId: string | null;
   } | null>(null);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   console.log('Session ID:', sessionId);
 
   // Initialize: load survey status if no sessionId
   React.useEffect(() => {
     const init = async () => {
-      // If sessionId already in URL - use it
-      if (sessionId) {
+      // If sessionId already in URL or creating session - skip
+      if (sessionId || isCreatingSession) {
         return;
       }
 
@@ -52,7 +53,7 @@ export function ExpressPage() {
     };
 
     init();
-  }, [sessionId, navigate]);
+  }, [sessionId, navigate, isCreatingSession]);
 
   const {
     surveyVariant,
@@ -108,6 +109,8 @@ export function ExpressPage() {
       return;
     }
 
+    setIsCreatingSession(true);
+
     try {
       // Create new session via API
       const { session, sessionToken } = await api.startSurvey('express', parseInt(user.telegramId));
@@ -117,6 +120,7 @@ export function ExpressPage() {
       navigate(`/express/${session.id}`, { replace: true });
     } catch (error) {
       console.error('Failed to start survey:', error);
+      setIsCreatingSession(false);
     }
   };
 
