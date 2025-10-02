@@ -60,7 +60,7 @@ export const useAuthStore = create<AuthState>()(
               for (let attempt = 1; attempt <= retries; attempt++) {
                 try {
                   console.log(`🔄 Token verification attempt ${attempt}/${retries}`);
-                  const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/verify`, {
+                  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/verify`, {
                     headers: {
                       'Authorization': `Bearer ${urlToken}`
                     }
@@ -137,7 +137,7 @@ export const useAuthStore = create<AuthState>()(
               for (let attempt = 1; attempt <= retries; attempt++) {
                 try {
                   console.log(`🔄 Stored token verification attempt ${attempt}/${retries}`);
-                  const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/verify`, {
+                  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/verify`, {
                     headers: {
                       'Authorization': `Bearer ${currentToken}`
                     }
@@ -193,7 +193,7 @@ export const useAuthStore = create<AuthState>()(
           if (tgWebAppData) {
             console.log('📱 Found tgWebAppData in URL, attempting authentication...');
             try {
-              const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/telegram`, {
+              const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/telegram`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -242,7 +242,7 @@ export const useAuthStore = create<AuthState>()(
             if (telegramInitData && telegramInitData.trim()) {
               console.log('✅ InitData available, attempting authentication...');
               try {
-                const apiUrl = `${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/telegram`;
+                const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/telegram`;
                 console.log('📡 API URL:', apiUrl);
 
                 const response = await fetch(apiUrl, {
@@ -295,8 +295,8 @@ export const useAuthStore = create<AuthState>()(
             console.warn('⚠️ Telegram WebApp not available');
           }
 
-          // В режиме разработки, если Telegram недоступен, попробуем создать тестовый токен
-          if (import.meta.env.DEV) {
+          // Если Telegram недоступен, попробуем создать тестовый токен (только в dev режиме)
+          if (import.meta.env.MODE === 'development') {
             await get().initDevelopmentAuth();
           } else {
             // В продакшене без Telegram аутентификации возвращаем ошибку
@@ -329,7 +329,7 @@ export const useAuthStore = create<AuthState>()(
           if (window.Telegram?.WebApp?.initData) {
             // Try Telegram authentication first
             try {
-              const response = await fetch(`${import.meta.env.DEV ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') : ''}/api/auth/telegram`, {
+              const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/telegram`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ initData: window.Telegram.WebApp.initData }),

@@ -45,15 +45,14 @@ services:
         value: "false" # Database schema sync disabled after initial deployment
     healthCheckPath: /api/health
 
-  # Frontend Service
-  - type: web
+  # Frontend Service - Static Site (no Docker, no nginx)
+  - type: static
     name: bizass-frontend
-    runtime: docker
     plan: free
-    dockerfilePath: ./frontend/Dockerfile
-    dockerContext: ./
+    buildCommand: cd shared && npm ci && npm run build && cd ../frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
     envVars:
-      - key: BACKEND_URL
+      - key: VITE_API_URL
         value: "https://bizass-backend.onrender.com"
 
 databases:

@@ -3,10 +3,8 @@ import { Survey, SurveySession, SurveyType, SurveyResults, CategoryResult } from
 import { SurveyVariant } from '../types/adapters';
 import { useAuthStore } from '../store/auth';
 
-// API client configuration - use relative URLs for production, full URL for development
-const API_BASE_URL = import.meta.env.DEV
-  ? (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api'
-  : '/api'; // In production, nginx will proxy /api to backend
+// API client configuration - always use VITE_API_URL (set at build time)
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001') + '/api';
 
 class ApiClient {
   private client: AxiosInstance;
