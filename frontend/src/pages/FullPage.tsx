@@ -103,7 +103,6 @@ export function FullPage() {
     getOverallProgress,
     getCategoryProgress,
     isSurveyCompleted,
-    showSurveyResults,
     hideSurveyResults
   } = useSurvey('full', sessionId);
 

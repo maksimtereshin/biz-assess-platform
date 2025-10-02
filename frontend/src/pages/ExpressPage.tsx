@@ -106,7 +106,6 @@ export function ExpressPage() {
     getOverallProgress,
     getCategoryProgress,
     isSurveyCompleted,
-    showSurveyResults,
     hideSurveyResults
   } = useSurvey('express', sessionId);
   console.log('Survey Variant:', surveyVariant);
