@@ -25,12 +25,22 @@ class ApiClient {
       const authToken = useAuthStore.getState().token;
       const token = this.sessionToken || authToken;
 
+      console.log('=== API REQUEST INTERCEPTOR ===');
+      console.log('Method:', config.method?.toUpperCase());
+      console.log('URL:', config.url);
+      console.log('Base URL:', config.baseURL);
+      console.log('Full URL:', `${config.baseURL}${config.url}`);
+      console.log('Session token in memory:', this.sessionToken ? `${this.sessionToken.substring(0, 30)}...` : 'NULL');
+      console.log('Auth token from store:', authToken ? `${authToken.substring(0, 30)}...` : 'NULL');
+      console.log('Final token to use:', token ? `${token.substring(0, 30)}...` : 'NULL');
+      console.log('Token source:', this.sessionToken ? 'SESSION_TOKEN' : authToken ? 'AUTH_STORE' : 'NONE');
+
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('✓ Authorization header set');
+      } else {
+        console.warn('⚠️ No token available for this request!');
       }
-
-      console.log('API Request:', config.method?.toUpperCase(), config.url);
-      console.log('Using token:', token ? `${token.substring(0, 20)}...` : 'none');
 
       return config;
     });

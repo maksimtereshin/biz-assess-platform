@@ -34,6 +34,11 @@ export function SurveySelectionScreen() {
 
       const { session, sessionToken } = response;
 
+      console.log('=== SESSION CREATION DEBUG ===');
+      console.log('Created session ID:', session.id);
+      console.log('Session token (first 30 chars):', sessionToken.substring(0, 30) + '...');
+      console.log('Full session object:', JSON.stringify(session, null, 2));
+
       // Create a UserSession object from the API session
       const userSession = {
         id: session.id,
@@ -44,12 +49,25 @@ export function SurveySelectionScreen() {
         isCompleted: false,
         currentQuestionIndex: 0
       };
-      console.log('User Session:', userSession);
+      console.log('User Session object created:', JSON.stringify(userSession, null, 2));
+
       // Store new session info
       LocalStorageService.setCurrentSession(userSession);
+      console.log('✓ Session saved to localStorage');
+
       api.setSessionToken(sessionToken);
+      console.log('✓ Session token set in API client');
+
       LocalStorageService.setSessionToken(session.id, sessionToken);
-      console.log('Session Token saved for session:', session.id);
+      console.log('✓ Session token saved to localStorage for session:', session.id);
+
+      // Verify token was saved correctly
+      const savedToken = LocalStorageService.getSessionToken(session.id);
+      console.log('Verification - Token retrieved from localStorage:', savedToken ? savedToken.substring(0, 30) + '...' : 'NULL');
+      console.log('Tokens match:', savedToken === sessionToken);
+
+      console.log('=== NAVIGATING TO:', `/${surveyVariant}/${session.id}`, '===');
+
       // Navigate to survey with session ID
       navigate(`/${surveyVariant}/${session.id}`);
     } catch (error) {

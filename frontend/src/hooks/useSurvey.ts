@@ -112,20 +112,44 @@ export function useSurvey(initialVariant?: SurveyVariant | null, sessionId?: str
           // Use the provided sessionId - load existing session from backend
           currentSessionId = sessionId;
 
+          console.log('=== USESURVY HOOK - LOADING SESSION ===');
+          console.log('Session ID from URL:', sessionId);
+          console.log('Survey variant:', initialVariant);
+
           // Restore session token from localStorage first
           const savedToken = LocalStorageService.getSessionToken(sessionId);
-          console.log('Restoring session token for session:', sessionId);
-          console.log('Found saved token:', savedToken ? `${savedToken.substring(0, 20)}...` : 'none');
+          console.log('Attempting to restore token from localStorage...');
+          console.log('Found saved token:', savedToken ? `${savedToken.substring(0, 30)}...` : 'NULL');
 
           if (savedToken) {
+            // Decode JWT to see what's inside
+            try {
+              const parts = savedToken.split('.');
+              if (parts.length === 3) {
+                const payload = JSON.parse(atob(parts[1]));
+                console.log('JWT Token Payload:', JSON.stringify(payload, null, 2));
+                console.log('Token sessionId:', payload.sessionId);
+                console.log('URL sessionId:', sessionId);
+                console.log('SessionIds match:', payload.sessionId === sessionId);
+              }
+            } catch (e) {
+              console.error('Failed to decode JWT:', e);
+            }
+
             api.setSessionToken(savedToken);
-            console.log('Session token set in API client');
+            console.log('✓ Session token set in API client');
+            console.log('Token length:', savedToken.length);
           } else {
-            console.warn('No saved token found for session:', sessionId);
+            console.warn('⚠️ No saved token found for session:', sessionId);
+            console.warn('This will likely cause authentication failure!');
           }
 
           try {
+            console.log('Making API request to load session...');
             const backendSession = await api.getCurrentSession(sessionId);
+            console.log('✓ Successfully loaded session from backend');
+            console.log('Backend session data:', JSON.stringify(backendSession, null, 2));
+
             if (backendSession) {
               // Create a UserSession from the backend session
               variantSession = {
@@ -138,9 +162,16 @@ export function useSurvey(initialVariant?: SurveyVariant | null, sessionId?: str
                 currentQuestionIndex: 0
               };
               LocalStorageService.setCurrentSession(variantSession);
+              console.log('✓ Session saved to localStorage');
             }
-          } catch (error) {
-            console.error('Failed to load session from backend:', error);
+          } catch (error: any) {
+            console.error('=== FAILED TO LOAD SESSION FROM BACKEND ===');
+            console.error('Error type:', error?.constructor?.name);
+            console.error('Error message:', error?.message);
+            console.error('Response status:', error?.response?.status);
+            console.error('Response data:', JSON.stringify(error?.response?.data, null, 2));
+            console.error('Request headers:', JSON.stringify(error?.config?.headers, null, 2));
+            console.error('Full error:', error);
             // If can't load from backend, redirect to selection
             navigate('/');
             return;
