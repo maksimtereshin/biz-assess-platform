@@ -72,20 +72,19 @@ export class SurveyController {
       throw new NotFoundException("Session not found");
     }
 
-    // Verify session belongs to authenticated user
-    const userTelegramId = req.user.telegramId;
-    const sessionUserId = typeof session.userId === 'string' 
-      ? parseInt(session.userId.replace('tg_', ''))  // "tg_113961571" → 113961571
-      : session.userId;  // Уже число
+    // Normalize both userId values for comparison
+    // Handle both formats: number (113961571) and string ("tg_113961571")
+    const sessionUserIdStr = String(session.userId).replace(/^tg_/, '');
+    const requestUserIdStr = String(req.user.telegramId);
 
-    if (sessionUserId !== userTelegramId) {
+    if (sessionUserIdStr !== requestUserIdStr) {
       throw new ForbiddenException("Access denied to this session");
     }
 
     // Generate session token for this session
     const sessionToken = this.jwtService.sign(
       {
-        telegramId: userTelegramId,
+        telegramId: req.user.telegramId,
         sessionId: session.id,
         type: "session",
       },
