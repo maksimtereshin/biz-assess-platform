@@ -38,7 +38,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: FRONTEND_URL
-        value: "https://bizass-frontend.onrender.com"
+        value: "https://biz-assess-platform.onrender.com"
       - key: TELEGRAM_BOT_TOKEN
         sync: false # Set manually in Render dashboard
       - key: DB_SYNC

@@ -32,7 +32,7 @@ async function bootstrap() {
 
   // Render.com specific origins - always allow these in production
   const renderOrigins = [
-    "https://bizass-frontend.onrender.com",
+    "https://biz-assess-platform.onrender.com",
     "https://bizass-backend.onrender.com",
   ];
 
