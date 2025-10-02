@@ -68,8 +68,10 @@ export function SurveySelectionScreen() {
 
       console.log('=== NAVIGATING TO:', `/${surveyVariant}/${session.id}`, '===');
 
-      // Navigate to survey with session ID
-      navigate(`/${surveyVariant}/${session.id}`);
+      // Navigate to survey with session ID and autoStart flag
+      navigate(`/${surveyVariant}/${session.id}`, {
+        state: { autoStart: true }
+      });
     } catch (error) {
       console.error('Error starting survey:', error);
       // Fallback to old navigation if session creation fails

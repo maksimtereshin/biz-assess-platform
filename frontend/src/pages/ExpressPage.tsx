@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronLeft, Play, RotateCcw, Eye, CreditCard } from 'lucide-react';
 import { useSurvey } from '../hooks/useSurvey';
 import { useUserSession } from '../hooks/useUserSession';
@@ -10,8 +10,10 @@ import api from '../services/api';
 
 export function ExpressPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { sessionId } = useParams<{ sessionId: string }>();
   const { hasCompletedSurvey } = useUserSession();
+  const shouldAutoStart = location.state?.autoStart === true;
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [surveyStatus, setSurveyStatus] = useState<{
     hasCompleted: boolean;
@@ -183,15 +185,16 @@ export function ExpressPage() {
     setShowResetConfirm(false);
   };
 
-  // Auto-start survey when sessionId is present and session is loaded
+  // Auto-start survey ONLY when explicitly requested (new session from SurveySelectionScreen)
   React.useEffect(() => {
     // Only auto-start if:
-    // 1. We have a sessionId in URL
-    // 2. We're not already in a survey (currentCategory is null)
-    // 3. Categories data is loaded
-    // 4. Survey is not completed
-    if (sessionId && !surveyState.currentCategory && categoriesData.length > 0 && !isSurveyCompleted()) {
-      console.log('Auto-starting survey for session:', sessionId);
+    // 1. We have autoStart flag from navigation (new session created)
+    // 2. We have a sessionId in URL
+    // 3. We're not already in a survey (currentCategory is null)
+    // 4. Categories data is loaded
+    // 5. Survey is not completed
+    if (shouldAutoStart && sessionId && !surveyState.currentCategory && categoriesData.length > 0 && !isSurveyCompleted()) {
+      console.log('Auto-starting NEW survey for session:', sessionId);
       const firstIncompleteCategory = categoriesData.find(category =>
         category.completedQuestions < category.totalQuestions
       );
@@ -201,7 +204,7 @@ export function ExpressPage() {
         startSurvey(firstIncompleteCategory.id);
       }
     }
-  }, [sessionId, surveyState.currentCategory, categoriesData, isSurveyCompleted, startSurvey]);
+  }, [shouldAutoStart, sessionId, surveyState.currentCategory, categoriesData, isSurveyCompleted, startSurvey]);
 
   // Handle navigation based on survey state
   React.useEffect(() => {
