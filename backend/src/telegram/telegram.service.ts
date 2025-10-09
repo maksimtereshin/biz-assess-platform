@@ -13,6 +13,7 @@ import { ADMIN_USERNAMES, ADMIN_PANEL } from "./telegram.constants";
 import { CalendarService } from "./calendar/calendar.service";
 import * as fs from "fs";
 import * as FormData from "form-data";
+import axios from "axios";
 
 interface InlineKeyboardMarkup {
   inline_keyboard: Array<
@@ -1325,20 +1326,18 @@ Click the button below to pay:
       });
       formData.append('caption', '📊 Аналитический отчет');
 
-      const response = await fetch(
+      const response = await axios.post(
         `https://api.telegram.org/bot${this.botToken}/sendDocument`,
+        formData,
         {
-          method: 'POST',
-          body: formData as any,
           headers: formData.getHeaders(),
         },
       );
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        this.logger.error('Telegram sendDocument API error response:', errorBody);
+      if (response.status !== 200) {
+        this.logger.error('Telegram sendDocument API error response:', response.data);
         throw new Error(
-          `Telegram sendDocument API error: ${response.statusText} - ${errorBody}`,
+          `Telegram sendDocument API error: ${response.statusText}`,
         );
       }
     } catch (error) {
