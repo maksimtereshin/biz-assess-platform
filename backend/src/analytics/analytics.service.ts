@@ -302,14 +302,14 @@ export class AnalyticsService {
       .select('user.telegram_id', 'telegram_id')
       .addSelect('user.first_name', 'first_name')
       .addSelect('user.username', 'username')
-      .addSelect('COUNT(session.id)', '"completedCount"')
-      .addSelect('MAX(session.updated_at)', 'lastActivity')
+      .addSelect('COUNT(session.id)', 'completed_count')
+      .addSelect('MAX(session.updated_at)', 'last_activity')
       .leftJoin('user.survey_sessions', 'session')
       .where('session.status = :status', { status: SurveySessionStatus.COMPLETED })
       .groupBy('user.telegram_id')
       .addGroupBy('user.first_name')
       .addGroupBy('user.username')
-      .orderBy('"completedCount"', 'DESC')
+      .orderBy('completed_count', 'DESC')
       .limit(limit)
       .getRawMany();
 
@@ -317,8 +317,8 @@ export class AnalyticsService {
       telegramId: parseInt(row.telegram_id),
       firstName: row.first_name,
       username: row.username,
-      completedSurveys: parseInt(row.completedCount),
-      lastActivityDate: new Date(row.lastActivity),
+      completedSurveys: parseInt(row.completed_count),
+      lastActivityDate: new Date(row.last_activity),
     }));
   }
 
@@ -331,9 +331,9 @@ export class AnalyticsService {
       .select('user.telegram_id', 'telegram_id')
       .addSelect('user.first_name', 'first_name')
       .addSelect('user.username', 'username')
-      .addSelect('AVG(answer.score)', '"avgScore"')
-      .addSelect('COUNT(DISTINCT session.id)', '"completedCount"')
-      .addSelect('MAX(session.updated_at)', 'lastActivity')
+      .addSelect('AVG(answer.score)', 'avg_score')
+      .addSelect('COUNT(DISTINCT session.id)', 'completed_count')
+      .addSelect('MAX(session.updated_at)', 'last_activity')
       .leftJoin('user.survey_sessions', 'session')
       .leftJoin('session.answers', 'answer')
       .where('session.status = :status', { status: SurveySessionStatus.COMPLETED })
@@ -341,7 +341,7 @@ export class AnalyticsService {
       .addGroupBy('user.first_name')
       .addGroupBy('user.username')
       .having('COUNT(DISTINCT session.id) > 0')
-      .orderBy('"avgScore"', 'DESC')
+      .orderBy('avg_score', 'DESC')
       .limit(limit)
       .getRawMany();
 
@@ -349,9 +349,9 @@ export class AnalyticsService {
       telegramId: parseInt(row.telegram_id),
       firstName: row.first_name,
       username: row.username,
-      completedSurveys: parseInt(row.completedCount),
-      averageScore: Math.round(parseFloat(row.avgScore) * 100) / 100,
-      lastActivityDate: new Date(row.lastActivity),
+      completedSurveys: parseInt(row.completed_count),
+      averageScore: Math.round(parseFloat(row.avg_score) * 100) / 100,
+      lastActivityDate: new Date(row.last_activity),
     }));
   }
 
