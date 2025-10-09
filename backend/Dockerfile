@@ -92,6 +92,9 @@ COPY --from=builder --chown=nestjs:nodejs /shared ./node_modules/bizass-shared
 # Copy built application from builder stage
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 
+# Copy migrations directory
+COPY --chown=nestjs:nodejs ./backend/migrations ./migrations
+
 # Create uploads directory for file storage
 RUN mkdir -p uploads && chown nestjs:nodejs uploads
 
