@@ -10,6 +10,8 @@ import { TelegramModule } from "./telegram/telegram.module";
 import { AuthModule } from "./auth/auth.module";
 import { HealthModule } from "./health/health.module";
 import { ProxyModule } from "./proxy/proxy.module";
+import { AnalyticsModule } from "./analytics/analytics.module";
+import { ExcelModule } from "./excel/excel.module";
 import * as entities from "./entities";
 import { DataSource } from "typeorm";
 import { seedSurveys } from "./data/seed-surveys";
@@ -62,6 +64,8 @@ import { seedSurveys } from "./data/seed-surveys";
     AuthModule,
     HealthModule,
     ProxyModule,
+    AnalyticsModule,
+    ExcelModule,
   ],
   providers: [
     {

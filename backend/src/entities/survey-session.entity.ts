@@ -33,6 +33,12 @@ export class SurveySession {
   })
   status: string;
 
+  @Column({
+    type: "boolean",
+    default: false,
+  })
+  requires_payment: boolean;
+
   @CreateDateColumn({ type: "timestamptz" })
   created_at: Date;
 

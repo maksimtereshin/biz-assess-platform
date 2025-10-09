@@ -253,6 +253,82 @@ export class SurveyService {
     };
   }
 
+  /**
+   * Check if user has already used their free survey
+   * Returns true if user has completed at least one survey (of any type)
+   */
+  async hasUsedFreeSurvey(userId: number): Promise<boolean> {
+    const completedCount = await this.sessionRepository.count({
+      where: {
+        user_telegram_id: userId,
+        status: SessionStatus.COMPLETED,
+      },
+    });
+
+    return completedCount > 0;
+  }
+
+  /**
+   * Check if user must pay for a new survey
+   * First survey (any type) is free, all subsequent surveys require payment
+   */
+  async requiresPayment(userId: number): Promise<boolean> {
+    return await this.hasUsedFreeSurvey(userId);
+  }
+
+  /**
+   * Start a new survey with payment requirement check
+   * First survey is free, all subsequent surveys require payment
+   */
+  async startSurveyWithPaymentCheck(
+    userId: number,
+    type: string,
+  ): Promise<SurveySession & { requiresPayment: boolean }> {
+    // Check if user exists, create if not
+    let user = await this.userRepository.findOne({
+      where: { telegram_id: userId },
+    });
+    if (!user) {
+      user = this.userRepository.create({
+        telegram_id: userId,
+        first_name: "Unknown", // Will be updated from Telegram data
+      });
+      await this.userRepository.save(user);
+    }
+
+    // Get survey by type (convert to uppercase for case-insensitive matching)
+    const survey = await this.surveyRepository.findOne({
+      where: { type: type.toUpperCase() }
+    });
+    if (!survey) {
+      throw new NotFoundException(`Survey type ${type} not found`);
+    }
+
+    // Check if payment is required
+    const requiresPayment = await this.requiresPayment(userId);
+
+    // Create new session with payment requirement flag
+    const session = this.sessionRepository.create({
+      id: uuidv4(),
+      user_telegram_id: userId,
+      survey_id: survey.id,
+      status: SessionStatus.IN_PROGRESS,
+      requires_payment: requiresPayment,
+    });
+
+    const savedSession = await this.sessionRepository.save(session);
+
+    return {
+      id: savedSession.id,
+      userId: savedSession.user_telegram_id,
+      surveyType: type as SurveyType,
+      status: savedSession.status as SessionStatus,
+      answers: {},
+      createdAt: savedSession.created_at.toISOString(),
+      requiresPayment,
+    };
+  }
+
   async generateReport(
     sessionId: string,
     isPaid: boolean = false,

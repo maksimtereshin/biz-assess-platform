@@ -6,7 +6,12 @@ import { TelegramWebhookPayload, SurveyType } from "bizass-shared";
 import { AuthService } from "../auth/auth.service";
 import { SurveyService } from "../survey/survey.service";
 import { PaymentService } from "../payment/payment.service";
+import { AnalyticsService } from "../analytics/analytics.service";
+import { ExcelService } from "../excel/excel.service";
 import { User } from "../entities";
+import { ADMIN_USERNAMES, ADMIN_PANEL } from "./telegram.constants";
+import { CalendarService } from "./calendar/calendar.service";
+import * as fs from "fs";
 
 interface InlineKeyboardMarkup {
   inline_keyboard: Array<
@@ -25,11 +30,26 @@ export class TelegramService {
   private readonly botToken: string;
   private readonly webAppUrl: string;
 
+  // Store calendar selection state per user
+  private readonly calendarState = new Map<number, {
+    startDate?: Date;
+    endDate?: Date;
+    currentViewDate: Date;
+  }>();
+
+  // Rate limiting for report generation (1 per minute per admin)
+  private readonly reportGenerationCooldown = new Map<number, number>();
+  private readonly REPORT_COOLDOWN_MS = 60000; // 1 minute
+  private readonly REPORT_TIMEOUT_MS = 30000; // 30 seconds
+
   constructor(
     private configService: ConfigService,
     private authService: AuthService,
     private surveyService: SurveyService,
     private paymentService: PaymentService,
+    private analyticsService: AnalyticsService,
+    private excelService: ExcelService,
+    private calendarService: CalendarService,
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {
@@ -40,15 +60,47 @@ export class TelegramService {
     );
   }
 
-  private getMainKeyboard(): InlineKeyboardMarkup {
+  /**
+   * Check if a username belongs to an authorized admin
+   * Performs case-insensitive matching and trims whitespace
+   * @param username - Telegram username to check
+   * @returns true if user is admin, false otherwise
+   */
+  isAdmin(username?: string | null): boolean {
+    if (!username) {
+      return false;
+    }
+
+    const normalizedUsername = username.trim().toLowerCase();
+    const isAdminUser = ADMIN_USERNAMES.some(
+      (adminUsername) => adminUsername.toLowerCase() === normalizedUsername
+    );
+
+    if (isAdminUser) {
+      this.logger.log(`Admin access granted for username: ${username}`);
+    }
+
+    return isAdminUser;
+  }
+
+  getMainKeyboard(user?: { username?: string }): InlineKeyboardMarkup {
+    const baseKeyboard = [
+      [{ text: "🚀 Начать ЧЕК АП", callback_data: "start_checkup" }],
+      [{ text: "📊 Мои результаты", callback_data: "my_results" }],
+      [{ text: "👥 Реферальная программа", callback_data: "referral" }],
+      [{ text: "ℹ️ О проекте", callback_data: "about" }],
+      [{ text: "❓ Помощь", callback_data: "help" }],
+    ];
+
+    // Add admin button for authorized users
+    if (user?.username && this.isAdmin(user.username)) {
+      baseKeyboard.push([
+        { text: ADMIN_PANEL.BUTTON_TEXT, callback_data: "admin_panel" },
+      ]);
+    }
+
     return {
-      inline_keyboard: [
-        [{ text: "🚀 Начать ЧЕК АП", callback_data: "start_checkup" }],
-        [{ text: "📊 Мои результаты", callback_data: "my_results" }],
-        [{ text: "👥 Реферальная программа", callback_data: "referral" }],
-        [{ text: "ℹ️ О проекте", callback_data: "about" }],
-        [{ text: "❓ Помощь", callback_data: "help" }],
-      ],
+      inline_keyboard: baseKeyboard,
     };
   }
 
@@ -181,6 +233,33 @@ export class TelegramService {
       await this.handleHelpCommand(chatId);
     } else if (data === "back_to_main") {
       await this.handleStartCommand(chatId, user);
+    } else if (data === "admin_panel" || data.startsWith("analytics_")) {
+      // Admin-only features - check authorization
+      if (!this.isAdmin(user.username)) {
+        this.logger.warn(`Unauthorized admin access attempt by user: ${user.username || user.id}`);
+        await this.sendMessage(
+          chatId,
+          "⛔ Вы не авторизованы для доступа к админ панели.",
+        );
+        return;
+      }
+
+      if (data === "admin_panel") {
+        await this.handleAdminPanel(chatId);
+      } else if (data === "analytics_all_time") {
+        await this.sendMessage(chatId, "📊 Генерация отчета за весь период...\n\n⏳ Пожалуйста, подождите...");
+        await this.generateAndSendAnalyticsReport(chatId, user.id, null, null);
+      } else if (data === "analytics_custom") {
+        await this.handleCalendarStart(chatId, user.id);
+      }
+    } else if (data.startsWith("calendar_")) {
+      // Calendar widget callbacks - admin only
+      if (!this.isAdmin(user.username)) {
+        this.logger.warn(`Unauthorized calendar access attempt by user: ${user.username || user.id}`);
+        await this.sendMessage(chatId, "⛔ Вы не авторизованы для доступа к этой функции.");
+        return;
+      }
+      await this.handleCalendarCallback(chatId, user.id, data, callbackQuery.message.message_id);
     } else if (data.startsWith("survey_")) {
       const surveyType = data.split("_")[1] as SurveyType;
       await this.handleSurveySelection(chatId, user.id, surveyType);
@@ -193,6 +272,9 @@ export class TelegramService {
     } else if (data.startsWith("payment_")) {
       const sessionId = data.split("_")[1];
       await this.handlePaymentRequest(chatId, user.id, sessionId);
+    } else if (data.startsWith("download_report_")) {
+      const sessionId = data.split("_")[2];
+      await this.handleReportDownload(chatId, user.id, sessionId);
     } else if (data.startsWith("report_")) {
       const reportId = data.split("_")[1];
       await this.handleReportRequest(chatId, user.id, reportId);
@@ -221,7 +303,7 @@ export class TelegramService {
     await this.sendMessageWithKeyboard(
       chatId,
       welcomeMessage,
-      this.getMainKeyboard(),
+      this.getMainKeyboard(user),
     );
   }
 
@@ -247,6 +329,440 @@ export class TelegramService {
       message,
       this.getSurveyTypeKeyboard(chatId),
     );
+  }
+
+  private async handleAdminPanel(chatId: number): Promise<void> {
+    const keyboard = {
+      inline_keyboard: [
+        [
+          {
+            text: ADMIN_PANEL.ALL_TIME_ANALYTICS,
+            callback_data: "analytics_all_time",
+          },
+        ],
+        [
+          {
+            text: ADMIN_PANEL.CUSTOM_ANALYTICS,
+            callback_data: "analytics_custom",
+          },
+        ],
+        [
+          {
+            text: ADMIN_PANEL.BACK_TO_MAIN,
+            callback_data: "back_to_main",
+          },
+        ],
+      ],
+    };
+
+    await this.sendMessageWithKeyboard(
+      chatId,
+      ADMIN_PANEL.MENU_TITLE,
+      keyboard,
+    );
+  }
+
+  /**
+   * Initialize calendar for date range selection
+   */
+  private async handleCalendarStart(chatId: number, userId: number): Promise<void> {
+    // Initialize calendar state
+    const today = new Date();
+    this.calendarState.set(userId, {
+      currentViewDate: today,
+    });
+
+    const message = `
+📅 *Выбор периода для аналитики*
+
+Выберите начальную дату периода.
+После выбора начальной даты, выберите конечную дату.
+
+_Максимальный период: 1 год_
+    `;
+
+    const calendar = this.calendarService.generateCalendar(today);
+
+    await this.sendMessageWithKeyboard(chatId, message, calendar);
+  }
+
+  /**
+   * Handle calendar navigation and date selection
+   */
+  private async handleCalendarCallback(
+    chatId: number,
+    userId: number,
+    callbackData: string,
+    messageId: number,
+  ): Promise<void> {
+    const state = this.calendarState.get(userId) || { currentViewDate: new Date() };
+    const parsed = this.calendarService.parseCallbackData(callbackData);
+
+    switch (parsed.action) {
+      case 'prev_month': {
+        const { year, month } = this.calendarService.getPreviousMonth(
+          parsed.year!,
+          parsed.month!,
+        );
+        state.currentViewDate = new Date(year, month, 1);
+        this.calendarState.set(userId, state);
+
+        const calendar = this.calendarService.generateCalendarWithSelection(
+          state.currentViewDate,
+          state.startDate,
+          state.endDate,
+        );
+
+        await this.editMessageKeyboard(chatId, messageId, calendar);
+        break;
+      }
+
+      case 'next_month': {
+        const { year, month } = this.calendarService.getNextMonth(
+          parsed.year!,
+          parsed.month!,
+        );
+        state.currentViewDate = new Date(year, month, 1);
+        this.calendarState.set(userId, state);
+
+        const calendar = this.calendarService.generateCalendarWithSelection(
+          state.currentViewDate,
+          state.startDate,
+          state.endDate,
+        );
+
+        await this.editMessageKeyboard(chatId, messageId, calendar);
+        break;
+      }
+
+      case 'select': {
+        const selectedDate = parsed.date!;
+
+        if (!state.startDate) {
+          // First selection - set as start date
+          state.startDate = selectedDate;
+          state.endDate = undefined;
+
+          const message = `
+📅 *Выбор периода для аналитики*
+
+✅ Начальная дата: ${this.formatDateRussian(selectedDate)}
+
+Теперь выберите конечную дату периода.
+          `;
+
+          const calendar = this.calendarService.generateCalendarWithSelection(
+            state.currentViewDate,
+            state.startDate,
+          );
+
+          await this.editMessageWithKeyboard(chatId, messageId, message, calendar);
+        } else if (!state.endDate) {
+          // Second selection - set as end date
+          state.endDate = selectedDate;
+
+          // Validate date range
+          const validation = this.calendarService.validateDateRange(
+            state.startDate,
+            state.endDate,
+          );
+
+          if (!validation.valid) {
+            await this.sendMessage(chatId, `❌ ${validation.error}`);
+            // Reset selection
+            state.startDate = undefined;
+            state.endDate = undefined;
+
+            const calendar = this.calendarService.generateCalendar(state.currentViewDate);
+            await this.editMessageKeyboard(chatId, messageId, calendar);
+            return;
+          }
+
+          const message = `
+📅 *Выбор периода для аналитики*
+
+✅ Начальная дата: ${this.formatDateRussian(state.startDate)}
+✅ Конечная дата: ${this.formatDateRussian(state.endDate)}
+
+Нажмите "Подтвердить выбор" для генерации отчета.
+          `;
+
+          const calendar = this.calendarService.generateCalendarWithSelection(
+            state.currentViewDate,
+            state.startDate,
+            state.endDate,
+          );
+
+          await this.editMessageWithKeyboard(chatId, messageId, message, calendar);
+        } else {
+          // Both dates already selected - reset and start over
+          state.startDate = selectedDate;
+          state.endDate = undefined;
+
+          const message = `
+📅 *Выбор периода для аналитики*
+
+✅ Начальная дата: ${this.formatDateRussian(selectedDate)}
+
+Теперь выберите конечную дату периода.
+          `;
+
+          const calendar = this.calendarService.generateCalendarWithSelection(
+            state.currentViewDate,
+            state.startDate,
+          );
+
+          await this.editMessageWithKeyboard(chatId, messageId, message, calendar);
+        }
+
+        this.calendarState.set(userId, state);
+        break;
+      }
+
+      case 'confirm': {
+        if (!state.startDate || !state.endDate) {
+          await this.sendMessage(chatId, '❌ Ошибка: Не выбраны даты');
+          return;
+        }
+
+        // Clear calendar state
+        this.calendarState.delete(userId);
+
+        const message = `
+📊 *Генерация отчета за период*
+
+📅 С ${this.formatDateRussian(state.startDate)} по ${this.formatDateRussian(state.endDate)}
+
+⏳ Пожалуйста, подождите...
+
+_Генерация отчета может занять до 30 секунд_
+        `;
+
+        await this.sendMessage(chatId, message);
+        this.logger.log(
+          `Confirmed date range: ${state.startDate.toISOString()} to ${state.endDate.toISOString()}`,
+        );
+
+        // Generate and send analytics report
+        await this.generateAndSendAnalyticsReport(chatId, userId, state.startDate, state.endDate);
+        break;
+      }
+
+      case 'cancel': {
+        this.calendarState.delete(userId);
+        await this.sendMessage(chatId, '❌ Выбор периода отменен');
+        await this.handleAdminPanel(chatId);
+        break;
+      }
+
+      case 'noop':
+      default:
+        // Do nothing
+        break;
+    }
+  }
+
+  /**
+   * Format date in Russian format: DD.MM.YYYY
+   */
+  private formatDateRussian(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+  }
+
+  /**
+   * Check if user can generate a report (rate limiting)
+   */
+  private canGenerateReport(userId: number): boolean {
+    const lastRequest = this.reportGenerationCooldown.get(userId);
+    if (!lastRequest) return true;
+
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequest;
+
+    return timeSinceLastRequest >= this.REPORT_COOLDOWN_MS;
+  }
+
+  /**
+   * Get remaining cooldown time in seconds
+   */
+  private getRemainingCooldown(userId: number): number {
+    const lastRequest = this.reportGenerationCooldown.get(userId);
+    if (!lastRequest) return 0;
+
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequest;
+    const remaining = this.REPORT_COOLDOWN_MS - timeSinceLastRequest;
+
+    return Math.ceil(remaining / 1000);
+  }
+
+  /**
+   * Generate analytics report and send as Excel file
+   */
+  private async generateAndSendAnalyticsReport(
+    chatId: number,
+    userId: number,
+    startDate: Date | null = null,
+    endDate: Date | null = null,
+  ): Promise<void> {
+    // Check rate limiting
+    if (!this.canGenerateReport(userId)) {
+      const remainingSeconds = this.getRemainingCooldown(userId);
+      await this.sendMessage(
+        chatId,
+        `⏳ Пожалуйста, подождите еще ${remainingSeconds} секунд перед следующим запросом отчета.`,
+      );
+      return;
+    }
+
+    // Update rate limiting
+    this.reportGenerationCooldown.set(userId, Date.now());
+
+    let filePath: string | null = null;
+
+    try {
+      // Set timeout for report generation
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Report generation timeout')), this.REPORT_TIMEOUT_MS);
+      });
+
+      const reportPromise = this.generateReport(startDate, endDate);
+
+      filePath = await Promise.race([reportPromise, timeoutPromise]) as string;
+
+      // Send file to user
+      await this.sendDocument(chatId, filePath, 'Аналитический_отчет.xlsx');
+
+      // Success message
+      await this.sendMessage(
+        chatId,
+        '✅ Отчет успешно сгенерирован и отправлен!',
+      );
+
+      this.logger.log(`Analytics report generated successfully for user ${userId}`);
+    } catch (error) {
+      this.logger.error('Error generating analytics report:', error);
+
+      if (error.message === 'Report generation timeout') {
+        await this.sendMessage(
+          chatId,
+          '⏱️ Превышено время ожидания генерации отчета (30 секунд). Пожалуйста, попробуйте позже.',
+        );
+      } else {
+        await this.sendMessage(
+          chatId,
+          '❌ Ошибка при генерации отчета. Пожалуйста, попробуйте позже или обратитесь к администратору.',
+        );
+      }
+    } finally {
+      // Clean up temp file
+      if (filePath) {
+        try {
+          await this.excelService.deleteReportFile(filePath);
+        } catch (cleanupError) {
+          this.logger.warn('Error deleting temp report file:', cleanupError);
+        }
+      }
+    }
+  }
+
+  /**
+   * Generate analytics report data and Excel file
+   */
+  private async generateReport(
+    startDate: Date | null,
+    endDate: Date | null,
+  ): Promise<string> {
+    // Gather all analytics data
+    const [
+      totalUsers,
+      newUsers,
+      userGrowthRate,
+      expressStats,
+      fullStats,
+      expressConversion,
+      fullConversion,
+      expressAvgTime,
+      fullAvgTime,
+      expressAvgScore,
+      fullAvgScore,
+      paidRetakes,
+      totalRevenue,
+      periodRevenue,
+      avgRevenuePerUser,
+      paymentConversionRate,
+      topUsers,
+    ] = await Promise.all([
+      this.analyticsService.getTotalUsers(),
+      this.analyticsService.getNewUsers(startDate, endDate),
+      startDate && endDate
+        ? this.analyticsService.getUserGrowthRate(startDate, endDate)
+        : Promise.resolve(0),
+      this.analyticsService.getSurveyStats('express', startDate, endDate),
+      this.analyticsService.getSurveyStats('full', startDate, endDate),
+      this.analyticsService.getConversionRate('express', startDate, endDate),
+      this.analyticsService.getConversionRate('full', startDate, endDate),
+      this.analyticsService.getAverageCompletionTime('express'),
+      this.analyticsService.getAverageCompletionTime('full'),
+      this.analyticsService.getAverageScores('express', startDate, endDate),
+      this.analyticsService.getAverageScores('full', startDate, endDate),
+      this.analyticsService.getPaidRetakes(startDate, endDate),
+      this.analyticsService.getTotalRevenue(),
+      startDate && endDate
+        ? this.analyticsService.getPeriodRevenue(startDate, endDate)
+        : this.analyticsService.getTotalRevenue(),
+      this.analyticsService.getAverageRevenuePerUser(),
+      this.analyticsService.getPaymentConversionRate(),
+      this.analyticsService.getUsersWithMostCompletions(20),
+    ]);
+
+    // Build report object
+    const report = {
+      userStats: {
+        totalUsers,
+        newUsers,
+        userGrowthRate,
+      },
+      surveyStats: [
+        {
+          type: 'express',
+          started: expressStats.started,
+          completed: expressStats.completed,
+          conversionRate: expressConversion,
+          averageCompletionTime: expressAvgTime,
+          averageScore: expressAvgScore,
+        },
+        {
+          type: 'full',
+          started: fullStats.started,
+          completed: fullStats.completed,
+          conversionRate: fullConversion,
+          averageCompletionTime: fullAvgTime,
+          averageScore: fullAvgScore,
+        },
+      ],
+      financialMetrics: {
+        paidRetakes,
+        totalRevenue,
+        periodRevenue,
+        averageRevenuePerUser: avgRevenuePerUser,
+        paymentConversionRate,
+      },
+      topUsers,
+      generatedAt: new Date(),
+      dateRange: {
+        startDate,
+        endDate,
+      },
+    };
+
+    // Generate Excel file
+    const filePath = await this.excelService.generateAnalyticsReport(report);
+
+    return filePath;
   }
 
   private async handleAboutCommand(chatId: number): Promise<void> {
@@ -308,63 +824,55 @@ Need more help? Contact support.
     userId: number,
   ): Promise<void> {
     try {
-      // Get user's survey sessions and reports
+      // Get user's completed survey sessions
       const sessions = await this.surveyService.getUserSessions(userId);
+      const completedSessions = sessions.filter(s => s.status === 'COMPLETED');
 
-      if (sessions.length === 0) {
+      if (completedSessions.length === 0) {
         await this.sendMessage(
           chatId,
-          "📊 You haven't completed any surveys yet. Use /start to begin your first assessment!",
+          "📊 У вас пока нет завершенных опросов.\n\nИспользуйте /start чтобы начать свой первый ЧЕК АП!",
         );
         return;
       }
 
-      let message = "📊 *Your Survey Reports:*\n\n";
+      // Build indexed list message
+      let message = "📊 *Ваши результаты ЧЕК АПа:*\n\n";
+      const buttons: Array<Array<{ text: string; callback_data: string }>> = [];
 
-      for (const session of sessions) {
-        const status =
-          session.status === "COMPLETED" ? "✅ Completed" : "⏳ In Progress";
-        const surveyType =
-          session.survey?.type === "EXPRESS" ? "⚡ Express" : "📈 Full";
-        const date = new Date(session.created_at).toLocaleDateString();
+      completedSessions.forEach((session, index) => {
+        const surveyType = session.survey?.type === "EXPRESS" ? "express" : "full";
+        const date = new Date(session.created_at).toLocaleDateString('ru-RU', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
 
-        message += `${surveyType} - ${status}\n`;
-        message += `📅 ${date}\n`;
+        // Format: "1. express-2025-10-08"
+        const listItem = `${index + 1}. ${surveyType}-${date.split('.').reverse().join('-')}`;
+        message += `${listItem}\n`;
 
-        if (session.status === "COMPLETED") {
-          // Add download buttons for completed surveys
-          const keyboard = {
-            inline_keyboard: [
-              [
-                {
-                  text: "📄 Download Free Report",
-                  callback_data: `report_free_${session.id}`,
-                },
-              ],
-              [
-                {
-                  text: "💎 Buy Full Report",
-                  callback_data: `report_paid_${session.id}`,
-                },
-              ],
-            ],
-          };
+        // Add download button for this result
+        buttons.push([
+          {
+            text: `📥 Скачать отчет #${index + 1}`,
+            callback_data: `download_report_${session.id}`,
+          },
+        ]);
+      });
 
-          await this.sendMessageWithKeyboard(chatId, message, keyboard);
-          message = ""; // Reset for next session
-        } else {
-          message += `🔗 [Continue Survey](${this.webAppUrl}/survey?session=${session.id})\n\n`;
-        }
-      }
+      message += "\n_Нажмите на кнопку, чтобы скачать PDF отчет_";
 
-      if (message.trim()) {
-        await this.sendMessage(chatId, message);
-      }
+      const keyboard = {
+        inline_keyboard: buttons,
+      };
+
+      await this.sendMessageWithKeyboard(chatId, message, keyboard);
     } catch (error) {
       this.logger.error("Error fetching reports:", error);
       await this.sendMessage(
         chatId,
-        "Sorry, there was an error fetching your reports. Please try again later.",
+        "Извините, произошла ошибка при получении ваших результатов. Пожалуйста, попробуйте позже.",
       );
     }
   }
@@ -571,6 +1079,33 @@ Click the button below to pay:
     }
   }
 
+  private async handleReportDownload(
+    chatId: number,
+    userId: number,
+    sessionId: string,
+  ): Promise<void> {
+    try {
+      this.logger.log(`User ${userId} requesting report download for session ${sessionId}`);
+
+      // TODO: Implement PDF report generation and download
+      // For now, send a placeholder message
+      await this.sendMessage(
+        chatId,
+        "📄 Генерация PDF отчета...\n\n⏳ Функция генерации PDF отчетов будет добавлена в следующем обновлении.",
+      );
+
+      // This would eventually call ReportService to generate PDF and send it
+      // const pdfPath = await this.reportService.generatePDF(sessionId);
+      // await this.sendDocument(chatId, pdfPath, `report_${sessionId}.pdf`);
+    } catch (error) {
+      this.logger.error("Error handling report download:", error);
+      await this.sendMessage(
+        chatId,
+        "❌ Ошибка при загрузке отчета. Пожалуйста, попробуйте позже.",
+      );
+    }
+  }
+
   private async handleReportRequest(
     chatId: number,
     _userId: number,
@@ -605,6 +1140,77 @@ Click the button below to pay:
       }
     } catch (error) {
       this.logger.error("Error sending message:", error);
+      throw error;
+    }
+  }
+
+  async editMessageWithKeyboard(
+    chatId: number,
+    messageId: number,
+    text: string,
+    keyboard: any,
+  ): Promise<void> {
+    try {
+      const response = await fetch(
+        `https://api.telegram.org/bot${this.botToken}/editMessageText`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: messageId,
+            text: text,
+            parse_mode: "Markdown",
+            reply_markup: keyboard,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        this.logger.error("Telegram API error response:", errorBody);
+        throw new Error(
+          `Telegram API error: ${response.statusText} - ${errorBody}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error("Error editing message with keyboard:", error);
+      throw error;
+    }
+  }
+
+  async editMessageKeyboard(
+    chatId: number,
+    messageId: number,
+    keyboard: any,
+  ): Promise<void> {
+    try {
+      const response = await fetch(
+        `https://api.telegram.org/bot${this.botToken}/editMessageReplyMarkup`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: messageId,
+            reply_markup: keyboard,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        this.logger.error("Telegram API error response:", errorBody);
+        throw new Error(
+          `Telegram API error: ${response.statusText} - ${errorBody}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error("Error editing message keyboard:", error);
       throw error;
     }
   }
@@ -699,6 +1305,44 @@ Click the button below to pay:
       }
     } catch (error) {
       this.logger.error("Error sending invoice:", error);
+      throw error;
+    }
+  }
+
+  async sendDocument(
+    chatId: number,
+    filePath: string,
+    fileName: string,
+  ): Promise<void> {
+    try {
+      const FormData = (await import('form-data')).default;
+      const formData = new FormData();
+
+      formData.append('chat_id', chatId.toString());
+      formData.append('document', fs.createReadStream(filePath), {
+        filename: fileName,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      formData.append('caption', '📊 Аналитический отчет');
+
+      const response = await fetch(
+        `https://api.telegram.org/bot${this.botToken}/sendDocument`,
+        {
+          method: 'POST',
+          body: formData as any,
+          headers: formData.getHeaders(),
+        },
+      );
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        this.logger.error('Telegram sendDocument API error response:', errorBody);
+        throw new Error(
+          `Telegram sendDocument API error: ${response.statusText} - ${errorBody}`,
+        );
+      }
+    } catch (error) {
+      this.logger.error('Error sending document:', error);
       throw error;
     }
   }

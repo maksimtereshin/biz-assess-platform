@@ -1,0 +1,25 @@
+implementers:
+  - id: backend-engineer
+    agent_file: .claude/agents/agent-os/implementation/backend-engineer.md
+    description: Handles backend services, business logic, and NestJS modules
+    verified_by: backend-verifier
+
+  - id: integration-engineer
+    agent_file: .claude/agents/agent-os/implementation/integration-engineer.md
+    description: Handles Telegram bot integration, webhooks, and external service connections
+    verified_by: backend-verifier
+
+  - id: data-engineer
+    agent_file: .claude/agents/agent-os/implementation/data-engineer.md
+    description: Handles analytics, data aggregation, and database queries
+    verified_by: backend-verifier
+
+  - id: ui-engineer
+    agent_file: .claude/agents/agent-os/implementation/ui-engineer.md
+    description: Handles Telegram bot UI, calendars, and interface design
+    verified_by: backend-verifier
+
+  - id: testing-engineer
+    agent_file: .claude/agents/agent-os/implementers/testing-engineer.md
+    description: Handles testing, validation, and end-to-end test scenarios
+    verified_by: backend-verifier

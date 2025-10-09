@@ -1,0 +1,18 @@
+task_assignments:
+  - task_group: "Task Group 1: Admin Authorization System"
+    assigned_subagent: "backend-engineer"
+
+  - task_group: "Task Group 2: Analytics Service Implementation"
+    assigned_subagent: "data-engineer"
+
+  - task_group: "Task Group 3: Calendar Widget & Date Selection"
+    assigned_subagent: "ui-engineer"
+
+  - task_group: "Task Group 4: Excel Generation & Export"
+    assigned_subagent: "backend-engineer"
+
+  - task_group: "Task Group 5: Telegram Bot Admin Panel Integration"
+    assigned_subagent: "integration-engineer"
+
+  - task_group: "Task Group 6: Free/Paid Survey Logic Updates"
+    assigned_subagent: "backend-engineer"

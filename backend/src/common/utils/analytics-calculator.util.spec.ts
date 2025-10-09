@@ -1,13 +1,27 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { AnalyticsCalculator } from "./analytics-calculator.util";
 import { Survey, SurveyType } from "bizass-shared";
+import { ReportDataService } from "../../report/report-data.service";
+
+// Mock ReportDataService
+const mockReportDataService = {
+  // Add any methods that might be called during tests
+  getReportDataForCategory: jest.fn(),
+  getReportDataForSubcategory: jest.fn(),
+};
 
 describe("AnalyticsCalculator", () => {
   let calculator: AnalyticsCalculator;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AnalyticsCalculator],
+      providers: [
+        AnalyticsCalculator,
+        {
+          provide: ReportDataService,
+          useValue: mockReportDataService,
+        },
+      ],
     }).compile();
 
     calculator = module.get<AnalyticsCalculator>(AnalyticsCalculator);

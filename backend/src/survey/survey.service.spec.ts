@@ -5,6 +5,7 @@ import { NotFoundException, BadRequestException } from "@nestjs/common";
 import { SurveyService } from "./survey.service";
 import { Survey, SurveySession, Answer, User } from "../entities";
 import { SurveyType, SessionStatus } from "bizass-shared";
+import { AnalyticsCalculator } from "../common/utils/analytics-calculator.util";
 
 describe("SurveyService", () => {
   let service: SurveyService;
@@ -39,6 +40,11 @@ describe("SurveyService", () => {
     save: jest.fn(),
   };
 
+  const mockAnalyticsCalculator = {
+    calculateSurveyResults: jest.fn(),
+    getCategoryDetails: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -58,6 +64,10 @@ describe("SurveyService", () => {
         {
           provide: getRepositoryToken(User),
           useValue: mockUserRepository,
+        },
+        {
+          provide: AnalyticsCalculator,
+          useValue: mockAnalyticsCalculator,
         },
       ],
     }).compile();
@@ -305,7 +315,7 @@ describe("SurveyService", () => {
 
       expect(mockSessionRepository.findOne).toHaveBeenCalledWith({
         where: { id: sessionId },
-        relations: ["answers"],
+        relations: ["answers", "survey"],
       });
       expect(result).toEqual({
         id: sessionId,
@@ -346,15 +356,14 @@ describe("SurveyService", () => {
 
       expect(mockSessionRepository.findOne).toHaveBeenCalledWith({
         where: { id: sessionId },
+        relations: ["answers", "survey"],
       });
       expect(mockSessionRepository.save).toHaveBeenCalledWith({
         ...mockSession,
         status: SessionStatus.COMPLETED,
       });
-      expect(result).toEqual({
-        message: "Session completed successfully",
-        sessionId,
-      });
+      expect(result.message).toBe("Session completed successfully");
+      expect(result.sessionId).toBe(sessionId);
     });
 
     it("should throw NotFoundException when session does not exist", async () => {
@@ -415,6 +424,186 @@ describe("SurveyService", () => {
       const result = await service.canStartNewSurvey(userId);
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe("hasUsedFreeSurvey", () => {
+    const userId = 12345;
+
+    it("should return false when user has no completed surveys", async () => {
+      mockSessionRepository.count.mockResolvedValue(0);
+
+      const result = await service.hasUsedFreeSurvey(userId);
+
+      expect(mockSessionRepository.count).toHaveBeenCalledWith({
+        where: {
+          user_telegram_id: userId,
+          status: SessionStatus.COMPLETED,
+        },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("should return true when user has one completed survey (express)", async () => {
+      mockSessionRepository.count.mockResolvedValue(1);
+
+      const result = await service.hasUsedFreeSurvey(userId);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return true when user has multiple completed surveys", async () => {
+      mockSessionRepository.count.mockResolvedValue(3);
+
+      const result = await service.hasUsedFreeSurvey(userId);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe("requiresPayment", () => {
+    const userId = 12345;
+
+    it("should return false for first survey (no completed surveys)", async () => {
+      mockSessionRepository.count.mockResolvedValue(0);
+
+      const result = await service.requiresPayment(userId);
+
+      expect(mockSessionRepository.count).toHaveBeenCalledWith({
+        where: {
+          user_telegram_id: userId,
+          status: SessionStatus.COMPLETED,
+        },
+      });
+      expect(result).toBe(false);
+    });
+
+    it("should return true for second survey (one completed survey)", async () => {
+      mockSessionRepository.count.mockResolvedValue(1);
+
+      const result = await service.requiresPayment(userId);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return true for third and subsequent surveys", async () => {
+      mockSessionRepository.count.mockResolvedValue(2);
+
+      const result = await service.requiresPayment(userId);
+
+      expect(result).toBe(true);
+    });
+
+    it("should work across different survey types (express and full)", async () => {
+      // User completed an express survey
+      mockSessionRepository.count.mockResolvedValue(1);
+
+      // Starting a full survey should require payment
+      const result = await service.requiresPayment(userId);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe("startSurveyWithPaymentCheck", () => {
+    const userId = 12345;
+    const surveyType = SurveyType.EXPRESS;
+    const mockSurvey = {
+      id: 1,
+      type: SurveyType.EXPRESS,
+      name: "Express Survey",
+      structure: {},
+    };
+    const mockUser = {
+      telegram_id: userId,
+      first_name: "Test User",
+      username: "testuser",
+    };
+
+    it("should create a free session for first survey", async () => {
+      const mockSession = {
+        id: "session-uuid",
+        user_telegram_id: userId,
+        survey_id: 1,
+        status: SessionStatus.IN_PROGRESS,
+        requires_payment: false,
+        created_at: new Date(),
+      };
+
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      mockSurveyRepository.findOne.mockResolvedValue(mockSurvey);
+      mockSessionRepository.count.mockResolvedValue(0); // No completed surveys
+      mockSessionRepository.create.mockReturnValue(mockSession);
+      mockSessionRepository.save.mockResolvedValue(mockSession);
+
+      const result = await service.startSurveyWithPaymentCheck(userId, surveyType);
+
+      expect(mockSessionRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_telegram_id: userId,
+          survey_id: mockSurvey.id,
+          status: SessionStatus.IN_PROGRESS,
+          requires_payment: false,
+        })
+      );
+      expect(result.requiresPayment).toBe(false);
+    });
+
+    it("should create a paid session for second and subsequent surveys", async () => {
+      const mockSession = {
+        id: "session-uuid",
+        user_telegram_id: userId,
+        survey_id: 1,
+        status: SessionStatus.IN_PROGRESS,
+        requires_payment: true,
+        created_at: new Date(),
+      };
+
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      mockSurveyRepository.findOne.mockResolvedValue(mockSurvey);
+      mockSessionRepository.count.mockResolvedValue(1); // One completed survey
+      mockSessionRepository.create.mockReturnValue(mockSession);
+      mockSessionRepository.save.mockResolvedValue(mockSession);
+
+      const result = await service.startSurveyWithPaymentCheck(userId, surveyType);
+
+      expect(mockSessionRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_telegram_id: userId,
+          survey_id: mockSurvey.id,
+          status: SessionStatus.IN_PROGRESS,
+          requires_payment: true,
+        })
+      );
+      expect(result.requiresPayment).toBe(true);
+    });
+
+    it("should enforce payment requirement across different survey types", async () => {
+      const mockSession = {
+        id: "session-uuid",
+        user_telegram_id: userId,
+        survey_id: 2,
+        status: SessionStatus.IN_PROGRESS,
+        requires_payment: true,
+        created_at: new Date(),
+      };
+
+      const mockFullSurvey = {
+        id: 2,
+        type: SurveyType.FULL,
+        name: "Full Survey",
+        structure: {},
+      };
+
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      mockSurveyRepository.findOne.mockResolvedValue(mockFullSurvey);
+      mockSessionRepository.count.mockResolvedValue(1); // Completed express survey
+      mockSessionRepository.create.mockReturnValue(mockSession);
+      mockSessionRepository.save.mockResolvedValue(mockSession);
+
+      const result = await service.startSurveyWithPaymentCheck(userId, SurveyType.FULL);
+
+      expect(result.requiresPayment).toBe(true);
     });
   });
 });

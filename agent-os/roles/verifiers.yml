@@ -1,0 +1,10 @@
+verifiers:
+  - id: backend-verifier
+    agent_file: .claude/agents/agent-os/verifiers/backend-verifier.md
+    description: Verifies backend implementations, database operations, and API functionality
+    scope:
+      - Backend services and modules
+      - Database queries and operations
+      - Telegram bot integration
+      - Analytics and data aggregation
+      - Testing implementations
