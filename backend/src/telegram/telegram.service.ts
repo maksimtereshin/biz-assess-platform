@@ -12,6 +12,7 @@ import { User } from "../entities";
 import { ADMIN_USERNAMES, ADMIN_PANEL } from "./telegram.constants";
 import { CalendarService } from "./calendar/calendar.service";
 import * as fs from "fs";
+import FormData from "form-data";
 
 interface InlineKeyboardMarkup {
   inline_keyboard: Array<
@@ -1315,7 +1316,6 @@ Click the button below to pay:
     fileName: string,
   ): Promise<void> {
     try {
-      const FormData = (await import('form-data')).default;
       const formData = new FormData();
 
       formData.append('chat_id', chatId.toString());
