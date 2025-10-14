@@ -12,6 +12,7 @@ import { HealthModule } from "./health/health.module";
 import { ProxyModule } from "./proxy/proxy.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { ExcelModule } from "./excel/excel.module";
+import { CommonModule } from "./common/common.module";
 import * as entities from "./entities";
 import { DataSource } from "typeorm";
 import { seedSurveys } from "./data/seed-surveys";
@@ -56,6 +57,9 @@ import { MigrationRunnerService } from "./common/services/migration-runner.servi
       synchronize: process.env.NODE_ENV === "development", // Never synchronize in production
       logging: process.env.NODE_ENV === "development",
     }),
+
+    // Common module (global utilities)
+    CommonModule,
 
     // Feature modules
     SurveyModule,
