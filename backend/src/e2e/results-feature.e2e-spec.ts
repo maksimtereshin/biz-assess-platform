@@ -38,33 +38,57 @@ describe('Results Feature E2E Tests', () => {
   };
 
   const testSurvey = {
-    id: 'survey-1',
+    id: 1,
     type: 'express',
     name: 'Express Business Assessment',
-    description: 'Quick assessment',
-    structure: {
-      categories: [
-        {
-          id: 'hr',
-          name: 'HR Management',
-          subcategories: [
-            { id: 'recruitment', name: 'Recruitment' },
-            { id: 'training', name: 'Training' }
-          ],
-        },
-        {
-          id: 'marketing',
-          name: 'Marketing',
-          subcategories: [
-            { id: 'digital', name: 'Digital Marketing' },
-            { id: 'branding', name: 'Branding' }
-          ],
-        },
-      ],
-    },
-    created_at: new Date(),
-    updated_at: new Date(),
+    structure: [
+      {
+        id: 'hr',
+        name: 'HR Management',
+        subcategories: [
+          { id: 'recruitment', name: 'Recruitment' },
+          { id: 'training', name: 'Training' }
+        ],
+      },
+      {
+        id: 'marketing',
+        name: 'Marketing',
+        subcategories: [
+          { id: 'digital', name: 'Digital Marketing' },
+          { id: 'branding', name: 'Branding' }
+        ],
+      },
+    ],
   };
+
+  // Helper function to create properly typed callback query payload
+  const createCallbackQuery = (userId: number, firstName: string, username: string, data: string, updateId: number) => ({
+    update_id: updateId,
+    callback_query: {
+      id: `callback_${updateId}`,
+      from: {
+        id: userId,
+        is_bot: false,
+        first_name: firstName,
+        username: username,
+      },
+      message: {
+        message_id: updateId,
+        from: {
+          id: userId,
+          is_bot: false,
+          first_name: firstName,
+          username: username,
+        },
+        chat: {
+          id: userId,
+          type: 'private',
+        },
+        date: Math.floor(Date.now() / 1000),
+      },
+      data: data,
+    },
+  });
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -111,7 +135,7 @@ describe('Results Feature E2E Tests', () => {
       const session = await sessionRepository.save({
         id: 'test-session-1',
         user_telegram_id: testUser.telegram_id,
-        survey: testSurvey,
+        survey_id: testSurvey.id,
         status: SessionStatus.COMPLETED,
         started_at: new Date(),
         completed_at: new Date(),
@@ -127,18 +151,13 @@ describe('Results Feature E2E Tests', () => {
       ]);
 
       // Step 2: Simulate bot command /reports
-      const mockUpdate = {
-        update_id: 123,
-        callback_query: {
-          id: 'callback_123',
-          from: {
-            id: testUser.telegram_id,
-            first_name: testUser.first_name,
-            username: testUser.telegram_username,
-          },
-          data: 'my_results',
-        },
-      };
+      const mockUpdate = createCallbackQuery(
+        testUser.telegram_id,
+        testUser.first_name,
+        testUser.telegram_username,
+        'my_results',
+        123
+      );
 
       // Mock Telegram API responses
       global.fetch = jest.fn(() =>
@@ -161,18 +180,13 @@ describe('Results Feature E2E Tests', () => {
       );
 
       // Step 3: User clicks download button
-      const downloadUpdate = {
-        update_id: 124,
-        callback_query: {
-          id: 'callback_124',
-          from: {
-            id: testUser.telegram_id,
-            first_name: testUser.first_name,
-            username: testUser.telegram_username,
-          },
-          data: `download_report_${session.id}`,
-        },
-      };
+      const downloadUpdate = createCallbackQuery(
+        testUser.telegram_id,
+        testUser.first_name,
+        testUser.telegram_username,
+        `download_report_${session.id}`,
+        124
+      );
 
       await telegramService.handleWebhook(downloadUpdate);
 
@@ -211,7 +225,7 @@ describe('Results Feature E2E Tests', () => {
         const session = await sessionRepository.save({
           id: `session-user-${user.id}`,
           user_telegram_id: user.telegram_id,
-          survey: testSurvey,
+          survey_id: testSurvey.id,
           status: SessionStatus.COMPLETED,
           started_at: new Date(),
           completed_at: new Date(),
@@ -224,17 +238,13 @@ describe('Results Feature E2E Tests', () => {
 
       // Simulate concurrent report downloads
       const downloadPromises = sessions.map(async (session, index) => {
-        const update = {
-          update_id: 200 + index,
-          callback_query: {
-            id: `callback_${200 + index}`,
-            from: {
-              id: users[index].telegram_id,
-              first_name: users[index].first_name,
-            },
-            data: `download_report_${session.id}`,
-          },
-        };
+        const update = createCallbackQuery(
+          users[index].telegram_id,
+          users[index].first_name,
+          `user${users[index].id}`,
+          `download_report_${session.id}`,
+          200 + index
+        );
 
         return telegramService.handleWebhook(update);
       });
@@ -255,7 +265,7 @@ describe('Results Feature E2E Tests', () => {
       const session = await sessionRepository.save({
         id: 'test-session-error',
         user_telegram_id: testUser.telegram_id,
-        survey: testSurvey,
+        survey_id: testSurvey.id,
         status: SessionStatus.COMPLETED,
         started_at: new Date(),
         completed_at: new Date(),
@@ -268,17 +278,13 @@ describe('Results Feature E2E Tests', () => {
         new Error('PDF generation failed'),
       );
 
-      const downloadUpdate = {
-        update_id: 300,
-        callback_query: {
-          id: 'callback_300',
-          from: {
-            id: testUser.telegram_id,
-            first_name: testUser.first_name,
-          },
-          data: `download_report_${session.id}`,
-        },
-      };
+      const downloadUpdate = createCallbackQuery(
+        testUser.telegram_id,
+        testUser.first_name,
+        testUser.telegram_username,
+        `download_report_${session.id}`,
+        300
+      );
 
       await telegramService.handleWebhook(downloadUpdate);
 
@@ -310,7 +316,7 @@ describe('Results Feature E2E Tests', () => {
       const session = await sessionRepository.save({
         id: 'first-session',
         user_telegram_id: newUser.telegram_id,
-        survey: testSurvey,
+        survey_id: testSurvey.id,
         status: SessionStatus.COMPLETED,
         started_at: new Date(),
         completed_at: new Date(),
@@ -342,7 +348,7 @@ describe('Results Feature E2E Tests', () => {
       await sessionRepository.save({
         id: 'first-free-session',
         user_telegram_id: existingUser.telegram_id,
-        survey: testSurvey,
+        survey_id: testSurvey.id,
         status: SessionStatus.COMPLETED,
         started_at: new Date(),
         completed_at: new Date(),
@@ -354,7 +360,7 @@ describe('Results Feature E2E Tests', () => {
       const secondSession = await sessionRepository.save({
         id: 'second-paid-session',
         user_telegram_id: existingUser.telegram_id,
-        survey: testSurvey,
+        survey_id: testSurvey.id,
         status: SessionStatus.COMPLETED,
         started_at: new Date(),
         completed_at: new Date(),
@@ -373,7 +379,23 @@ describe('Results Feature E2E Tests', () => {
           id: 'callback_400',
           from: {
             id: existingUser.telegram_id,
+            is_bot: false,
             first_name: existingUser.first_name,
+            username: existingUser.telegram_username,
+          },
+          message: {
+            message_id: 100,
+            from: {
+              id: existingUser.telegram_id,
+              is_bot: false,
+              first_name: existingUser.first_name,
+              username: existingUser.telegram_username,
+            },
+            chat: {
+              id: existingUser.telegram_id,
+              type: 'private',
+            },
+            date: Math.floor(Date.now() / 1000),
           },
           data: `download_report_${secondSession.id}`,
         },
@@ -403,7 +425,7 @@ describe('Results Feature E2E Tests', () => {
       await sessionRepository.save({
         id: 'paid-user-session-1',
         user_telegram_id: paidUser.telegram_id,
-        survey: testSurvey,
+        survey_id: testSurvey.id,
         status: SessionStatus.COMPLETED,
         started_at: new Date(),
         completed_at: new Date(),
@@ -414,7 +436,7 @@ describe('Results Feature E2E Tests', () => {
       const paidSession = await sessionRepository.save({
         id: 'paid-user-session-2',
         user_telegram_id: paidUser.telegram_id,
-        survey: testSurvey,
+        survey_id: testSurvey.id,
         status: SessionStatus.COMPLETED,
         started_at: new Date(),
         completed_at: new Date(),

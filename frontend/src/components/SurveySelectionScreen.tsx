@@ -40,9 +40,10 @@ export function SurveySelectionScreen() {
       console.log('Full session object:', JSON.stringify(session, null, 2));
 
       // Create a UserSession object from the API session
+      // Note: Backend returns user_telegram_id, not userId
       const userSession = {
         id: session.id,
-        userId: session.userId?.toString() || 'unknown', // Safe conversion with fallback
+        userId: (session as any).user_telegram_id?.toString() || user?.telegramId || 'unknown',
         surveyVariant: surveyVariant,
         startedAt: new Date().toISOString(),
         lastActivityAt: new Date().toISOString(),
