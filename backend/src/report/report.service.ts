@@ -4,7 +4,7 @@ import { Repository } from "typeorm";
 import { AnalyticsCalculator } from "../common/utils/analytics-calculator.util";
 import { PdfGenerator } from "../common/utils/pdf-generator.util";
 import { Report, SurveySession, Answer } from "../entities";
-import { AnalyticsResult, PaymentStatus, SurveyResults } from "bizass-shared";
+import { AnalyticsResult, PaymentStatus, SurveyResults, Survey, SurveyType } from "bizass-shared";
 import { QueryCacheService } from "../common/services/query-cache.service";
 
 @Injectable()
@@ -50,11 +50,20 @@ export class ReportService {
     // Determine survey type
     const surveyType = session.survey.type === 'EXPRESS' ? 'express' : 'full';
 
+    // Wrap survey structure in Survey format expected by analytics calculator
+    // session.survey from DB has structure as array, but calculator expects Survey object
+    const surveyStructure: Survey = {
+      id: session.survey.id,
+      type: session.survey.type as SurveyType,
+      name: session.survey.name,
+      structure: session.survey.structure,
+    };
+
     // Generate survey results using appropriate method
     const surveyResults = await this.generateSurveyResultsWithCache(
       sessionId,
       answers,
-      session.survey.structure,
+      surveyStructure,
       surveyType,
       isPaid,
     );
@@ -104,7 +113,7 @@ export class ReportService {
   private async generateSurveyResultsWithCache(
     sessionId: string,
     answers: Array<{ questionId: number; score: number }>,
-    surveyStructure: any,
+    surveyStructure: Survey,
     surveyType: 'express' | 'full',
     isPaid: boolean,
   ): Promise<SurveyResults> {
