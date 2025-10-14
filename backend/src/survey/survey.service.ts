@@ -148,7 +148,10 @@ export class SurveyService {
 
     return {
       id: session.id,
-      userId: session.user_telegram_id,
+      // Ensure userId is always a number (TypeORM may return bigint as string)
+      userId: typeof session.user_telegram_id === 'string'
+        ? parseInt(session.user_telegram_id, 10)
+        : session.user_telegram_id,
       surveyType: session.survey.type as SurveyType,
       status: session.status as SessionStatus,
       answers,

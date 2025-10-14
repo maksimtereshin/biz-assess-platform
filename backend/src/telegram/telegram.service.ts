@@ -1145,8 +1145,11 @@ Click the button below to pay:
       // 1. Validate session ownership
       const session = await this.surveyService.getSession(sessionId);
 
-      if (session.userId !== userId) {
-        this.logger.warn(`User ${userId} attempted to access session ${sessionId} owned by ${session.userId}`);
+      // Convert both to numbers for comparison (bigint from DB might be returned as string)
+      const sessionUserId = typeof session.userId === 'string' ? parseInt(session.userId, 10) : session.userId;
+
+      if (sessionUserId !== userId) {
+        this.logger.warn(`User ${userId} attempted to access session ${sessionId} owned by ${sessionUserId} (original: ${session.userId}, type: ${typeof session.userId})`);
         await this.sendMessage(
           chatId,
           "⛔ У вас нет доступа к этому отчету.",
