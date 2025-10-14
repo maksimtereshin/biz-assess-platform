@@ -8,6 +8,7 @@ import { SurveyService } from "../survey/survey.service";
 import { PaymentService } from "../payment/payment.service";
 import { AnalyticsService } from "../analytics/analytics.service";
 import { ExcelService } from "../excel/excel.service";
+import { ReportService } from "../report/report.service";
 import { User } from "../entities";
 import { ADMIN_USERNAMES, ADMIN_PANEL } from "./telegram.constants";
 import { CalendarService } from "./calendar/calendar.service";
@@ -44,6 +45,10 @@ export class TelegramService {
   private readonly REPORT_COOLDOWN_MS = 60000; // 1 minute
   private readonly REPORT_TIMEOUT_MS = 30000; // 30 seconds
 
+  // Rate limiting for PDF report downloads (1 per minute per user)
+  private readonly pdfDownloadCooldown = new Map<number, number>();
+  private readonly PDF_DOWNLOAD_COOLDOWN_MS = 60000; // 1 minute
+
   constructor(
     private configService: ConfigService,
     private authService: AuthService,
@@ -52,6 +57,7 @@ export class TelegramService {
     private analyticsService: AnalyticsService,
     private excelService: ExcelService,
     private calendarService: CalendarService,
+    private reportService: ReportService,
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {
@@ -275,7 +281,7 @@ export class TelegramService {
       const sessionId = data.split("_")[1];
       await this.handlePaymentRequest(chatId, user.id, sessionId);
     } else if (data.startsWith("download_report_")) {
-      const sessionId = data.split("_")[2];
+      const sessionId = data.replace("download_report_", "");
       await this.handleReportDownload(chatId, user.id, sessionId);
     } else if (data.startsWith("report_")) {
       const reportId = data.split("_")[1];
@@ -602,6 +608,33 @@ _Генерация отчета может занять до 30 секунд_
   }
 
   /**
+   * Check if user can download a PDF report (rate limiting)
+   */
+  private canDownloadPdfReport(userId: number): boolean {
+    const lastRequest = this.pdfDownloadCooldown.get(userId);
+    if (!lastRequest) return true;
+
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequest;
+
+    return timeSinceLastRequest >= this.PDF_DOWNLOAD_COOLDOWN_MS;
+  }
+
+  /**
+   * Get remaining PDF download cooldown time in seconds
+   */
+  private getRemainingPdfDownloadCooldown(userId: number): number {
+    const lastRequest = this.pdfDownloadCooldown.get(userId);
+    if (!lastRequest) return 0;
+
+    const now = Date.now();
+    const timeSinceLastRequest = now - lastRequest;
+    const remaining = this.PDF_DOWNLOAD_COOLDOWN_MS - timeSinceLastRequest;
+
+    return Math.ceil(remaining / 1000);
+  }
+
+  /**
    * Generate analytics report and send as Excel file
    */
   private async generateAndSendAnalyticsReport(
@@ -923,7 +956,7 @@ Click the link below to start your business assessment:
 [🚀 Start Survey](${surveyUrl})
 
 *What to expect:*
-• ${surveyType === SurveyType.EXPRESS ? "25 questions" : "61 questions"} across key business areas  
+• ${surveyType === SurveyType.EXPRESS ? "25 questions" : "61 questions"} across key business areas
 • Auto-save progress (you can pause and resume)
 • Instant free report upon completion
 • Option to purchase detailed analysis
@@ -1052,7 +1085,7 @@ Your payment invoice has been generated. Please complete the payment to receive 
 
 *What you'll get:*
 • Detailed subcategory analysis
-• Advanced recommendations  
+• Advanced recommendations
 • Action plans for improvement
 • Priority areas to focus on
 
@@ -1081,6 +1114,10 @@ Click the button below to pay:
     }
   }
 
+  /**
+   * Handles PDF report download requests from users
+   * Implements rate limiting, ownership validation, and free/paid logic
+   */
   private async handleReportDownload(
     chatId: number,
     userId: number,
@@ -1089,22 +1126,93 @@ Click the button below to pay:
     try {
       this.logger.log(`User ${userId} requesting report download for session ${sessionId}`);
 
-      // TODO: Implement PDF report generation and download
-      // For now, send a placeholder message
+      // Check rate limiting
+      if (!this.canDownloadPdfReport(userId)) {
+        const remainingSeconds = this.getRemainingPdfDownloadCooldown(userId);
+        await this.sendMessage(
+          chatId,
+          `⏳ Пожалуйста, подождите еще ${remainingSeconds} секунд перед следующим запросом отчета.`,
+        );
+        return;
+      }
+
+      // Send initial status message
       await this.sendMessage(
         chatId,
-        "📄 Генерация PDF отчета...\n\n⏳ Функция генерации PDF отчетов будет добавлена в следующем обновлении.",
+        "📄 Генерация PDF отчета...\n\n⏳ Это может занять несколько секунд.",
       );
 
-      // This would eventually call ReportService to generate PDF and send it
-      // const pdfPath = await this.reportService.generatePDF(sessionId);
-      // await this.sendDocument(chatId, pdfPath, `report_${sessionId}.pdf`);
-    } catch (error) {
-      this.logger.error("Error handling report download:", error);
+      // 1. Validate session ownership
+      const session = await this.surveyService.getSession(sessionId);
+
+      if (session.userId !== userId) {
+        this.logger.warn(`User ${userId} attempted to access session ${sessionId} owned by ${session.userId}`);
+        await this.sendMessage(
+          chatId,
+          "⛔ У вас нет доступа к этому отчету.",
+        );
+        return;
+      }
+
+      // 2. Determine if report should be free or paid
+      const completedSessions = await this.surveyService.getUserSessions(userId);
+      const completedCount = completedSessions.filter(s => s.status === 'COMPLETED').length;
+      const isFree = completedCount === 1;
+
+      this.logger.log(`User ${userId} has ${completedCount} completed sessions. Report is ${isFree ? 'FREE' : 'PAID'}`);
+
+      // 3. If paid and not yet paid, initiate payment flow
+      if (!isFree) {
+        await this.sendMessage(
+          chatId,
+          "💎 *Оплата требуется*\n\nВаш первый отчет был бесплатным. Для получения последующих отчетов необходима оплата.\n\n*Стоимость: 299 руб*\n\nФункция оплаты будет добавлена в следующем обновлении.",
+        );
+        return;
+      }
+
+      // Update rate limiting
+      this.pdfDownloadCooldown.set(userId, Date.now());
+
+      // 4. Generate PDF report
+
+      // 4. Generate PDF report (returns Buffer)
+      const pdfBuffer = await this.reportService.generateReport(sessionId, !isFree);
+
+      // 5. Send PDF via Telegram using buffer
+      const fileName = `report_${sessionId}.pdf`;
+      const caption = isFree
+        ? '📄 Ваш бесплатный отчет готов!'
+        : '💎 Ваш полный отчет готов!';
+
+      // Send PDF buffer directly
+      await this.sendDocumentFromBuffer(chatId, pdfBuffer, fileName, caption);
+
       await this.sendMessage(
         chatId,
-        "❌ Ошибка при загрузке отчета. Пожалуйста, попробуйте позже.",
+        "✅ Отчет успешно сгенерирован и отправлен!",
       );
+
+      this.logger.log(`Successfully generated and sent report for session ${sessionId} to user ${userId}`);
+    } catch (error) {
+      this.logger.error("Error handling report download:", error);
+
+      // Provide user-friendly error messages
+      if (error.message?.includes('not found')) {
+        await this.sendMessage(
+          chatId,
+          "❌ Опрос не найден. Пожалуйста, убедитесь, что вы завершили опрос.",
+        );
+      } else if (error.message?.includes('Session not found')) {
+        await this.sendMessage(
+          chatId,
+          "❌ Опрос не найден. Пожалуйста, убедитесь, что вы завершили опрос.",
+        );
+      } else {
+        await this.sendMessage(
+          chatId,
+          "❌ Ошибка при генерации отчета. Пожалуйста, попробуйте позже.",
+        );
+      }
     }
   }
 
@@ -1315,6 +1423,7 @@ Click the button below to pay:
     chatId: number,
     filePath: string,
     fileName: string,
+    caption?: string,
   ): Promise<void> {
     try {
       const formData = new FormData();
@@ -1322,9 +1431,16 @@ Click the button below to pay:
       formData.append('chat_id', chatId.toString());
       formData.append('document', fs.createReadStream(filePath), {
         filename: fileName,
-        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        contentType: fileName.endsWith('.pdf')
+          ? 'application/pdf'
+          : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
-      formData.append('caption', '📊 Аналитический отчет');
+
+      if (caption) {
+        formData.append('caption', caption);
+      } else {
+        formData.append('caption', fileName.endsWith('.pdf') ? '📄 PDF отчет' : '📊 Аналитический отчет');
+      }
 
       const response = await axios.post(
         `https://api.telegram.org/bot${this.botToken}/sendDocument`,
@@ -1342,6 +1458,56 @@ Click the button below to pay:
       }
     } catch (error) {
       this.logger.error('Error sending document:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send document from buffer (for on-demand PDF generation)
+   * @param chatId - Telegram chat ID
+   * @param buffer - PDF buffer
+   * @param fileName - Filename for the document
+   * @param caption - Optional caption
+   */
+  async sendDocumentFromBuffer(
+    chatId: number,
+    buffer: Buffer,
+    fileName: string,
+    caption?: string,
+  ): Promise<void> {
+    try {
+      const formData = new FormData();
+
+      formData.append('chat_id', chatId.toString());
+      formData.append('document', buffer, {
+        filename: fileName,
+        contentType: 'application/pdf',
+      });
+
+      if (caption) {
+        formData.append('caption', caption);
+      } else {
+        formData.append('caption', '📄 PDF отчет');
+      }
+
+      const response = await axios.post(
+        `https://api.telegram.org/bot${this.botToken}/sendDocument`,
+        formData,
+        {
+          headers: formData.getHeaders(),
+        },
+      );
+
+      if (response.status !== 200) {
+        this.logger.error('Telegram sendDocument API error response:', response.data);
+        throw new Error(
+          `Telegram sendDocument API error: ${response.statusText}`,
+        );
+      }
+
+      this.logger.log(`Successfully sent PDF document (${buffer.length} bytes) to chat ${chatId}`);
+    } catch (error) {
+      this.logger.error('Error sending document from buffer:', error);
       throw error;
     }
   }

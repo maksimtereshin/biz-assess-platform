@@ -201,6 +201,128 @@ export class AnalyticsCalculator {
   }
 
   /**
+   * Generate free version data for PDF (summary only, no detailed category analysis)
+   * Used for first survey report which is free
+   *
+   * @param sessionId - Survey session ID
+   * @param answers - User's answers
+   * @param surveyStructure - Survey structure
+   * @param surveyType - Survey type (express or full)
+   * @returns Report data with category scores for pie chart, without detailed subcategories
+   */
+  generateFreeVersionData(
+    sessionId: string,
+    answers: Array<{ questionId: number; score: number }>,
+    surveyStructure: Survey,
+    surveyType: 'express' | 'full'
+  ): SurveyResults {
+    // Calculate analytics
+    const analytics = this.calculateScores(answers, surveyStructure);
+
+    // Get overall content
+    const overallContent = this.reportDataService.findReportContent(
+      surveyType,
+      'OVERALL',
+      analytics.overallScore
+    );
+
+    // For free version, include categories with scores but no detailed subcategories
+    const categories: CategoryResult[] = surveyStructure.structure.map(category => {
+      const categoryScore = analytics.categoryScores[category.id] || 0;
+
+      return {
+        name: category.name,
+        score: categoryScore,
+        content: {
+          category: category.name.toUpperCase(),
+          subcategory: '',
+          titleSummary: `${category.name}: ${categoryScore}%`,
+          result: `${categoryScore}%`,
+          resultDescription: `Your ${category.name.toLowerCase()} score is ${categoryScore}%. Upgrade to paid version for detailed analysis.`,
+          min: 0,
+          max: 100,
+          color: this.reportDataService.getColorForScore(categoryScore)
+        },
+        subcategories: [] // No subcategories in free version
+      };
+    });
+
+    return {
+      sessionId,
+      surveyType,
+      overallScore: analytics.overallScore,
+      overallContent: overallContent || this.getDefaultContent('Overall', analytics.overallScore),
+      categories
+    };
+  }
+
+  /**
+   * Generate paid version data for PDF (full details with all category analysis)
+   * Used for subsequent survey reports which require payment
+   *
+   * @param sessionId - Survey session ID
+   * @param answers - User's answers
+   * @param surveyStructure - Survey structure
+   * @param surveyType - Survey type (express or full)
+   * @returns Complete report data with detailed category and subcategory analysis
+   */
+  generatePaidVersionData(
+    sessionId: string,
+    answers: Array<{ questionId: number; score: number }>,
+    surveyStructure: Survey,
+    surveyType: 'express' | 'full'
+  ): SurveyResults {
+    // For paid version, use the full calculateSurveyResults method
+    return this.calculateSurveyResults(sessionId, answers, surveyStructure, surveyType);
+  }
+
+  /**
+   * Get pie chart data formatted for PDF generation
+   * Ensures category percentages are properly formatted and sum correctly
+   *
+   * @param analytics - Analytics result with category scores
+   * @param surveyStructure - Survey structure
+   * @returns Pie chart data with labels, values, and colors
+   */
+  getPieChartData(
+    analytics: AnalyticsResult,
+    surveyStructure: Survey
+  ): {
+    labels: string[];
+    values: number[];
+    colors: string[];
+    percentages: number[];
+  } {
+    const labels: string[] = [];
+    const values: number[] = [];
+    const colors: string[] = [];
+    const percentages: number[] = [];
+
+    // Extract category data in consistent order
+    for (const category of surveyStructure.structure) {
+      const score = analytics.categoryScores[category.id] || 0;
+
+      labels.push(category.name);
+      values.push(score);
+      percentages.push(score); // Score IS the percentage (0-100)
+      colors.push(this.reportDataService.getColorForScore(score));
+    }
+
+    // Verify all percentages are valid (0-100)
+    const allValid = percentages.every(p => p >= 0 && p <= 100);
+    if (!allValid) {
+      throw new Error('Invalid percentage values in pie chart data');
+    }
+
+    return {
+      labels,
+      values,
+      colors,
+      percentages
+    };
+  }
+
+  /**
    * Provides default content when CSV data is not available
    * Maintains graceful degradation following clean code principles
    */

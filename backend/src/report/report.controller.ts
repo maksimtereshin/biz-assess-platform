@@ -9,43 +9,130 @@ import {
   HttpStatus,
   Res,
   NotFoundException,
+  ForbiddenException,
+  BadRequestException,
 } from "@nestjs/common";
 import { ReportService } from "./report.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { Response } from "express";
-import * as fs from "fs";
-import * as path from "path";
 
 @Controller("reports")
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
-  @Post("generate/:sessionId")
+  /**
+   * Generate and stream PDF report on-demand
+   * No file storage - PDF is generated and streamed directly to client
+   *
+   * GET /reports/generate/:sessionId
+   */
+  @Get("generate/:sessionId")
   @UseGuards(JwtAuthGuard)
   async generateReport(
     @Param("sessionId") sessionId: string,
     @Request() req: any,
+    @Res() res: Response,
   ) {
-    // Verify the session belongs to the authenticated user
-    if (req.user.sessionId !== sessionId) {
-      throw new Error("Unauthorized access to session");
-    }
+    try {
+      // Verify the session belongs to the authenticated user
+      if (req.user.sessionId !== sessionId) {
+        throw new ForbiddenException("Unauthorized access to session");
+      }
 
-    return await this.reportService.generateReport(sessionId, false);
+      const userId = req.user.telegramId;
+
+      // Determine if report should be free or paid
+      const isFree = await this.reportService.isReportFree(userId);
+
+      // If not free, check if user has paid for this session
+      if (!isFree) {
+        const hasPaid = await this.reportService.hasUserPaidForSession(sessionId);
+        if (!hasPaid) {
+          throw new BadRequestException({
+            statusCode: HttpStatus.PAYMENT_REQUIRED,
+            message: "Payment required for this report",
+            error: "PAYMENT_REQUIRED",
+            sessionId,
+          });
+        }
+      }
+
+      // Generate PDF buffer
+      const pdfBuffer = await this.reportService.generateReport(sessionId, !isFree);
+
+      // Set headers for PDF streaming
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="business-assessment-${sessionId}.pdf"`,
+      );
+      res.setHeader("Content-Length", pdfBuffer.length);
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+
+      // Stream PDF buffer to client
+      res.send(pdfBuffer);
+    } catch (error) {
+      if (error instanceof ForbiddenException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to generate report: ${error.message}`);
+    }
   }
 
+  /**
+   * Legacy endpoint - Generate paid report
+   * Deprecated in favor of unified /generate/:sessionId endpoint
+   */
   @Post("generate-paid/:sessionId")
   @UseGuards(JwtAuthGuard)
   async generatePaidReport(
     @Param("sessionId") sessionId: string,
     @Request() req: any,
+    @Res() res: Response,
   ) {
-    // Verify the session belongs to the authenticated user
-    if (req.user.sessionId !== sessionId) {
-      throw new Error("Unauthorized access to session");
-    }
+    try {
+      // Verify the session belongs to the authenticated user
+      if (req.user.sessionId !== sessionId) {
+        throw new ForbiddenException("Unauthorized access to session");
+      }
 
-    return await this.reportService.generateReport(sessionId, true);
+      const userId = req.user.telegramId;
+
+      // Check if user has paid for this session
+      const hasPaid = await this.reportService.hasUserPaidForSession(sessionId);
+      if (!hasPaid) {
+        throw new BadRequestException({
+          statusCode: HttpStatus.PAYMENT_REQUIRED,
+          message: "Payment required for this report",
+          error: "PAYMENT_REQUIRED",
+          sessionId,
+        });
+      }
+
+      // Generate paid PDF buffer
+      const pdfBuffer = await this.reportService.generateReport(sessionId, true);
+
+      // Set headers for PDF streaming
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="business-assessment-premium-${sessionId}.pdf"`,
+      );
+      res.setHeader("Content-Length", pdfBuffer.length);
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+
+      // Stream PDF buffer to client
+      res.send(pdfBuffer);
+    } catch (error) {
+      if (error instanceof ForbiddenException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to generate report: ${error.message}`);
+    }
   }
 
   @Get(":reportId")
@@ -59,12 +146,16 @@ export class ReportController {
   async getUserReports(@Param("userId") userId: number, @Request() req: any) {
     // Verify the user is requesting their own reports
     if (req.user.telegramId !== userId) {
-      throw new Error("Unauthorized access to user reports");
+      throw new ForbiddenException("Unauthorized access to user reports");
     }
 
     return await this.reportService.getUserReports(userId);
   }
 
+  /**
+   * Legacy download endpoint - no longer used with on-demand generation
+   * Kept for backwards compatibility
+   */
   @Get("download/:reportId")
   @UseGuards(JwtAuthGuard)
   async downloadReport(
@@ -76,27 +167,12 @@ export class ReportController {
 
     // Verify the user has access to this report
     if (req.user.telegramId !== report.session.user_telegram_id) {
-      throw new Error("Unauthorized access to report");
+      throw new ForbiddenException("Unauthorized access to report");
     }
 
-    // Extract filename from storage URL
-    const fileName = report.storage_url.split("/").pop();
-    const filePath = path.join(process.cwd(), "uploads", fileName);
-
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      throw new NotFoundException("Report file not found");
-    }
-
-    // Set headers for PDF download
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="business-assessment-report-${reportId}.pdf"`,
+    // Since we no longer store files, redirect to generate endpoint
+    throw new BadRequestException(
+      "This endpoint is deprecated. Please use /reports/generate/:sessionId instead.",
     );
-
-    // Stream the file
-    const fileStream = fs.createReadStream(filePath);
-    fileStream.pipe(res);
   }
 }

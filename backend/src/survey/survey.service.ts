@@ -169,34 +169,12 @@ export class SurveyService {
     session.status = SessionStatus.COMPLETED;
     await this.sessionRepository.save(session);
 
-    // Generate free report automatically
-    try {
-      // Import ReportService dynamically to avoid circular dependency
-      const { ReportService } = await import("../report/report.service");
-      const reportService = new ReportService(
-        this.sessionRepository.manager.getRepository("Report"),
-        this.sessionRepository,
-        this.answerRepository,
-        null, // AnalyticsCalculator - will be injected properly in module
-        null, // PdfGenerator - will be injected properly in module
-      );
-
-      const report = await reportService.generateReport(sessionId, false);
-
-      return {
-        message: "Session completed successfully",
-        sessionId,
-        reportId: report.id,
-        reportUrl: report.storage_url,
-      };
-    } catch (error) {
-      console.error("Error generating report:", error);
-      return {
-        message: "Session completed successfully",
-        sessionId,
-        note: "Report generation failed, but session was completed",
-      };
-    }
+    // Note: Reports are now generated on-demand when requested,
+    // not automatically on session completion
+    return {
+      message: "Session completed successfully",
+      sessionId,
+    };
   }
 
   async isFirstSurvey(userId: number): Promise<boolean> {
@@ -222,12 +200,50 @@ export class SurveyService {
     return inProgressSessions === 0;
   }
 
+  /**
+   * Get user sessions with optimized query
+   * Uses indexes on user_telegram_id and created_at for performance
+   */
   async getUserSessions(userId: number): Promise<SurveySessionEntity[]> {
-    return await this.sessionRepository.find({
-      where: { user_telegram_id: userId },
-      relations: ["survey"],
-      order: { created_at: "DESC" },
-    });
+    return await this.sessionRepository
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.survey', 'survey')
+      .where('session.user_telegram_id = :userId', { userId })
+      .orderBy('session.created_at', 'DESC')
+      .getMany();
+  }
+
+  /**
+   * Get completed sessions for a user with optimized query
+   * Uses composite index on (user_telegram_id, status) for better performance
+   */
+  async getCompletedSessions(userId: number): Promise<SurveySessionEntity[]> {
+    return await this.sessionRepository
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.survey', 'survey')
+      .where('session.user_telegram_id = :userId', { userId })
+      .andWhere('session.status = :status', { status: SessionStatus.COMPLETED })
+      .orderBy('session.updated_at', 'DESC')
+      .getMany();
+  }
+
+  /**
+   * Get session with answers using efficient join
+   * Optimized to load all related data in a single query
+   */
+  async getSessionWithAnswers(sessionId: string): Promise<SurveySessionEntity> {
+    const session = await this.sessionRepository
+      .createQueryBuilder('session')
+      .leftJoinAndSelect('session.answers', 'answers')
+      .leftJoinAndSelect('session.survey', 'survey')
+      .where('session.id = :sessionId', { sessionId })
+      .getOne();
+
+    if (!session) {
+      throw new NotFoundException(`Session ${sessionId} not found`);
+    }
+
+    return session;
   }
 
   async getUserSurveysStatus(telegramId: number) {
@@ -256,14 +272,14 @@ export class SurveyService {
   /**
    * Check if user has already used their free survey
    * Returns true if user has completed at least one survey (of any type)
+   * Optimized with composite index on (user_telegram_id, status)
    */
   async hasUsedFreeSurvey(userId: number): Promise<boolean> {
-    const completedCount = await this.sessionRepository.count({
-      where: {
-        user_telegram_id: userId,
-        status: SessionStatus.COMPLETED,
-      },
-    });
+    const completedCount = await this.sessionRepository
+      .createQueryBuilder('session')
+      .where('session.user_telegram_id = :userId', { userId })
+      .andWhere('session.status = :status', { status: SessionStatus.COMPLETED })
+      .getCount();
 
     return completedCount > 0;
   }
@@ -355,15 +371,8 @@ export class SurveyService {
    * Implements clean architecture principles and leverages existing analytics
    */
   async getSurveyResults(sessionId: string): Promise<SurveyResults> {
-    // Get session with answers
-    const session = await this.sessionRepository.findOne({
-      where: { id: sessionId },
-      relations: ["answers", "survey"],
-    });
-
-    if (!session) {
-      throw new NotFoundException(`Session ${sessionId} not found`);
-    }
+    // Get session with answers using optimized query
+    const session = await this.getSessionWithAnswers(sessionId);
 
     // Get survey structure
     const surveyType = session.survey.type.toLowerCase() as 'express' | 'full';
@@ -389,15 +398,8 @@ export class SurveyService {
    * Follows single responsibility principle - delegates to AnalyticsCalculator
    */
   async getCategoryDetails(sessionId: string, categoryName: string): Promise<CategoryResult | null> {
-    // Get session with answers
-    const session = await this.sessionRepository.findOne({
-      where: { id: sessionId },
-      relations: ["answers", "survey"],
-    });
-
-    if (!session) {
-      throw new NotFoundException(`Session ${sessionId} not found`);
-    }
+    // Get session with answers using optimized query
+    const session = await this.getSessionWithAnswers(sessionId);
 
     // Get survey structure
     const surveyType = session.survey.type.toLowerCase() as 'express' | 'full';

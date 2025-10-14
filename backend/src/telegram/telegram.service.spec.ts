@@ -9,6 +9,7 @@ import { PaymentService } from '../payment/payment.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { ExcelService } from '../excel/excel.service';
 import { CalendarService } from './calendar/calendar.service';
+import { ReportService } from '../report/report.service';
 import { User } from '../entities';
 import { ADMIN_USERNAMES } from './telegram.constants';
 
@@ -21,6 +22,7 @@ describe('TelegramService', () => {
   let analyticsService: AnalyticsService;
   let excelService: ExcelService;
   let calendarService: CalendarService;
+  let reportService: ReportService;
   let configService: ConfigService;
 
   const mockUserRepository = {
@@ -37,6 +39,7 @@ describe('TelegramService', () => {
     getUserSessions: jest.fn(),
     generateReport: jest.fn(),
     getPaidReport: jest.fn(),
+    getSession: jest.fn(),
   };
 
   const mockPaymentService = {
@@ -71,6 +74,12 @@ describe('TelegramService', () => {
     getPreviousMonth: jest.fn(),
     getNextMonth: jest.fn(),
     validateDateRange: jest.fn(),
+  };
+
+  const mockReportService = {
+    generateReport: jest.fn(),
+    getReport: jest.fn(),
+    getUserReports: jest.fn(),
   };
 
   const mockConfigService = {
@@ -116,6 +125,10 @@ describe('TelegramService', () => {
           useValue: mockCalendarService,
         },
         {
+          provide: ReportService,
+          useValue: mockReportService,
+        },
+        {
           provide: getRepositoryToken(User),
           useValue: mockUserRepository,
         },
@@ -130,6 +143,7 @@ describe('TelegramService', () => {
     analyticsService = module.get<AnalyticsService>(AnalyticsService);
     excelService = module.get<ExcelService>(ExcelService);
     calendarService = module.get<CalendarService>(CalendarService);
+    reportService = module.get<ReportService>(ReportService);
     configService = module.get<ConfigService>(ConfigService);
 
     // Reset all mocks before each test
@@ -820,6 +834,300 @@ describe('TelegramService', () => {
           expect.stringContaining('sendMessage'),
           expect.objectContaining({
             body: expect.stringContaining('download_report_session123'),
+          }),
+        );
+      });
+    });
+
+    describe('PDF Report Download', () => {
+      beforeEach(() => {
+        global.fetch = jest.fn(() =>
+          Promise.resolve({
+            ok: true,
+            json: async () => ({ result: true }),
+            text: async () => 'OK',
+          } as Response),
+        );
+      });
+
+      it('should validate session ownership before generating report', async () => {
+        const userId = 123456789;
+        const sessionId = 'session123';
+
+        // Mock session with different user
+        mockSurveyService.getSession.mockResolvedValue({
+          id: sessionId,
+          userId: 987654321, // Different user
+          surveyType: 'express',
+          status: 'COMPLETED',
+          answers: {},
+        });
+
+        const callbackQuery = {
+          id: 'callback_download',
+          from: {
+            id: userId,
+            first_name: 'User',
+            is_bot: false,
+          },
+          message: {
+            message_id: 123,
+            from: {
+              id: userId,
+              first_name: 'User',
+              is_bot: false,
+            },
+            chat: {
+              id: userId,
+              type: 'private' as const,
+              first_name: 'User',
+            },
+            date: Math.floor(Date.now() / 1000),
+          },
+          data: `download_report_${sessionId}`,
+        };
+
+        await service.handleWebhook({ update_id: 123, callback_query: callbackQuery });
+
+        // Verify error message was sent
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('sendMessage'),
+          expect.objectContaining({
+            body: expect.stringContaining('нет доступа'),
+          }),
+        );
+
+        // Verify report was NOT generated
+        expect(mockReportService.generateReport).not.toHaveBeenCalled();
+      });
+
+      it('should generate free report for first completed survey', async () => {
+        const userId = 123456789;
+        const sessionId = 'session123';
+
+        // Mock session owned by user
+        mockSurveyService.getSession.mockResolvedValue({
+          id: sessionId,
+          userId: userId,
+          surveyType: 'express',
+          status: 'COMPLETED',
+          answers: {},
+        });
+
+        // Mock user has only one completed session (first one is free)
+        mockSurveyService.getUserSessions.mockResolvedValue([
+          {
+            id: sessionId,
+            status: 'COMPLETED',
+            user_telegram_id: userId,
+          },
+        ]);
+
+        // Mock report generation
+        mockReportService.generateReport.mockResolvedValue({
+          id: 'report123',
+          session_id: sessionId,
+          storage_url: '/tmp/report.pdf',
+          payment_status: 'FREE',
+        });
+
+        const callbackQuery = {
+          id: 'callback_download',
+          from: {
+            id: userId,
+            first_name: 'User',
+            is_bot: false,
+          },
+          message: {
+            message_id: 123,
+            from: {
+              id: userId,
+              first_name: 'User',
+              is_bot: false,
+            },
+            chat: {
+              id: userId,
+              type: 'private' as const,
+              first_name: 'User',
+            },
+            date: Math.floor(Date.now() / 1000),
+          },
+          data: `download_report_${sessionId}`,
+        };
+
+        await service.handleWebhook({ update_id: 123, callback_query: callbackQuery });
+
+        // Verify free report was generated
+        expect(mockReportService.generateReport).toHaveBeenCalledWith(sessionId, false);
+      });
+
+      it('should initiate payment flow for subsequent surveys', async () => {
+        const userId = 123456789;
+        const sessionId = 'session456';
+
+        // Mock session owned by user
+        mockSurveyService.getSession.mockResolvedValue({
+          id: sessionId,
+          userId: userId,
+          surveyType: 'full',
+          status: 'COMPLETED',
+          answers: {},
+        });
+
+        // Mock user has multiple completed sessions
+        mockSurveyService.getUserSessions.mockResolvedValue([
+          {
+            id: 'session123',
+            status: 'COMPLETED',
+            user_telegram_id: userId,
+          },
+          {
+            id: sessionId,
+            status: 'COMPLETED',
+            user_telegram_id: userId,
+          },
+        ]);
+
+        const callbackQuery = {
+          id: 'callback_download',
+          from: {
+            id: userId,
+            first_name: 'User',
+            is_bot: false,
+          },
+          message: {
+            message_id: 123,
+            from: {
+              id: userId,
+              first_name: 'User',
+              is_bot: false,
+            },
+            chat: {
+              id: userId,
+              type: 'private' as const,
+              first_name: 'User',
+            },
+            date: Math.floor(Date.now() / 1000),
+          },
+          data: `download_report_${sessionId}`,
+        };
+
+        await service.handleWebhook({ update_id: 123, callback_query: callbackQuery });
+
+        // Verify payment message was sent
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('sendMessage'),
+          expect.objectContaining({
+            body: expect.stringContaining('Оплата'),
+          }),
+        );
+
+        // Verify report was NOT generated yet
+        expect(mockReportService.generateReport).not.toHaveBeenCalled();
+      });
+
+      it('should handle missing session gracefully', async () => {
+        const userId = 123456789;
+        const sessionId = 'nonexistent';
+
+        // Mock session not found
+        mockSurveyService.getSession.mockRejectedValue(
+          new Error('Session not found'),
+        );
+
+        const callbackQuery = {
+          id: 'callback_download',
+          from: {
+            id: userId,
+            first_name: 'User',
+            is_bot: false,
+          },
+          message: {
+            message_id: 123,
+            from: {
+              id: userId,
+              first_name: 'User',
+              is_bot: false,
+            },
+            chat: {
+              id: userId,
+              type: 'private' as const,
+              first_name: 'User',
+            },
+            date: Math.floor(Date.now() / 1000),
+          },
+          data: `download_report_${sessionId}`,
+        };
+
+        await service.handleWebhook({ update_id: 123, callback_query: callbackQuery });
+
+        // Verify error message was sent
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('sendMessage'),
+          expect.objectContaining({
+            body: expect.stringContaining('не найден'),
+          }),
+        );
+      });
+
+      it('should handle PDF generation errors', async () => {
+        const userId = 123456789;
+        const sessionId = 'session123';
+
+        // Mock session owned by user
+        mockSurveyService.getSession.mockResolvedValue({
+          id: sessionId,
+          userId: userId,
+          surveyType: 'express',
+          status: 'COMPLETED',
+          answers: {},
+        });
+
+        // Mock user has one completed session
+        mockSurveyService.getUserSessions.mockResolvedValue([
+          {
+            id: sessionId,
+            status: 'COMPLETED',
+            user_telegram_id: userId,
+          },
+        ]);
+
+        // Mock report generation failure
+        mockReportService.generateReport.mockRejectedValue(
+          new Error('PDF generation failed'),
+        );
+
+        const callbackQuery = {
+          id: 'callback_download',
+          from: {
+            id: userId,
+            first_name: 'User',
+            is_bot: false,
+          },
+          message: {
+            message_id: 123,
+            from: {
+              id: userId,
+              first_name: 'User',
+              is_bot: false,
+            },
+            chat: {
+              id: userId,
+              type: 'private' as const,
+              first_name: 'User',
+            },
+            date: Math.floor(Date.now() / 1000),
+          },
+          data: `download_report_${sessionId}`,
+        };
+
+        await service.handleWebhook({ update_id: 123, callback_query: callbackQuery });
+
+        // Verify error message was sent
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('sendMessage'),
+          expect.objectContaining({
+            body: expect.stringContaining('Ошибка'),
           }),
         );
       });

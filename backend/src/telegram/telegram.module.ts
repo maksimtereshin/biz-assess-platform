@@ -8,6 +8,7 @@ import { SurveyModule } from "../survey/survey.module";
 import { PaymentModule } from "../payment/payment.module";
 import { AnalyticsModule } from "../analytics/analytics.module";
 import { ExcelModule } from "../excel/excel.module";
+import { ReportModule } from "../report/report.module";
 import { User } from "../entities";
 
 @Module({
@@ -18,6 +19,7 @@ import { User } from "../entities";
     PaymentModule,
     AnalyticsModule,
     ExcelModule,
+    ReportModule,
   ],
   controllers: [TelegramController],
   providers: [TelegramService, CalendarService],

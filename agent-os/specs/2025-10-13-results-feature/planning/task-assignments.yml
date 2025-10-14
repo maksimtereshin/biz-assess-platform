@@ -1,0 +1,15 @@
+task_assignments:
+  - task_group: "Task Group 1: Telegram Bot Commands and Handlers"
+    assigned_subagent: "integration-engineer"
+
+  - task_group: "Task Group 2: Report Generation Service Updates"
+    assigned_subagent: "backend-engineer"
+
+  - task_group: "Task Group 3: Analytics and Data Aggregation"
+    assigned_subagent: "data-engineer"
+
+  - task_group: "Task Group 4: PDF Layout and Content"
+    assigned_subagent: "ui-engineer"
+
+  - task_group: "Task Group 5: End-to-End Testing & Integration"
+    assigned_subagent: "testing-engineer"
