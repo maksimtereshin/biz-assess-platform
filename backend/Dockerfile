@@ -92,6 +92,9 @@ COPY --from=builder --chown=nestjs:nodejs /shared ./node_modules/bizass-shared
 # Copy built application from builder stage
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 
+# Copy AdminJS component source files (required for runtime bundling)
+COPY --from=builder --chown=nestjs:nodejs /app/src/admin/components ./src/admin/components
+
 # Copy migrations directory
 COPY --chown=nestjs:nodejs ./backend/migrations ./migrations
 
@@ -104,9 +107,9 @@ USER nestjs
 # Expose port
 EXPOSE 3001
 
-# Health check
+# Health check (use /api/health since all routes have /api prefix)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+  CMD node -e "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# Start the application
-CMD ["node", "dist/main.js"]
+# Start the application (NestJS builds to dist/src/main.js)
+CMD ["node", "dist/src/main.js"]
