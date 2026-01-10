@@ -1,10 +1,17 @@
-import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Logger,
+} from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, ILike } from "typeorm";
 import { Admin } from "../entities/admin.entity";
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     @InjectRepository(Admin)
     private adminRepository: Repository<Admin>,
@@ -16,9 +23,28 @@ export class AdminService {
    * @returns true if user is an admin, false otherwise
    */
   async validateAdmin(telegramUsername: string): Promise<boolean> {
+    const normalizedUsername = telegramUsername.trim().toLowerCase();
+    this.logger.log(
+      `[ADMIN CHECK] Validating username: "${telegramUsername}" (normalized: "${normalizedUsername}")`,
+    );
+
     const admin = await this.adminRepository.findOne({
-      where: { telegram_username: telegramUsername },
+      where: { telegram_username: ILike(normalizedUsername) },
     });
+
+    this.logger.log(
+      `[ADMIN CHECK] Query result for "${normalizedUsername}": ${admin ? "FOUND" : "NOT FOUND"}`,
+    );
+
+    if (!admin) {
+      // Show what's actually in database
+      const allAdmins = await this.adminRepository.find();
+      this.logger.warn(
+        `[ADMIN CHECK] Available admins:`,
+        allAdmins.map((a) => a.telegram_username),
+      );
+    }
+
     return !!admin;
   }
 
@@ -39,13 +65,16 @@ export class AdminService {
    * @returns Created admin entity
    */
   async createAdmin(username: string, createdById: number): Promise<Admin> {
-    // Check if admin already exists
+    // Check if admin already exists (case-insensitive)
+    const normalizedUsername = username.trim().toLowerCase();
     const existing = await this.adminRepository.findOne({
-      where: { telegram_username: username },
+      where: { telegram_username: ILike(normalizedUsername) },
     });
 
     if (existing) {
-      throw new BadRequestException(`Admin with username ${username} already exists`);
+      throw new BadRequestException(
+        `Admin with username ${username} already exists`,
+      );
     }
 
     // Create new admin
@@ -95,8 +124,9 @@ export class AdminService {
    * @returns Admin entity or null
    */
   async findByUsername(telegramUsername: string): Promise<Admin | null> {
+    const normalizedUsername = telegramUsername.trim().toLowerCase();
     return this.adminRepository.findOne({
-      where: { telegram_username: telegramUsername },
+      where: { telegram_username: ILike(normalizedUsername) },
     });
   }
 

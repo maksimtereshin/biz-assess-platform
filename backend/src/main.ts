@@ -232,12 +232,21 @@ async function setupAdminJS(app: any) {
       try {
         // Validate JWT token
         const payload = authService.validateAdminToken(token);
+        logger.log(
+          `[ADMIN AUTH] Token validated for username: "${payload.username}"`,
+        );
 
         // Check if user is admin (normalize username for consistency with database)
         const normalizedUsername = payload.username?.trim().toLowerCase();
+        logger.log(`[ADMIN AUTH] Normalized username: "${normalizedUsername}"`);
+
         const isAdmin = await adminService.isAdmin(normalizedUsername);
+        logger.log(
+          `[ADMIN AUTH] Admin check result for "${normalizedUsername}": ${isAdmin}`,
+        );
 
         if (!isAdmin) {
+          logger.warn(`[ADMIN AUTH] Access denied for "${normalizedUsername}"`);
           return res.status(403).send(`
             <!DOCTYPE html>
             <html>
