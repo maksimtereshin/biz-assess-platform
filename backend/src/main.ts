@@ -50,10 +50,11 @@ async function setupAdminJS(app: any) {
     // ComponentLoader handles bundling automatically when admin.watch() is called
     const isDev = process.env.NODE_ENV !== "production";
 
-    // Fix component paths for production build
-    // In dev: __dirname = backend/src, so ../admin/components works
-    // In production: __dirname = dist/src, so ../admin/components also works
-    const componentsPath = path.join(__dirname, "../admin/components");
+    // Component paths must point to SOURCE .tsx files (not dist/)
+    // AdminJS ComponentLoader needs .tsx files to bundle at runtime
+    // In local build: __dirname = backend/dist/src → ../../src/admin/components
+    // In Docker: __dirname = /app/dist/src → /app/src/admin/components (copied by Dockerfile)
+    const componentsPath = path.join(__dirname, "../../src/admin/components");
 
     const Components = {
       StructureEditor: componentLoader.add(
