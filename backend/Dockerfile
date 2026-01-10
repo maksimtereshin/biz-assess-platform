@@ -111,5 +111,6 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# Start the application (NestJS builds to dist/main.js in production)
-CMD ["node", "dist/main.js"]
+# Start the application with migrations (NestJS builds to dist/main.js in production)
+# Migrations run before app starts to ensure database is up-to-date
+CMD ["npm", "run", "start:prod:migrate"]
