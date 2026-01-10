@@ -269,8 +269,14 @@ async function setupAdminJS(app: any) {
 
         // Get admin details
         const adminUser = await adminService.findByUsername(normalizedUsername);
+        logger.log(
+          `[ADMIN AUTH] findByUsername result: ${adminUser ? `FOUND (id: ${adminUser.id}, username: ${adminUser.telegram_username})` : "NULL"}`,
+        );
 
         if (!adminUser) {
+          logger.error(
+            `[ADMIN AUTH] Admin not found for "${normalizedUsername}" despite isAdmin=true`,
+          );
           return res.status(403).send("Доступ запрещен");
         }
 
@@ -281,8 +287,18 @@ async function setupAdminJS(app: any) {
           email: `${adminUser.telegram_username}@telegram.user`, // AdminJS expects email
         };
 
-        // Redirect to /admin without token in URL
-        return res.redirect("/admin");
+        // CRITICAL FIX: Save session before redirect to prevent race condition
+        session.save((err) => {
+          if (err) {
+            logger.error("[ADMIN AUTH] Failed to save session:", err);
+            return res.status(500).send("Internal server error");
+          }
+
+          logger.log(
+            `[ADMIN AUTH] Session saved successfully for "${normalizedUsername}", redirecting to /admin`,
+          );
+          return res.redirect("/admin");
+        });
       } catch (error) {
         console.error("Admin authentication error:", error);
         return res.status(403).send(`
