@@ -66,4 +66,4 @@ services:
 databases:
   - name: bizass-postgres
     databaseName: bizass_platform
-    plan: basic_256mb
+    plan: basic-256mb
