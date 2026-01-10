@@ -268,7 +268,7 @@ async function setupAdminJS(app: any) {
         }
 
         // Get admin details
-        const adminUser = await adminService.findByUsername(payload.username);
+        const adminUser = await adminService.findByUsername(normalizedUsername);
 
         if (!adminUser) {
           return res.status(403).send("Доступ запрещен");
