@@ -1,26 +1,9 @@
 import { DataSource } from "typeorm";
 import { config } from "dotenv";
-import * as path from "path";
-import * as fs from "fs";
 import * as entities from "./entities";
 
 // Load environment variables
 config();
-
-// Get migration files (excluding spec files)
-const migrationsDir = path.join(__dirname, "migrations");
-const migrationFiles = fs.existsSync(migrationsDir)
-  ? fs
-      .readdirSync(migrationsDir)
-      .filter(
-        (file) =>
-          (file.endsWith(".ts") || file.endsWith(".js")) &&
-          !file.endsWith(".spec.ts") &&
-          !file.endsWith(".spec.js") &&
-          !file.endsWith(".d.ts"),
-      )
-      .map((file) => path.join(migrationsDir, file))
-  : [];
 
 // Filter out non-entity exports (enums, types, etc)
 const entityClasses = Object.values(entities).filter(
@@ -35,7 +18,9 @@ export const AppDataSource = new DataSource({
   password: process.env.DB_PASSWORD || "password",
   database: process.env.DB_NAME || "bizass_platform",
   entities: entityClasses,
-  migrations: migrationFiles,
+  // Use glob pattern for migrations - works in both dev (.ts) and production (.js)
+  // Excludes .spec.ts, .spec.js, and .d.ts files
+  migrations: [__dirname + "/migrations/*[0-9]*{.ts,.js}"],
   migrationsTableName: "migrations",
   synchronize: false, // Never use synchronize with migrations
   logging: true,
