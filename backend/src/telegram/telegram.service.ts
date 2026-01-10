@@ -182,7 +182,6 @@ export class TelegramService implements OnModuleInit {
     }
   }
 
-
   /**
    * Get main keyboard with 6 buttons from database content
    * Admin button conditionally displayed based on user role
@@ -599,7 +598,9 @@ export class TelegramService implements OnModuleInit {
     }
 
     // Generate admin auth token (15 minute expiration)
-    const token = this.authService.generateAdminAuthToken(username);
+    // Normalize username to lowercase for consistency with database
+    const normalizedUsername = username.trim().toLowerCase();
+    const token = this.authService.generateAdminAuthToken(normalizedUsername);
 
     // Create admin panel URL with token
     const adminPanelUrl = `${this.backendUrl}/admin?token=${token}`;

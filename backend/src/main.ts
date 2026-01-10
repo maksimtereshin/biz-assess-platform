@@ -233,8 +233,9 @@ async function setupAdminJS(app: any) {
         // Validate JWT token
         const payload = authService.validateAdminToken(token);
 
-        // Check if user is admin
-        const isAdmin = await adminService.isAdmin(payload.username);
+        // Check if user is admin (normalize username for consistency with database)
+        const normalizedUsername = payload.username?.trim().toLowerCase();
+        const isAdmin = await adminService.isAdmin(normalizedUsername);
 
         if (!isAdmin) {
           return res.status(403).send(`
