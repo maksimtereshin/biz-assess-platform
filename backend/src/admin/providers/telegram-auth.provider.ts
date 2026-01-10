@@ -1,11 +1,10 @@
-import { DefaultAuthProvider } from "adminjs";
 import { AuthService } from "../../auth/auth.service";
 import { AdminService } from "../admin.service";
 
 /**
  * TelegramAuthProvider implements AdminJS authentication using Telegram SecureStorage + Bearer tokens
  *
- * This provider extends DefaultAuthProvider to support:
+ * This provider supports:
  * 1. Token-based authentication via URL query parameter (?token=...)
  * 2. Token-based authentication via Authorization header (Bearer ...)
  * 3. Session-based authentication (fallback if cookies work)
@@ -18,14 +17,26 @@ import { AdminService } from "../admin.service";
  * 5. Validates JWT token and returns user object
  * 6. AdminJS stores user in req.session.adminUser automatically
  */
-export class TelegramAuthProvider extends DefaultAuthProvider {
+export class TelegramAuthProvider {
+  private DefaultAuthProvider: any;
+
   constructor(
     private readonly componentLoader: any,
     private readonly authService: AuthService,
     private readonly adminService: AdminService,
-  ) {
-    super({
-      componentLoader,
+  ) {}
+
+  /**
+   * Initialize the provider by loading AdminJS DefaultAuthProvider
+   * This uses dynamic import to handle AdminJS ESM module
+   */
+  async initialize() {
+    const adminjs = await import("adminjs");
+    this.DefaultAuthProvider = adminjs.DefaultAuthProvider;
+
+    // Create base provider instance
+    const baseProvider = new this.DefaultAuthProvider({
+      componentLoader: this.componentLoader,
       authenticate: async (payload: any, context?: any) => {
         // This is called by AdminJS login form (if shown as fallback)
         // For Telegram auth, we use handleLogin instead
@@ -33,6 +44,10 @@ export class TelegramAuthProvider extends DefaultAuthProvider {
         return null;
       },
     });
+
+    // Copy methods from base provider to this instance
+    Object.setPrototypeOf(this, baseProvider);
+    return this;
   }
 
   /**

@@ -319,13 +319,14 @@ async function setupAdminJS(app: any) {
       }
     };
 
-    // Create TelegramAuthProvider for AdminJS authentication
+    // Create and initialize TelegramAuthProvider for AdminJS authentication
     // This provider handles authentication via Bearer tokens from Telegram SecureStorage
-    const telegramAuthProvider = new TelegramAuthProvider(
+    // Uses dynamic import to handle AdminJS ESM module
+    const telegramAuthProvider = await new TelegramAuthProvider(
       componentLoader,
       authService,
       adminService,
-    );
+    ).initialize();
 
     // Session secret for AdminJS
     const sessionSecret =
