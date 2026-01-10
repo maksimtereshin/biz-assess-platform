@@ -56,7 +56,6 @@ services:
   - type: web
     name: biz-assess-platform
     runtime: static
-    plan: starter
     buildCommand: cd shared && npm ci && npm run build && cd ../frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
     envVars:
