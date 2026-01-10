@@ -49,16 +49,20 @@ async function setupAdminJS(app: any) {
     // AdminJS v7 requires direct paths to .tsx files (not .bundle.tsx)
     // ComponentLoader handles bundling automatically when admin.watch() is called
     const isDev = process.env.NODE_ENV !== "production";
-    const projectRoot = path.join(__dirname, "../..");
+
+    // Fix component paths for production build
+    // In dev: __dirname = backend/src, so ../admin/components works
+    // In production: __dirname = dist/src, so ../admin/components also works
+    const componentsPath = path.join(__dirname, "../admin/components");
 
     const Components = {
       StructureEditor: componentLoader.add(
         "StructureEditor",
-        path.resolve(projectRoot, "src/admin/components/StructureEditor"),
+        path.join(componentsPath, "StructureEditor"),
       ),
       SurveyPreview: componentLoader.add(
         "SurveyPreview",
-        path.resolve(projectRoot, "src/admin/components/SurveyPreview"),
+        path.join(componentsPath, "SurveyPreview"),
       ),
     };
 
@@ -336,6 +340,12 @@ async function setupAdminJS(app: any) {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger("Bootstrap");
+
+  // Set global API prefix (all routes will be prefixed with /api)
+  // Exclude frontend proxy routes (/, /express/*, /full/*)
+  app.setGlobalPrefix("api", {
+    exclude: ["/", "express", "express/(.*)", "full", "full/(.*)"],
+  });
 
   // Enable CORS
   app.enableCors({
