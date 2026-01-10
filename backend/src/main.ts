@@ -200,8 +200,24 @@ async function setupAdminJS(app: any) {
 
       const session = req.session;
 
+      // Log session info for debugging
+      logger.log(
+        `[ADMIN AUTH] Request to ${req.path}, Session ID: ${req.sessionID}`,
+      );
+      logger.log(
+        `[ADMIN AUTH] Session.adminUser exists: ${!!session?.adminUser}`,
+      );
+      if (session?.adminUser) {
+        logger.log(
+          `[ADMIN AUTH] Session.adminUser: ${JSON.stringify(session.adminUser)}`,
+        );
+      }
+
       // Check if user already authenticated in session
       if (session?.adminUser) {
+        logger.log(
+          `[ADMIN AUTH] User authenticated via session, allowing access`,
+        );
         return next();
       }
 
@@ -295,8 +311,13 @@ async function setupAdminJS(app: any) {
           }
 
           logger.log(
-            `[ADMIN AUTH] Session saved successfully for "${normalizedUsername}", redirecting to /admin`,
+            `[ADMIN AUTH] Session saved successfully for "${normalizedUsername}"`,
           );
+          logger.log(`[ADMIN AUTH] Session ID: ${req.sessionID}`);
+          logger.log(
+            `[ADMIN AUTH] Session data: ${JSON.stringify(session.adminUser)}`,
+          );
+          logger.log("[ADMIN AUTH] Redirecting to /admin");
           return res.redirect("/admin");
         });
       } catch (error) {
