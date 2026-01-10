@@ -226,76 +226,38 @@ async function setupAdminJS(app: any) {
           `);
         }
 
+        // Get full admin user details
+        const adminUser = await adminService.findByUsername(normalizedUsername);
+        if (!adminUser) {
+          throw new Error("Admin user not found in database");
+        }
+
         logger.log(
           `[ADMIN AUTH] Token validated for admin: "${normalizedUsername}"`,
         );
-        logger.log(`[ADMIN AUTH] Storing token in Telegram SecureStorage`);
+        logger.log(`[ADMIN AUTH] Creating AdminJS session for user`);
 
-        // Return HTML page that stores token in Telegram SecureStorage
-        return res.send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <title>Loading Admin Panel...</title>
-            <script src="https://telegram.org/js/telegram-web-app.js"></script>
-            <style>
-              body {
-                font-family: Arial, sans-serif;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                height: 100vh;
-                margin: 0;
-                background-color: #f5f5f5;
-              }
-              .loader { text-align: center; }
-              .spinner {
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #3498db;
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 20px;
-              }
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            </style>
-            <script>
-              const token = "${token}";
+        // Set AdminJS session - this is what AdminJS checks for authentication
+        req.session.adminUser = {
+          id: adminUser.id,
+          email: `${adminUser.telegram_username}@telegram.user`,
+          username: adminUser.telegram_username,
+          title: adminUser.telegram_username,
+          avatarUrl: null,
+        };
 
-              // Check if Telegram WebApp is available
-              if (typeof Telegram === 'undefined' || !Telegram.WebApp || !Telegram.WebApp.SecureStorage) {
-                console.error('Telegram WebApp not available');
-                alert('Failed to access Telegram WebApp. Please open this page from Telegram bot.');
-              } else {
-                // Store token in Telegram SecureStorage
-                Telegram.WebApp.SecureStorage.setItem('admin_token', token, function(error) {
-                  if (error) {
-                    console.error('[ADMIN] Failed to store token:', error);
-                    alert('Failed to save authentication. Please try again.');
-                    return;
-                  }
+        // Save session before redirect
+        await new Promise((resolve, reject) => {
+          req.session.save((err: any) => {
+            if (err) reject(err);
+            else resolve(null);
+          });
+        });
 
-                  console.log('[ADMIN] Token stored in SecureStorage');
+        logger.log(`[ADMIN AUTH] Session saved, redirecting to /admin`);
 
-                  // Redirect to /admin WITHOUT token in URL
-                  window.location.href = '/admin';
-                });
-              }
-            </script>
-          </head>
-          <body>
-            <div class="loader">
-              <div class="spinner"></div>
-              <p>Authenticating...</p>
-            </div>
-          </body>
-          </html>
-        `);
+        // Redirect to /admin - session is already set in req.session.adminUser
+        return res.redirect("/admin");
       } catch (error) {
         console.error("Admin authentication error:", error);
         return res.status(403).send(`
