@@ -303,7 +303,7 @@ async function setupAdminJS(app: any) {
           email: `${adminUser.telegram_username}@telegram.user`, // AdminJS expects email
         };
 
-        // CRITICAL FIX: Save session before redirect to prevent race condition
+        // CRITICAL FIX: Save session and use client-side redirect to preserve cookies in Telegram WebView
         session.save((err) => {
           if (err) {
             logger.error("[ADMIN AUTH] Failed to save session:", err);
@@ -317,8 +317,55 @@ async function setupAdminJS(app: any) {
           logger.log(
             `[ADMIN AUTH] Session data: ${JSON.stringify(session.adminUser)}`,
           );
-          logger.log("[ADMIN AUTH] Redirecting to /admin");
-          return res.redirect("/admin");
+          logger.log(
+            "[ADMIN AUTH] Token authentication successful, using client-side redirect",
+          );
+
+          // Use client-side redirect to preserve session cookies in Telegram WebView
+          return res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>Loading Admin Panel...</title>
+              <style>
+                body {
+                  font-family: Arial, sans-serif;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  height: 100vh;
+                  margin: 0;
+                  background-color: #f5f5f5;
+                }
+                .loader { text-align: center; }
+                .spinner {
+                  border: 4px solid #f3f3f3;
+                  border-top: 4px solid #3498db;
+                  border-radius: 50%;
+                  width: 40px;
+                  height: 40px;
+                  animation: spin 1s linear infinite;
+                  margin: 0 auto 20px;
+                }
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              </style>
+              <script>
+                // Client-side redirect removes token from URL and preserves session cookies
+                window.location.replace('/admin');
+              </script>
+            </head>
+            <body>
+              <div class="loader">
+                <div class="spinner"></div>
+                <p>Loading admin panel...</p>
+              </div>
+            </body>
+            </html>
+          `);
         });
       } catch (error) {
         console.error("Admin authentication error:", error);
@@ -350,6 +397,14 @@ async function setupAdminJS(app: any) {
       return null;
     };
 
+    // Provide authenticated admin user to AdminJS context
+    const getCurrentAdmin = async (req: any) => {
+      if (req.session?.adminUser) {
+        return req.session.adminUser;
+      }
+      return null;
+    };
+
     // Build AdminJS router with authentication
     // @ts-ignore
     const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
@@ -370,8 +425,10 @@ async function setupAdminJS(app: any) {
         cookie: {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         },
       },
+      getCurrentAdmin,
     );
 
     // Apply custom auth middleware before AdminJS routes
