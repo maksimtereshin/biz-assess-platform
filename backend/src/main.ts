@@ -52,9 +52,14 @@ async function setupAdminJS(app: any) {
 
     // Component paths must point to SOURCE .tsx files (not dist/)
     // AdminJS ComponentLoader needs .tsx files to bundle at runtime
-    // In local build: __dirname = backend/dist/src → ../../src/admin/components
-    // In Docker: __dirname = /app/dist/src → /app/src/admin/components (copied by Dockerfile)
-    const componentsPath = path.join(__dirname, "../../src/admin/components");
+    // Dynamically determine path based on where main.js is located:
+    // - Development/local: __dirname = /app/dist/src → ../../src/admin/components
+    // - Production Docker: __dirname = /app/dist → ../src/admin/components
+    const isInSrcSubdir = __dirname.endsWith(path.sep + "src");
+    const componentsPath = path.join(
+      __dirname,
+      isInSrcSubdir ? "../../src/admin/components" : "../src/admin/components",
+    );
 
     const Components = {
       StructureEditor: componentLoader.add(
