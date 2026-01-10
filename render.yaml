@@ -3,7 +3,7 @@ services:
   - type: web
     name: bizass-backend
     runtime: docker
-    plan: free
+    plan: starter
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./
     envVars:
@@ -53,10 +53,9 @@ services:
     # preDeployCommand not supported on free tier - run migrations manually after first deploy
 
   # Frontend Service - Static Site (no Docker, no nginx)
-  - type: web
-    name: bizass-frontend
-    runtime: static
-    plan: free
+  - type: static_site
+    name: biz-assess-platform
+    plan: starter
     buildCommand: cd shared && npm ci && npm run build && cd ../frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
     envVars:
@@ -66,4 +65,4 @@ services:
 databases:
   - name: bizass-postgres
     databaseName: bizass_platform
-    plan: free
+    plan: basic_256mb
