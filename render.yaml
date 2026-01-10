@@ -50,7 +50,7 @@ services:
       - key: ADMIN_TELEGRAM_USERNAME
         sync: false # First admin Telegram username - set manually in Render dashboard
     healthCheckPath: /api/health
-    preDeployCommand: cd backend && npm run migration:run
+    preDeployCommand: sh -c "cd backend && npm run migration:run"
 
   # Frontend Service - Static Site (no Docker, no nginx)
   - type: web
