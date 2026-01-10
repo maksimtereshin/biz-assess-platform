@@ -109,10 +109,6 @@ async function setupAdminJS(app: any) {
         logo: false,
       },
       componentLoader,
-      env: {
-        // Inject services for custom actions
-        surveyVersionService,
-      },
       locale: {
         language: "ru",
         translations: {
@@ -156,6 +152,10 @@ async function setupAdminJS(app: any) {
         },
       },
     });
+
+    // Attach services to AdminJS instance for custom actions
+    // Store on admin instance directly (not in env) to avoid JSON serialization issues
+    (admin as any).surveyVersionService = surveyVersionService;
 
     // Enable watch mode for component bundling in development
     // NOTE: admin.watch() causes "Converting circular structure to JSON" error

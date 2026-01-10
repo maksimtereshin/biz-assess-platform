@@ -60,18 +60,20 @@ export const publishVersionAction = {
     }
 
     try {
-      // Get SurveyVersionService from context (injected in main.ts)
-      const surveyVersionService = (context as any)._admin?.options?.env
+      // Get SurveyVersionService from AdminJS instance (attached in main.ts)
+      const surveyVersionService = (context as any)._admin
         ?.surveyVersionService as SurveyVersionService | undefined;
 
       if (!surveyVersionService) {
-        throw new Error("SurveyVersionService not available in AdminJS context");
+        throw new Error(
+          "SurveyVersionService not available in AdminJS context",
+        );
       }
 
       // Publish version
       const versionId = record.params.id;
-      const publishedVersion = await surveyVersionService.publishVersion(versionId);
-
+      const publishedVersion =
+        await surveyVersionService.publishVersion(versionId);
 
       return {
         record: record.toJSON(currentAdmin),

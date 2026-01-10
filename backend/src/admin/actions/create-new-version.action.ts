@@ -36,12 +36,14 @@ export const createNewVersionAction = {
     }
 
     try {
-      // Get SurveyVersionService from context (injected in main.ts)
-      const surveyVersionService = (context as any)._admin?.options?.env
+      // Get SurveyVersionService from AdminJS instance (attached in main.ts)
+      const surveyVersionService = (context as any)._admin
         ?.surveyVersionService as SurveyVersionService | undefined;
 
       if (!surveyVersionService) {
-        throw new Error("SurveyVersionService not available in AdminJS context");
+        throw new Error(
+          "SurveyVersionService not available in AdminJS context",
+        );
       }
 
       // Get admin ID from session
@@ -52,10 +54,11 @@ export const createNewVersionAction = {
 
       // Clone existing version into new draft
       const existingVersionId = record.params.id;
-      const newVersion = await surveyVersionService.createNewVersionFromExisting(
-        existingVersionId,
-        adminId,
-      );
+      const newVersion =
+        await surveyVersionService.createNewVersionFromExisting(
+          existingVersionId,
+          adminId,
+        );
 
       // Redirect to edit view of new version
       return {

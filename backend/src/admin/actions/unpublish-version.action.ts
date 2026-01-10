@@ -11,7 +11,8 @@ export const unpublishVersionAction = {
   actionType: "record" as const,
   icon: "Archive",
   label: "Снять с публикации",
-  guard: "Новые пользователи не смогут начать этот опрос. Активные сессии продолжат работать.",
+  guard:
+    "Новые пользователи не смогут начать этот опрос. Активные сессии продолжат работать.",
   component: false as const,
 
   /**
@@ -60,17 +61,20 @@ export const unpublishVersionAction = {
     }
 
     try {
-      // Get SurveyVersionService from context (injected in main.ts)
-      const surveyVersionService = (context as any)._admin?.options?.env
+      // Get SurveyVersionService from AdminJS instance (attached in main.ts)
+      const surveyVersionService = (context as any)._admin
         ?.surveyVersionService as SurveyVersionService | undefined;
 
       if (!surveyVersionService) {
-        throw new Error("SurveyVersionService not available in AdminJS context");
+        throw new Error(
+          "SurveyVersionService not available in AdminJS context",
+        );
       }
 
       // Unpublish version (change to ARCHIVED)
       const versionId = record.params.id;
-      const archivedVersion = await surveyVersionService.unpublishVersion(versionId);
+      const archivedVersion =
+        await surveyVersionService.unpublishVersion(versionId);
 
       return {
         record: record.toJSON(currentAdmin),
