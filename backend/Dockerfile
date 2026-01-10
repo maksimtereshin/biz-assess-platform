@@ -95,6 +95,9 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 # Copy AdminJS component source files (required for runtime bundling)
 COPY --from=builder --chown=nestjs:nodejs /app/src/admin/components ./src/admin/components
 
+# Copy and set up entrypoint script for migrations
+COPY --chmod=755 ./backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
 # Create uploads directory for file storage
 RUN mkdir -p uploads && chown nestjs:nodejs uploads
 
@@ -111,6 +114,8 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# Start the application with migrations (NestJS builds to dist/main.js in production)
-# Migrations run before app starts to ensure database is up-to-date
-CMD ["npm", "run", "start:prod:migrate"]
+# Set entrypoint to run migrations before starting the app
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
+# Start the application (passed as argument to entrypoint)
+CMD ["node", "dist/main.js"]
