@@ -2,9 +2,9 @@ import { AuthService } from "../../auth/auth.service";
 import { AdminService } from "../admin.service";
 
 /**
- * TelegramAuthProvider implements AdminJS authentication using Telegram SecureStorage + Bearer tokens
+ * Creates TelegramAuthProvider for AdminJS authentication using Telegram SecureStorage + Bearer tokens
  *
- * This provider supports:
+ * This factory function uses dynamic import to load AdminJS (ESM module) and create a provider that supports:
  * 1. Token-based authentication via URL query parameter (?token=...)
  * 2. Token-based authentication via Authorization header (Bearer ...)
  * 3. Session-based authentication (fallback if cookies work)
@@ -16,49 +16,36 @@ import { AdminService } from "../admin.service";
  * 4. handleLogin checks for token in query or Authorization header
  * 5. Validates JWT token and returns user object
  * 6. AdminJS stores user in req.session.adminUser automatically
+ *
+ * @param componentLoader - AdminJS ComponentLoader instance
+ * @param authService - AuthService for JWT token validation
+ * @param adminService - AdminService for admin user management
+ * @returns Promise<DefaultAuthProvider> - Configured AdminJS auth provider
  */
-export class TelegramAuthProvider {
-  private DefaultAuthProvider: any;
+export async function createTelegramAuthProvider(
+  componentLoader: any,
+  authService: AuthService,
+  adminService: AdminService,
+): Promise<any> {
+  // Dynamically import AdminJS to avoid CommonJS require() issues
+  const { DefaultAuthProvider } = await import("adminjs");
 
-  constructor(
-    private readonly componentLoader: any,
-    private readonly authService: AuthService,
-    private readonly adminService: AdminService,
-  ) {}
+  // Create and configure the provider
+  const provider = new DefaultAuthProvider({
+    componentLoader,
+    authenticate: async (payload: any, context?: any) => {
+      // This is called by AdminJS login form (if shown as fallback)
+      // For Telegram auth, we use handleLogin instead
+      // Return null to indicate "not authenticated via form"
+      return null;
+    },
+  });
 
-  /**
-   * Initialize the provider by loading AdminJS DefaultAuthProvider
-   * This uses dynamic import to handle AdminJS ESM module
-   */
-  async initialize() {
-    const adminjs = await import("adminjs");
-    this.DefaultAuthProvider = adminjs.DefaultAuthProvider;
-
-    // Create base provider instance
-    const baseProvider = new this.DefaultAuthProvider({
-      componentLoader: this.componentLoader,
-      authenticate: async (payload: any, context?: any) => {
-        // This is called by AdminJS login form (if shown as fallback)
-        // For Telegram auth, we use handleLogin instead
-        // Return null to indicate "not authenticated via form"
-        return null;
-      },
-    });
-
-    // Copy methods from base provider to this instance
-    Object.setPrototypeOf(this, baseProvider);
-    return this;
-  }
-
-  /**
-   * Handles login requests from AdminJS
-   * Called when AdminJS needs to authenticate a user
-   *
-   * @param opts - Request options containing query params, headers, etc.
-   * @param context - Request context
-   * @returns User object if authenticated, null otherwise
-   */
-  async handleLogin(opts: any, context?: any): Promise<any> {
+  // Override handleLogin method to implement custom token-based authentication
+  provider.handleLogin = async function (
+    opts: any,
+    context?: any,
+  ): Promise<any> {
     try {
       // Priority 1: Check for token in URL query (?token=...)
       // This is used on first visit from Telegram bot
@@ -82,7 +69,7 @@ export class TelegramAuthProvider {
       }
 
       // Validate JWT token
-      const payload = this.authService.validateAdminToken(token);
+      const payload = authService.validateAdminToken(token);
       if (!payload || !payload.username) {
         throw new Error("Invalid token payload");
       }
@@ -90,7 +77,7 @@ export class TelegramAuthProvider {
       const normalizedUsername = payload.username.trim().toLowerCase();
 
       // Verify user is still an admin
-      const isAdmin = await this.adminService.isAdmin(normalizedUsername);
+      const isAdmin = await adminService.isAdmin(normalizedUsername);
       if (!isAdmin) {
         console.warn(
           `[TelegramAuthProvider] Access denied for user: ${normalizedUsername}`,
@@ -99,8 +86,7 @@ export class TelegramAuthProvider {
       }
 
       // Get full admin user details
-      const adminUser =
-        await this.adminService.findByUsername(normalizedUsername);
+      const adminUser = await adminService.findByUsername(normalizedUsername);
 
       if (!adminUser) {
         throw new Error("Admin user not found in database");
@@ -122,16 +108,7 @@ export class TelegramAuthProvider {
       console.error("[TelegramAuthProvider] Authentication error:", error);
       return null; // Show login form on error
     }
-  }
+  };
 
-  /**
-   * Returns UI properties for customizing the login page
-   * Can be used to customize logo, title, etc.
-   */
-  getUiProps() {
-    return {
-      // Customize login page if needed
-      // For now, return empty object (use AdminJS defaults)
-    };
-  }
+  return provider;
 }

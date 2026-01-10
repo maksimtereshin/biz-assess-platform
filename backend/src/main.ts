@@ -6,7 +6,7 @@ import * as path from "path";
 import { AuthService } from "./auth/auth.service";
 import { AdminService } from "./admin/admin.service";
 import { SurveyVersionService } from "./survey/survey-version.service";
-import { TelegramAuthProvider } from "./admin/providers/telegram-auth.provider";
+import { createTelegramAuthProvider } from "./admin/providers/telegram-auth.provider";
 
 async function setupAdminJS(app: any) {
   try {
@@ -321,12 +321,12 @@ async function setupAdminJS(app: any) {
 
     // Create and initialize TelegramAuthProvider for AdminJS authentication
     // This provider handles authentication via Bearer tokens from Telegram SecureStorage
-    // Uses dynamic import to handle AdminJS ESM module
-    const telegramAuthProvider = await new TelegramAuthProvider(
+    // Uses factory function with dynamic import to handle AdminJS ESM module
+    const telegramAuthProvider = await createTelegramAuthProvider(
       componentLoader,
       authService,
       adminService,
-    ).initialize();
+    );
 
     // Session secret for AdminJS
     const sessionSecret =
