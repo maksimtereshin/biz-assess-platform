@@ -1,0 +1,15 @@
+task_assignments:
+  - task_group: "Task Group 1: Font Assets and Registration"
+    assigned_subagent: "backend-engineer"
+
+  - task_group: "Task Group 2: UTF-8 CSV Processing"
+    assigned_subagent: "data-engineer"
+
+  - task_group: "Task Group 3: PDF Generation with Cyrillic Support"
+    assigned_subagent: "backend-engineer"
+
+  - task_group: "Task Group 4: Payment-Based Content Logic"
+    assigned_subagent: "backend-engineer"
+
+  - task_group: "Task Group 5: End-to-End Testing"
+    assigned_subagent: "testing-engineer"

@@ -6,12 +6,13 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  BaseEntity,
 } from "typeorm";
 import { User } from "./user.entity";
 import { ReferralUsage } from "./referral-usage.entity";
 
 @Entity("referral_codes")
-export class ReferralCode {
+export class ReferralCode extends BaseEntity {
   @PrimaryColumn({ type: "varchar", length: 50 })
   code: string; // Unique user-facing referral code
 

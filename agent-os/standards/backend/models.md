@@ -8,3 +8,5 @@
 - **Validation at Multiple Layers**: Implement validation at both model and database levels for defense in depth
 - **Relationship Clarity**: Define relationships clearly with appropriate cascade behaviors and naming conventions
 - **Avoid Over-Normalization**: Balance normalization with practical query performance needs
+
+**Related:** See [Core Engineering Principles](../global/principles.md) - especially SRP for model design and DIP for repository patterns

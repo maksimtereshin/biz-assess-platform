@@ -9,3 +9,5 @@
 - **State Management**: Keep state as local as possible; lift it up only when needed by multiple components
 - **Minimal Props**: Keep the number of props manageable; if a component needs many props, consider composition or splitting it
 - **Documentation**: Document component usage, props, and provide examples for easier adoption by team members
+
+**Related:** See [Core Engineering Principles](../global/principles.md) - especially SRP, OCP, and composition patterns

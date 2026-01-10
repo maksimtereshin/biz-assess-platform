@@ -3,14 +3,11 @@
  */
 
 /**
- * List of authorized admin usernames (without @ symbol)
- * Admin users have access to:
- * - Analytics dashboard
- * - Report generation
- * - User statistics
- * - Platform metrics
+ * @deprecated This hardcoded list is no longer used. Admin status is now managed via the admins table.
+ * Use AdminService.isAdmin() to check admin status instead.
  *
- * To add/remove admins, update this array and redeploy
+ * Legacy list of authorized admin usernames (without @ symbol)
+ * Kept for backward compatibility only.
  */
 export const ADMIN_USERNAMES: string[] = [
   'maksim_tereshin',
@@ -21,7 +18,7 @@ export const ADMIN_USERNAMES: string[] = [
  * Admin panel menu texts
  */
 export const ADMIN_PANEL = {
-  BUTTON_TEXT: '👨‍💼 Админ',
+  BUTTON_TEXT: '🔧 Админ панель',
   MENU_TITLE: '👨‍💼 *Админ Панель*\n\nВыберите действие:',
   ALL_TIME_ANALYTICS: '📊 Аналитика за весь период',
   CUSTOM_ANALYTICS: '📅 Аналитика за период',

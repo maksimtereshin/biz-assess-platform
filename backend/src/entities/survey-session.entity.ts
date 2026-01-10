@@ -8,15 +8,17 @@ import {
   JoinColumn,
   OneToMany,
   OneToOne,
+  BaseEntity,
 } from "typeorm";
 import { User } from "./user.entity";
 import { Survey } from "./survey.entity";
+import { SurveyVersion } from "./survey-version.entity";
 import { Answer } from "./answer.entity";
 import { Report } from "./report.entity";
 import { Payment } from "./payment.entity";
 
 @Entity("survey_sessions")
-export class SurveySession {
+export class SurveySession extends BaseEntity {
   @PrimaryColumn({ type: "uuid" })
   id: string;
 
@@ -25,6 +27,10 @@ export class SurveySession {
 
   @Column({ type: "int" })
   survey_id: number;
+
+  // New field for versioning - tracks which version of the survey this session uses
+  @Column({ type: "int", nullable: true })
+  survey_version_id: number;
 
   @Column({
     type: "varchar",
@@ -53,6 +59,10 @@ export class SurveySession {
   @ManyToOne(() => Survey, (survey) => survey.survey_sessions)
   @JoinColumn({ name: "survey_id" })
   survey: Survey;
+
+  @ManyToOne(() => SurveyVersion, { nullable: true })
+  @JoinColumn({ name: "survey_version_id" })
+  survey_version: SurveyVersion;
 
   @OneToMany(() => Answer, (answer) => answer.session)
   answers: Answer[];

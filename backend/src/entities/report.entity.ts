@@ -6,12 +6,13 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  BaseEntity,
 } from "typeorm";
 import { SurveySession } from "./survey-session.entity";
 import { Payment } from "./payment.entity";
 
 @Entity("reports")
-export class Report {
+export class Report extends BaseEntity {
   @PrimaryColumn({ type: "uuid" })
   id: string;
 

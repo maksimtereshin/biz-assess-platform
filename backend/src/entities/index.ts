@@ -6,6 +6,8 @@
 export { User } from "./user.entity";
 export { Survey } from "./survey.entity";
 export { SurveySession } from "./survey-session.entity";
+export { SurveyVersion } from "./survey-version.entity";
+export { Admin } from "./admin.entity";
 export { Answer } from "./answer.entity";
 export { Report } from "./report.entity";
 export { Payment } from "./payment.entity";

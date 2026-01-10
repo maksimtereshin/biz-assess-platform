@@ -9,11 +9,12 @@ import { PaymentService } from "../payment/payment.service";
 import { AnalyticsService } from "../analytics/analytics.service";
 import { ExcelService } from "../excel/excel.service";
 import { ReportService } from "../report/report.service";
+import { AdminService } from "../admin/admin.service";
 import { User } from "../entities";
-import { ADMIN_USERNAMES, ADMIN_PANEL } from "./telegram.constants";
+import { ADMIN_PANEL } from "./telegram.constants";
 import { CalendarService } from "./calendar/calendar.service";
 import * as fs from "fs";
-import * as FormData from "form-data";
+import FormData from "form-data";
 import axios from "axios";
 
 interface InlineKeyboardMarkup {
@@ -32,6 +33,7 @@ export class TelegramService {
   private readonly logger = new Logger(TelegramService.name);
   private readonly botToken: string;
   private readonly webAppUrl: string;
+  private readonly backendUrl: string;
 
   // Store calendar selection state per user
   private readonly calendarState = new Map<number, {
@@ -58,6 +60,7 @@ export class TelegramService {
     private excelService: ExcelService,
     private calendarService: CalendarService,
     private reportService: ReportService,
+    private adminService: AdminService,
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {
@@ -66,23 +69,25 @@ export class TelegramService {
       "FRONTEND_URL",
       "http://localhost:3000",
     );
+    this.backendUrl = this.configService.get<string>(
+      "BACKEND_URL",
+      "http://localhost:4000",
+    );
   }
 
   /**
    * Check if a username belongs to an authorized admin
-   * Performs case-insensitive matching and trims whitespace
+   * Queries the admins table via AdminService
    * @param username - Telegram username to check
-   * @returns true if user is admin, false otherwise
+   * @returns Promise<boolean> - true if user is admin, false otherwise
    */
-  isAdmin(username?: string | null): boolean {
+  async isAdmin(username?: string | null): Promise<boolean> {
     if (!username) {
       return false;
     }
 
     const normalizedUsername = username.trim().toLowerCase();
-    const isAdminUser = ADMIN_USERNAMES.some(
-      (adminUsername) => adminUsername.toLowerCase() === normalizedUsername
-    );
+    const isAdminUser = await this.adminService.isAdmin(normalizedUsername);
 
     if (isAdminUser) {
       this.logger.log(`Admin access granted for username: ${username}`);
@@ -101,10 +106,12 @@ export class TelegramService {
     ];
 
     // Add admin button for authorized users
-    if (user?.username && this.isAdmin(user.username)) {
-      baseKeyboard.push([
-        { text: ADMIN_PANEL.BUTTON_TEXT, callback_data: "admin_panel" },
-      ]);
+    // Note: This is checked synchronously in handleStartCommand after async isAdmin check
+    if (user?.username) {
+      // Admin button will be added in handleStartCommand after async check
+      return {
+        inline_keyboard: baseKeyboard,
+      };
     }
 
     return {
@@ -241,9 +248,12 @@ export class TelegramService {
       await this.handleHelpCommand(chatId);
     } else if (data === "back_to_main") {
       await this.handleStartCommand(chatId, user);
-    } else if (data === "admin_panel" || data.startsWith("analytics_")) {
+    } else if (data === "admin_panel") {
+      // Handle admin panel button click
+      await this.handleAdminPanelButton(chatId, user.username);
+    } else if (data.startsWith("analytics_")) {
       // Admin-only features - check authorization
-      if (!this.isAdmin(user.username)) {
+      if (!(await this.isAdmin(user.username))) {
         this.logger.warn(`Unauthorized admin access attempt by user: ${user.username || user.id}`);
         await this.sendMessage(
           chatId,
@@ -252,9 +262,7 @@ export class TelegramService {
         return;
       }
 
-      if (data === "admin_panel") {
-        await this.handleAdminPanel(chatId);
-      } else if (data === "analytics_all_time") {
+      if (data === "analytics_all_time") {
         await this.sendMessage(chatId, "📊 Генерация отчета за весь период...\n\n⏳ Пожалуйста, подождите...");
         await this.generateAndSendAnalyticsReport(chatId, user.id, null, null);
       } else if (data === "analytics_custom") {
@@ -262,7 +270,7 @@ export class TelegramService {
       }
     } else if (data.startsWith("calendar_")) {
       // Calendar widget callbacks - admin only
-      if (!this.isAdmin(user.username)) {
+      if (!(await this.isAdmin(user.username))) {
         this.logger.warn(`Unauthorized calendar access attempt by user: ${user.username || user.id}`);
         await this.sendMessage(chatId, "⛔ Вы не авторизованы для доступа к этой функции.");
         return;
@@ -308,10 +316,20 @@ export class TelegramService {
 Выберите действие из меню ниже:
     `;
 
+    // Check if user is admin and add admin button
+    const isUserAdmin = await this.isAdmin(user.username);
+    const keyboard = this.getMainKeyboard(user);
+
+    if (isUserAdmin) {
+      keyboard.inline_keyboard.push([
+        { text: ADMIN_PANEL.BUTTON_TEXT, callback_data: "admin_panel" },
+      ]);
+    }
+
     await this.sendMessageWithKeyboard(
       chatId,
       welcomeMessage,
-      this.getMainKeyboard(user),
+      keyboard,
     );
   }
 
@@ -336,6 +354,57 @@ export class TelegramService {
       chatId,
       message,
       this.getSurveyTypeKeyboard(chatId),
+    );
+  }
+
+  /**
+   * Handles admin panel button click in Telegram bot
+   * Generates admin auth token and sends WebApp link
+   */
+  private async handleAdminPanelButton(chatId: number, username?: string): Promise<void> {
+    if (!username) {
+      await this.sendMessage(chatId, "⛔ Для доступа к админ-панели необходим Telegram username.");
+      return;
+    }
+
+    // Check if user is admin
+    const isUserAdmin = await this.isAdmin(username);
+    if (!isUserAdmin) {
+      this.logger.warn(`Unauthorized admin panel access attempt by user: ${username}`);
+      await this.sendMessage(chatId, "⛔ Доступ запрещен. Вы не являетесь администратором.");
+      return;
+    }
+
+    // Generate admin auth token (15 minute expiration)
+    const token = this.authService.generateAdminAuthToken(username);
+
+    // Create admin panel URL with token
+    const adminPanelUrl = `${this.backendUrl}/admin?token=${token}`;
+
+    this.logger.log(`Generated admin panel URL for ${username}: ${adminPanelUrl.substring(0, 50)}...`);
+
+    // Send message with WebApp button
+    const keyboard = {
+      inline_keyboard: [
+        [
+          {
+            text: "🔧 Открыть админ-панель",
+            web_app: { url: adminPanelUrl },
+          },
+        ],
+        [
+          {
+            text: "⬅️ Назад в главное меню",
+            callback_data: "back_to_main",
+          },
+        ],
+      ],
+    };
+
+    await this.sendMessageWithKeyboard(
+      chatId,
+      "🔧 *Админ-панель*\n\nНажмите кнопку ниже для открытия панели управления.\n\n_Токен действителен 15 минут._",
+      keyboard,
     );
   }
 

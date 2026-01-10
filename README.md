@@ -126,6 +126,47 @@ The application uses PostgreSQL with the following main entities:
 - **ReferralCodes**: User referral codes
 - **ReferralUsage**: Referral code usage tracking
 
+## Admin Panel
+
+The platform includes a comprehensive admin panel powered by AdminJS for managing surveys, viewing user sessions, and monitoring system health.
+
+### Accessing the Admin Panel
+
+**For Administrators:**
+1. Open the Telegram bot
+2. Click the "🔧 Админ-панель" button (visible only to authorized administrators)
+3. The admin panel will open automatically with authenticated access at `/admin`
+
+**Authentication:**
+- Administrators are automatically authenticated via Telegram WebApp integration
+- The system uses JWT tokens to validate admin access
+- Only users registered in the `admins` table can access the admin panel
+- Non-admin users receive a 403 Forbidden error when attempting to access `/admin`
+
+### Key Features
+
+- **Survey Management**: View and edit survey structures (Express and Full assessments)
+- **Survey Versioning**: Create, edit, publish, and unpublish survey versions with draft/published workflow
+- **Session Monitoring**: Track user survey sessions and responses in real-time
+- **Admin Management**: Manage administrator access and permissions
+- **Custom Actions**: Publish versions, create new versions, and unpublish surveys
+- **JSONB Structure Editor**: Visual editor for complex survey question structures
+
+### Survey Versioning System
+
+The admin panel implements a complete versioning system for surveys:
+
+- **Versions**: Each survey can have multiple versions (draft and published)
+- **Session Isolation**: User sessions are always tied to a specific survey version
+- **Safe Editing**: Create drafts, make changes, and publish when ready without affecting active users
+- **Version History**: Track all versions with creation dates and status
+
+### Documentation
+
+- **Administrator Guide**: See [agent-os/specs/2026-01-06-admin-panel-cms/docs/admin-guide.md](agent-os/specs/2026-01-06-admin-panel-cms/docs/admin-guide.md) for detailed workflows, FAQ, and troubleshooting
+- **API Documentation**: See [agent-os/specs/2026-01-06-admin-panel-cms/docs/api-documentation.md](agent-os/specs/2026-01-06-admin-panel-cms/docs/api-documentation.md) for versioning endpoints and API reference
+- **Database Schema**: See [agent-os/specs/2026-01-06-admin-panel-cms/docs/versioning-schema.md](agent-os/specs/2026-01-06-admin-panel-cms/docs/versioning-schema.md) for ER diagrams and version lifecycle
+
 ## Development Workflow
 
 1. **Backend Development**

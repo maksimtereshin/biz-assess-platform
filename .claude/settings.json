@@ -1,0 +1,102 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/auto-format.sh",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/validate-bash.py",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-start.sh",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/inject-context.sh",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Before completing, verify the following:\n1. Are all assigned tasks marked complete with [x] in tasks.md?\n2. Have IDE diagnostics been run on all modified files?\n3. Has Playwright testing been completed for any UI tasks?\n4. Are there any critical errors or warnings that need to be addressed?\n\nIf ANY requirement is not satisfied, respond with:\n{\"decision\": \"block\", \"reason\": \"Quality gate not satisfied: [specific requirement]\", \"continue\": true}\n\nIf all requirements are satisfied, respond with:\n{\"decision\": \"approve\"}",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Read:**",
+      "Glob:**",
+      "Grep:**",
+      "Edit:agent-os/specs/**/*.md",
+      "Edit:backend/src/**/*.ts",
+      "Edit:frontend/src/**/*.tsx",
+      "Edit:shared/src/**/*.ts",
+      "Write:agent-os/specs/**/*.md",
+      "Write:agent-os/specs/**/screenshots/*.png",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(git:*)",
+      "Bash(docker:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(xargs:*)",
+      "Bash(paste:*)"
+    ],
+    "deny": [
+      ".env",
+      ".env.*",
+      ".mcp.json",
+      "Package-lock.json",
+      "Node_modules/**",
+      ".git/config",
+      "*.key",
+      "*.pem",
+      "*.crt"
+    ],
+    "ask": [
+      "Edit:.claude/**",
+      "Write:agent-os/config.yml",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "WebFetch"
+    ]
+  }
+}

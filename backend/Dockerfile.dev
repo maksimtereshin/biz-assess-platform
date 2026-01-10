@@ -14,7 +14,8 @@ RUN apk add --no-cache \
     freetype-dev \
     python3 \
     make \
-    g++
+    g++ \
+    curl
 
 WORKDIR /shared
 COPY ./shared/package*.json ./
