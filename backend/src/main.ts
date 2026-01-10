@@ -187,10 +187,38 @@ async function setupAdminJS(app: any) {
     // Apply session middleware to all routes
     app.use(sessionMiddleware);
 
+    // Helper function to detect static asset requests
+    // Static assets should bypass authentication to allow browser to load bundles
+    const isStaticAsset = (path: string): boolean => {
+      const staticExtensions = [
+        ".js",
+        ".css",
+        ".map",
+        ".json",
+        ".ico",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".svg",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".eot",
+      ];
+      return staticExtensions.some((ext) => path.endsWith(ext));
+    };
+
     // Middleware to validate Authorization header for admin requests
     // Replaces session-based authentication with JWT token validation
     const adminAuthMiddleware = async (req: any, res: any, next: any) => {
       try {
+        // Allow static assets to bypass authentication
+        // Static bundles (JS, CSS) don't include Authorization headers by default
+        if (isStaticAsset(req.path)) {
+          return next();
+        }
+
         // Extract token from Authorization header
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
