@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -10,6 +10,7 @@ import { AnalyticsService } from "../analytics/analytics.service";
 import { ExcelService } from "../excel/excel.service";
 import { ReportService } from "../report/report.service";
 import { AdminService } from "../admin/admin.service";
+import { ContentService } from "./content.service";
 import { User } from "../entities";
 import { ADMIN_PANEL } from "./telegram.constants";
 import { CalendarService } from "./calendar/calendar.service";
@@ -29,18 +30,21 @@ interface InlineKeyboardMarkup {
 }
 
 @Injectable()
-export class TelegramService {
+export class TelegramService implements OnModuleInit {
   private readonly logger = new Logger(TelegramService.name);
   private readonly botToken: string;
   private readonly webAppUrl: string;
   private readonly backendUrl: string;
 
   // Store calendar selection state per user
-  private readonly calendarState = new Map<number, {
-    startDate?: Date;
-    endDate?: Date;
-    currentViewDate: Date;
-  }>();
+  private readonly calendarState = new Map<
+    number,
+    {
+      startDate?: Date;
+      endDate?: Date;
+      currentViewDate: Date;
+    }
+  >();
 
   // Rate limiting for report generation (1 per minute per admin)
   private readonly reportGenerationCooldown = new Map<number, number>();
@@ -53,6 +57,7 @@ export class TelegramService {
 
   constructor(
     private configService: ConfigService,
+    private contentService: ContentService,
     private authService: AuthService,
     private surveyService: SurveyService,
     private paymentService: PaymentService,
@@ -76,6 +81,81 @@ export class TelegramService {
   }
 
   /**
+   * Lifecycle hook: Configure bot commands on service initialization
+   * Sets bot commands using Telegram Bot API setMyCommands method
+   */
+  async onModuleInit(): Promise<void> {
+    try {
+      this.logger.log("Configuring Telegram bot commands...");
+
+      const commands = [
+        {
+          command: "start",
+          description:
+            this.contentService.getCachedContent("command_start_desc"),
+        },
+        {
+          command: "checkup",
+          description: this.contentService.getCachedContent(
+            "command_checkup_desc",
+          ),
+        },
+        {
+          command: "results",
+          description: this.contentService.getCachedContent(
+            "command_results_desc",
+          ),
+        },
+        {
+          command: "referral",
+          description: this.contentService.getCachedContent(
+            "command_referral_desc",
+          ),
+        },
+        {
+          command: "about",
+          description:
+            this.contentService.getCachedContent("command_about_desc"),
+        },
+        {
+          command: "faq",
+          description: this.contentService.getCachedContent("command_faq_desc"),
+        },
+        {
+          command: "admin",
+          description:
+            this.contentService.getCachedContent("command_admin_desc"),
+        },
+      ];
+
+      const response = await fetch(
+        `https://api.telegram.org/bot${this.botToken}/setMyCommands`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            commands: commands,
+            scope: { type: "default" },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        this.logger.error("Failed to set bot commands:", errorBody);
+      } else {
+        this.logger.log(
+          `Successfully configured ${commands.length} bot commands`,
+        );
+      }
+    } catch (error) {
+      this.logger.error("Error configuring bot commands:", error);
+    }
+  }
+
+  /**
    * Check if a username belongs to an authorized admin
    * Queries the admins table via AdminService
    * @param username - Telegram username to check
@@ -86,32 +166,73 @@ export class TelegramService {
       return false;
     }
 
-    const normalizedUsername = username.trim().toLowerCase();
-    const isAdminUser = await this.adminService.isAdmin(normalizedUsername);
+    try {
+      const normalizedUsername = username.trim().toLowerCase();
+      const isAdminUser = await this.adminService.isAdmin(normalizedUsername);
 
-    if (isAdminUser) {
-      this.logger.log(`Admin access granted for username: ${username}`);
+      if (isAdminUser) {
+        this.logger.log(`Admin access granted for username: ${username}`);
+      }
+
+      return isAdminUser;
+    } catch (error) {
+      this.logger.error(`Error checking admin status for ${username}:`, error);
+      // Fail-safe: Return false if admin check fails (deny admin access on error)
+      return false;
     }
-
-    return isAdminUser;
   }
 
-  getMainKeyboard(user?: { username?: string }): InlineKeyboardMarkup {
+
+  /**
+   * Get main keyboard with 6 buttons from database content
+   * Admin button conditionally displayed based on user role
+   * @param user - Telegram user object with username
+   * @returns InlineKeyboardMarkup with main menu buttons
+   */
+  async getMainKeyboard(user?: {
+    username?: string;
+  }): Promise<InlineKeyboardMarkup> {
     const baseKeyboard = [
-      [{ text: "🚀 Начать ЧЕК АП", callback_data: "start_checkup" }],
-      [{ text: "📊 Мои результаты", callback_data: "my_results" }],
-      [{ text: "👥 Реферальная программа", callback_data: "referral" }],
-      [{ text: "ℹ️ О проекте", callback_data: "about" }],
-      [{ text: "❓ Помощь", callback_data: "help" }],
+      [
+        {
+          text: this.contentService.getCachedContent("main_button_checkup"),
+          callback_data: "main_checkup",
+        },
+      ],
+      [
+        {
+          text: this.contentService.getCachedContent("main_button_booking"),
+          callback_data: "main_booking",
+        },
+      ],
+      [
+        {
+          text: this.contentService.getCachedContent("main_button_about"),
+          callback_data: "main_about",
+        },
+      ],
+      [
+        {
+          text: this.contentService.getCachedContent("main_button_faq"),
+          callback_data: "main_faq",
+        },
+      ],
+      [
+        {
+          text: this.contentService.getCachedContent("main_button_referral"),
+          callback_data: "main_referral",
+        },
+      ],
     ];
 
     // Add admin button for authorized users
-    // Note: This is checked synchronously in handleStartCommand after async isAdmin check
-    if (user?.username) {
-      // Admin button will be added in handleStartCommand after async check
-      return {
-        inline_keyboard: baseKeyboard,
-      };
+    if (user?.username && (await this.isAdmin(user.username))) {
+      baseKeyboard.push([
+        {
+          text: this.contentService.getCachedContent("main_button_admin"),
+          callback_data: "main_admin",
+        },
+      ]);
     }
 
     return {
@@ -119,16 +240,56 @@ export class TelegramService {
     };
   }
 
+  /**
+   * Get Чекап submenu keyboard with 4 buttons from database content
+   * Includes back button to return to main menu
+   * @returns InlineKeyboardMarkup with submenu buttons
+   */
+  getCheckupSubmenu(): InlineKeyboardMarkup {
+    return {
+      inline_keyboard: [
+        [
+          {
+            text: this.contentService.getCachedContent("checkup_submenu_start"),
+            callback_data: "start_checkup",
+          },
+        ],
+        [
+          {
+            text: this.contentService.getCachedContent(
+              "checkup_submenu_results",
+            ),
+            callback_data: "my_results",
+          },
+        ],
+        [
+          {
+            text: this.contentService.getCachedContent(
+              "checkup_submenu_referral",
+            ),
+            callback_data: "referral",
+          },
+        ],
+        [
+          {
+            text: this.contentService.getCachedContent("checkup_submenu_back"),
+            callback_data: "back_to_main",
+          },
+        ],
+      ],
+    };
+  }
+
   private getSurveyTypeKeyboard(telegramId?: number): InlineKeyboardMarkup {
     // Генерируем токен для авторизации если есть telegramId
-    let authToken = '';
+    let authToken = "";
     if (telegramId) {
       try {
         const token = this.authService.generateAuthToken(telegramId);
         authToken = `?token=${token.token}`;
-        console.log('🎫 Generated auth token for user:', telegramId);
+        console.log("🎫 Generated auth token for user:", telegramId);
       } catch (error) {
-        console.warn('⚠️ Failed to generate auth token:', error);
+        console.warn("⚠️ Failed to generate auth token:", error);
       }
     }
 
@@ -217,10 +378,18 @@ export class TelegramService {
       await this.handleStartCommand(chatId, user);
     } else if (text?.startsWith("/help")) {
       await this.handleHelpCommand(chatId);
-    } else if (text?.startsWith("/reports")) {
+    } else if (text?.startsWith("/reports") || text?.startsWith("/results")) {
       await this.handleReportsCommand(chatId, user.id);
     } else if (text?.startsWith("/referral")) {
       await this.handleReferralCommand(chatId, user.id);
+    } else if (text?.startsWith("/checkup")) {
+      await this.handleStartCheckup(chatId);
+    } else if (text?.startsWith("/about")) {
+      await this.handleWipMessage(chatId);
+    } else if (text?.startsWith("/faq")) {
+      await this.handleWipMessage(chatId);
+    } else if (text?.startsWith("/admin")) {
+      await this.handleAdminPanelButton(chatId, user.username);
     } else {
       await this.sendMessage(
         chatId,
@@ -236,14 +405,29 @@ export class TelegramService {
 
     this.logger.log(`Received callback query from ${user.id}: ${data}`);
 
-    if (data === "start_checkup") {
+    // New main menu callbacks
+    if (data === "main_checkup") {
+      await this.handleMainCheckupCallback(chatId);
+    } else if (data === "main_booking") {
+      await this.handleWipMessage(chatId);
+    } else if (data === "main_about") {
+      await this.handleWipMessage(chatId);
+    } else if (data === "main_faq") {
+      await this.handleWipMessage(chatId);
+    } else if (data === "main_referral") {
+      await this.handleReferralCommand(chatId, user.id);
+    } else if (data === "main_admin") {
+      await this.handleAdminPanelButton(chatId, user.username);
+    }
+    // Existing callback handlers (preserved)
+    else if (data === "start_checkup") {
       await this.handleStartCheckup(chatId);
     } else if (data === "my_results") {
       await this.handleReportsCommand(chatId, user.id);
     } else if (data === "referral") {
       await this.handleReferralCommand(chatId, user.id);
     } else if (data === "about") {
-      await this.handleAboutCommand(chatId);
+      await this.handleWipMessage(chatId);
     } else if (data === "help") {
       await this.handleHelpCommand(chatId);
     } else if (data === "back_to_main") {
@@ -254,7 +438,9 @@ export class TelegramService {
     } else if (data.startsWith("analytics_")) {
       // Admin-only features - check authorization
       if (!(await this.isAdmin(user.username))) {
-        this.logger.warn(`Unauthorized admin access attempt by user: ${user.username || user.id}`);
+        this.logger.warn(
+          `Unauthorized admin access attempt by user: ${user.username || user.id}`,
+        );
         await this.sendMessage(
           chatId,
           "⛔ Вы не авторизованы для доступа к админ панели.",
@@ -263,7 +449,10 @@ export class TelegramService {
       }
 
       if (data === "analytics_all_time") {
-        await this.sendMessage(chatId, "📊 Генерация отчета за весь период...\n\n⏳ Пожалуйста, подождите...");
+        await this.sendMessage(
+          chatId,
+          "📊 Генерация отчета за весь период...\n\n⏳ Пожалуйста, подождите...",
+        );
         await this.generateAndSendAnalyticsReport(chatId, user.id, null, null);
       } else if (data === "analytics_custom") {
         await this.handleCalendarStart(chatId, user.id);
@@ -271,11 +460,21 @@ export class TelegramService {
     } else if (data.startsWith("calendar_")) {
       // Calendar widget callbacks - admin only
       if (!(await this.isAdmin(user.username))) {
-        this.logger.warn(`Unauthorized calendar access attempt by user: ${user.username || user.id}`);
-        await this.sendMessage(chatId, "⛔ Вы не авторизованы для доступа к этой функции.");
+        this.logger.warn(
+          `Unauthorized calendar access attempt by user: ${user.username || user.id}`,
+        );
+        await this.sendMessage(
+          chatId,
+          "⛔ Вы не авторизованы для доступа к этой функции.",
+        );
         return;
       }
-      await this.handleCalendarCallback(chatId, user.id, data, callbackQuery.message.message_id);
+      await this.handleCalendarCallback(
+        chatId,
+        user.id,
+        data,
+        callbackQuery.message.message_id,
+      );
     } else if (data.startsWith("survey_")) {
       const surveyType = data.split("_")[1] as SurveyType;
       await this.handleSurveySelection(chatId, user.id, surveyType);
@@ -300,37 +499,50 @@ export class TelegramService {
     await this.answerCallbackQuery(callbackQuery.id);
   }
 
+  /**
+   * Handle /start command
+   * Shows personalized welcome message with main menu
+   * Loads content from database with {firstName} placeholder replacement
+   */
   private async handleStartCommand(chatId: number, user: any): Promise<void> {
     // Ensure user exists in database
     await this.ensureUserExists(user.id, user.first_name, user.username);
 
-    const welcomeMessage = `
-🎯 Добро пожаловать в ЧЕК АП Экспертный бизнес, ${user.first_name || "Friend"}!
-
-Это профессиональный опросник для экспертов помогающих профессий.
-
-✅ Всего 15-20 минут вашего времени
-📊 Персональный отчет с результатами
-🎯 Детальный план действий по выбранным категориям
-
-Выберите действие из меню ниже:
-    `;
-
-    // Check if user is admin and add admin button
-    const isUserAdmin = await this.isAdmin(user.username);
-    const keyboard = this.getMainKeyboard(user);
-
-    if (isUserAdmin) {
-      keyboard.inline_keyboard.push([
-        { text: ADMIN_PANEL.BUTTON_TEXT, callback_data: "admin_panel" },
-      ]);
-    }
-
-    await this.sendMessageWithKeyboard(
-      chatId,
-      welcomeMessage,
-      keyboard,
+    // Load welcome message from database
+    const welcomeTemplate =
+      this.contentService.getCachedContent("welcome_message");
+    const welcomeMessage = welcomeTemplate.replace(
+      "{firstName}",
+      user.first_name || "Friend",
     );
+
+    // Get main keyboard with admin button if applicable
+    const keyboard = await this.getMainKeyboard(user);
+
+    await this.sendMessageWithKeyboard(chatId, welcomeMessage, keyboard);
+  }
+
+  /**
+   * Handle main_checkup callback
+   * Shows Чекап submenu with title message from database
+   */
+  private async handleMainCheckupCallback(chatId: number): Promise<void> {
+    const message = this.contentService.getCachedContent(
+      "checkup_submenu_title",
+    );
+    const keyboard = this.getCheckupSubmenu();
+
+    await this.sendMessageWithKeyboard(chatId, message, keyboard);
+  }
+
+  /**
+   * Handle WIP (work-in-progress) message
+   * Shows database-loaded message for unimplemented features
+   * Does not navigate away from current menu
+   */
+  private async handleWipMessage(chatId: number): Promise<void> {
+    const message = this.contentService.getCachedContent("wip_message");
+    await this.sendMessage(chatId, message);
   }
 
   private async handleStartCheckup(chatId: number): Promise<void> {
@@ -361,17 +573,28 @@ export class TelegramService {
    * Handles admin panel button click in Telegram bot
    * Generates admin auth token and sends WebApp link
    */
-  private async handleAdminPanelButton(chatId: number, username?: string): Promise<void> {
+  private async handleAdminPanelButton(
+    chatId: number,
+    username?: string,
+  ): Promise<void> {
     if (!username) {
-      await this.sendMessage(chatId, "⛔ Для доступа к админ-панели необходим Telegram username.");
+      await this.sendMessage(
+        chatId,
+        "⛔ Для доступа к админ-панели необходим Telegram username.",
+      );
       return;
     }
 
     // Check if user is admin
     const isUserAdmin = await this.isAdmin(username);
     if (!isUserAdmin) {
-      this.logger.warn(`Unauthorized admin panel access attempt by user: ${username}`);
-      await this.sendMessage(chatId, "⛔ Доступ запрещен. Вы не являетесь администратором.");
+      this.logger.warn(
+        `Unauthorized admin panel access attempt by user: ${username}`,
+      );
+      await this.sendMessage(
+        chatId,
+        "⛔ Доступ запрещен. Вы не являетесь администратором.",
+      );
       return;
     }
 
@@ -381,7 +604,9 @@ export class TelegramService {
     // Create admin panel URL with token
     const adminPanelUrl = `${this.backendUrl}/admin?token=${token}`;
 
-    this.logger.log(`Generated admin panel URL for ${username}: ${adminPanelUrl.substring(0, 50)}...`);
+    this.logger.log(
+      `Generated admin panel URL for ${username}: ${adminPanelUrl.substring(0, 50)}...`,
+    );
 
     // Send message with WebApp button
     const keyboard = {
@@ -442,7 +667,10 @@ export class TelegramService {
   /**
    * Initialize calendar for date range selection
    */
-  private async handleCalendarStart(chatId: number, userId: number): Promise<void> {
+  private async handleCalendarStart(
+    chatId: number,
+    userId: number,
+  ): Promise<void> {
     // Initialize calendar state
     const today = new Date();
     this.calendarState.set(userId, {
@@ -472,11 +700,13 @@ _Максимальный период: 1 год_
     callbackData: string,
     messageId: number,
   ): Promise<void> {
-    const state = this.calendarState.get(userId) || { currentViewDate: new Date() };
+    const state = this.calendarState.get(userId) || {
+      currentViewDate: new Date(),
+    };
     const parsed = this.calendarService.parseCallbackData(callbackData);
 
     switch (parsed.action) {
-      case 'prev_month': {
+      case "prev_month": {
         const { year, month } = this.calendarService.getPreviousMonth(
           parsed.year!,
           parsed.month!,
@@ -494,7 +724,7 @@ _Максимальный период: 1 год_
         break;
       }
 
-      case 'next_month': {
+      case "next_month": {
         const { year, month } = this.calendarService.getNextMonth(
           parsed.year!,
           parsed.month!,
@@ -512,7 +742,7 @@ _Максимальный период: 1 год_
         break;
       }
 
-      case 'select': {
+      case "select": {
         const selectedDate = parsed.date!;
 
         if (!state.startDate) {
@@ -533,7 +763,12 @@ _Максимальный период: 1 год_
             state.startDate,
           );
 
-          await this.editMessageWithKeyboard(chatId, messageId, message, calendar);
+          await this.editMessageWithKeyboard(
+            chatId,
+            messageId,
+            message,
+            calendar,
+          );
         } else if (!state.endDate) {
           // Second selection - set as end date
           state.endDate = selectedDate;
@@ -550,7 +785,9 @@ _Максимальный период: 1 год_
             state.startDate = undefined;
             state.endDate = undefined;
 
-            const calendar = this.calendarService.generateCalendar(state.currentViewDate);
+            const calendar = this.calendarService.generateCalendar(
+              state.currentViewDate,
+            );
             await this.editMessageKeyboard(chatId, messageId, calendar);
             return;
           }
@@ -570,7 +807,12 @@ _Максимальный период: 1 год_
             state.endDate,
           );
 
-          await this.editMessageWithKeyboard(chatId, messageId, message, calendar);
+          await this.editMessageWithKeyboard(
+            chatId,
+            messageId,
+            message,
+            calendar,
+          );
         } else {
           // Both dates already selected - reset and start over
           state.startDate = selectedDate;
@@ -589,16 +831,21 @@ _Максимальный период: 1 год_
             state.startDate,
           );
 
-          await this.editMessageWithKeyboard(chatId, messageId, message, calendar);
+          await this.editMessageWithKeyboard(
+            chatId,
+            messageId,
+            message,
+            calendar,
+          );
         }
 
         this.calendarState.set(userId, state);
         break;
       }
 
-      case 'confirm': {
+      case "confirm": {
         if (!state.startDate || !state.endDate) {
-          await this.sendMessage(chatId, '❌ Ошибка: Не выбраны даты');
+          await this.sendMessage(chatId, "❌ Ошибка: Не выбраны даты");
           return;
         }
 
@@ -621,18 +868,23 @@ _Генерация отчета может занять до 30 секунд_
         );
 
         // Generate and send analytics report
-        await this.generateAndSendAnalyticsReport(chatId, userId, state.startDate, state.endDate);
+        await this.generateAndSendAnalyticsReport(
+          chatId,
+          userId,
+          state.startDate,
+          state.endDate,
+        );
         break;
       }
 
-      case 'cancel': {
+      case "cancel": {
         this.calendarState.delete(userId);
-        await this.sendMessage(chatId, '❌ Выбор периода отменен');
+        await this.sendMessage(chatId, "❌ Выбор периода отменен");
         await this.handleAdminPanel(chatId);
         break;
       }
 
-      case 'noop':
+      case "noop":
       default:
         // Do nothing
         break;
@@ -643,8 +895,8 @@ _Генерация отчета может занять до 30 секунд_
    * Format date in Russian format: DD.MM.YYYY
    */
   private formatDateRussian(date: Date): string {
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}.${month}.${year}`;
   }
@@ -730,35 +982,43 @@ _Генерация отчета может занять до 30 секунд_
     try {
       // Set timeout for report generation
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Report generation timeout')), this.REPORT_TIMEOUT_MS);
+        setTimeout(
+          () => reject(new Error("Report generation timeout")),
+          this.REPORT_TIMEOUT_MS,
+        );
       });
 
       const reportPromise = this.generateReport(startDate, endDate);
 
-      filePath = await Promise.race([reportPromise, timeoutPromise]) as string;
+      filePath = (await Promise.race([
+        reportPromise,
+        timeoutPromise,
+      ])) as string;
 
       // Send file to user
-      await this.sendDocument(chatId, filePath, 'Аналитический_отчет.xlsx');
+      await this.sendDocument(chatId, filePath, "Аналитический_отчет.xlsx");
 
       // Success message
       await this.sendMessage(
         chatId,
-        '✅ Отчет успешно сгенерирован и отправлен!',
+        "✅ Отчет успешно сгенерирован и отправлен!",
       );
 
-      this.logger.log(`Analytics report generated successfully for user ${userId}`);
+      this.logger.log(
+        `Analytics report generated successfully for user ${userId}`,
+      );
     } catch (error) {
-      this.logger.error('Error generating analytics report:', error);
+      this.logger.error("Error generating analytics report:", error);
 
-      if (error.message === 'Report generation timeout') {
+      if (error.message === "Report generation timeout") {
         await this.sendMessage(
           chatId,
-          '⏱️ Превышено время ожидания генерации отчета (30 секунд). Пожалуйста, попробуйте позже.',
+          "⏱️ Превышено время ожидания генерации отчета (30 секунд). Пожалуйста, попробуйте позже.",
         );
       } else {
         await this.sendMessage(
           chatId,
-          '❌ Ошибка при генерации отчета. Пожалуйста, попробуйте позже или обратитесь к администратору.',
+          "❌ Ошибка при генерации отчета. Пожалуйста, попробуйте позже или обратитесь к администратору.",
         );
       }
     } finally {
@@ -767,7 +1027,7 @@ _Генерация отчета может занять до 30 секунд_
         try {
           await this.excelService.deleteReportFile(filePath);
         } catch (cleanupError) {
-          this.logger.warn('Error deleting temp report file:', cleanupError);
+          this.logger.warn("Error deleting temp report file:", cleanupError);
         }
       }
     }
@@ -805,14 +1065,14 @@ _Генерация отчета может занять до 30 секунд_
       startDate && endDate
         ? this.analyticsService.getUserGrowthRate(startDate, endDate)
         : Promise.resolve(0),
-      this.analyticsService.getSurveyStats('express', startDate, endDate),
-      this.analyticsService.getSurveyStats('full', startDate, endDate),
-      this.analyticsService.getConversionRate('express', startDate, endDate),
-      this.analyticsService.getConversionRate('full', startDate, endDate),
-      this.analyticsService.getAverageCompletionTime('express'),
-      this.analyticsService.getAverageCompletionTime('full'),
-      this.analyticsService.getAverageScores('express', startDate, endDate),
-      this.analyticsService.getAverageScores('full', startDate, endDate),
+      this.analyticsService.getSurveyStats("express", startDate, endDate),
+      this.analyticsService.getSurveyStats("full", startDate, endDate),
+      this.analyticsService.getConversionRate("express", startDate, endDate),
+      this.analyticsService.getConversionRate("full", startDate, endDate),
+      this.analyticsService.getAverageCompletionTime("express"),
+      this.analyticsService.getAverageCompletionTime("full"),
+      this.analyticsService.getAverageScores("express", startDate, endDate),
+      this.analyticsService.getAverageScores("full", startDate, endDate),
       this.analyticsService.getPaidRetakes(startDate, endDate),
       this.analyticsService.getTotalRevenue(),
       startDate && endDate
@@ -832,7 +1092,7 @@ _Генерация отчета может занять до 30 секунд_
       },
       surveyStats: [
         {
-          type: 'express',
+          type: "express",
           started: expressStats.started,
           completed: expressStats.completed,
           conversionRate: expressConversion,
@@ -840,7 +1100,7 @@ _Генерация отчета может занять до 30 секунд_
           averageScore: expressAvgScore,
         },
         {
-          type: 'full',
+          type: "full",
           started: fullStats.started,
           completed: fullStats.completed,
           conversionRate: fullConversion,
@@ -870,30 +1130,7 @@ _Генерация отчета может занять до 30 секунд_
   }
 
   private async handleAboutCommand(chatId: number): Promise<void> {
-    const aboutMessage = `
-ℹ️ *О проекте ЧЕК АП Экспертный бизнес*
-
-Это профессиональный инструмент для диагностики и развития бизнеса экспертов помогающих профессий.
-
-*🎯 Наша миссия:*
-Помочь экспертам построить устойчивый и прибыльный бизнес
-
-*✨ Что вы получите:*
-• Детальный анализ текущего состояния бизнеса
-• Персональные рекомендации по развитию
-• Конкретный план действий
-• Выявление скрытых возможностей
-
-*📊 Методология:*
-Основана на проверенных бизнес-практиках и многолетнем опыте работы с экспертами
-
-*👥 Для кого:*
-Психологи, коучи, консультанты, тренеры и другие эксперты помогающих профессий
-
-Готовы узнать больше о своем бизнесе? Нажмите "🚀 Начать ЧЕК АП"!
-    `;
-
-    await this.sendMessage(chatId, aboutMessage);
+    await this.handleWipMessage(chatId);
   }
 
   private async handleHelpCommand(chatId: number): Promise<void> {
@@ -930,7 +1167,9 @@ Need more help? Contact support.
     try {
       // Get user's completed survey sessions
       const sessions = await this.surveyService.getUserSessions(userId);
-      const completedSessions = sessions.filter(s => s.status === 'COMPLETED');
+      const completedSessions = sessions.filter(
+        (s) => s.status === "COMPLETED",
+      );
 
       if (completedSessions.length === 0) {
         await this.sendMessage(
@@ -945,15 +1184,16 @@ Need more help? Contact support.
       const buttons: Array<Array<{ text: string; callback_data: string }>> = [];
 
       completedSessions.forEach((session, index) => {
-        const surveyType = session.survey?.type === "EXPRESS" ? "express" : "full";
-        const date = new Date(session.created_at).toLocaleDateString('ru-RU', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
+        const surveyType =
+          session.survey?.type === "EXPRESS" ? "express" : "full";
+        const date = new Date(session.created_at).toLocaleDateString("ru-RU", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
         });
 
         // Format: "1. express-2025-10-08"
-        const listItem = `${index + 1}. ${surveyType}-${date.split('.').reverse().join('-')}`;
+        const listItem = `${index + 1}. ${surveyType}-${date.split(".").reverse().join("-")}`;
         message += `${listItem}\n`;
 
         // Add download button for this result
@@ -1193,7 +1433,9 @@ Click the button below to pay:
     sessionId: string,
   ): Promise<void> {
     try {
-      this.logger.log(`User ${userId} requesting report download for session ${sessionId}`);
+      this.logger.log(
+        `User ${userId} requesting report download for session ${sessionId}`,
+      );
 
       // Check rate limiting
       if (!this.canDownloadPdfReport(userId)) {
@@ -1215,23 +1457,30 @@ Click the button below to pay:
       const session = await this.surveyService.getSession(sessionId);
 
       // Convert both to numbers for comparison (bigint from DB might be returned as string)
-      const sessionUserId = typeof session.userId === 'string' ? parseInt(session.userId, 10) : session.userId;
+      const sessionUserId =
+        typeof session.userId === "string"
+          ? parseInt(session.userId, 10)
+          : session.userId;
 
       if (sessionUserId !== userId) {
-        this.logger.warn(`User ${userId} attempted to access session ${sessionId} owned by ${sessionUserId} (original: ${session.userId}, type: ${typeof session.userId})`);
-        await this.sendMessage(
-          chatId,
-          "⛔ У вас нет доступа к этому отчету.",
+        this.logger.warn(
+          `User ${userId} attempted to access session ${sessionId} owned by ${sessionUserId} (original: ${session.userId}, type: ${typeof session.userId})`,
         );
+        await this.sendMessage(chatId, "⛔ У вас нет доступа к этому отчету.");
         return;
       }
 
       // 2. Determine if report should be free or paid
-      const completedSessions = await this.surveyService.getUserSessions(userId);
-      const completedCount = completedSessions.filter(s => s.status === 'COMPLETED').length;
+      const completedSessions =
+        await this.surveyService.getUserSessions(userId);
+      const completedCount = completedSessions.filter(
+        (s) => s.status === "COMPLETED",
+      ).length;
       const isFree = completedCount === 1;
 
-      this.logger.log(`User ${userId} has ${completedCount} completed sessions. Report is ${isFree ? 'FREE' : 'PAID'}`);
+      this.logger.log(
+        `User ${userId} has ${completedCount} completed sessions. Report is ${isFree ? "FREE" : "PAID"}`,
+      );
 
       // 3. If paid and not yet paid, initiate payment flow
       if (!isFree) {
@@ -1248,13 +1497,16 @@ Click the button below to pay:
       // 4. Generate PDF report
 
       // 4. Generate PDF report (returns Buffer)
-      const pdfBuffer = await this.reportService.generateReport(sessionId, !isFree);
+      const pdfBuffer = await this.reportService.generateReport(
+        sessionId,
+        !isFree,
+      );
 
       // 5. Send PDF via Telegram using buffer
       const fileName = `report_${sessionId}.pdf`;
       const caption = isFree
-        ? '📄 Ваш бесплатный отчет готов!'
-        : '💎 Ваш полный отчет готов!';
+        ? "📄 Ваш бесплатный отчет готов!"
+        : "💎 Ваш полный отчет готов!";
 
       // Send PDF buffer directly
       await this.sendDocumentFromBuffer(chatId, pdfBuffer, fileName, caption);
@@ -1264,17 +1516,19 @@ Click the button below to pay:
         "✅ Отчет успешно сгенерирован и отправлен!",
       );
 
-      this.logger.log(`Successfully generated and sent report for session ${sessionId} to user ${userId}`);
+      this.logger.log(
+        `Successfully generated and sent report for session ${sessionId} to user ${userId}`,
+      );
     } catch (error) {
       this.logger.error("Error handling report download:", error);
 
       // Provide user-friendly error messages
-      if (error.message?.includes('not found')) {
+      if (error.message?.includes("not found")) {
         await this.sendMessage(
           chatId,
           "❌ Опрос не найден. Пожалуйста, убедитесь, что вы завершили опрос.",
         );
-      } else if (error.message?.includes('Session not found')) {
+      } else if (error.message?.includes("Session not found")) {
         await this.sendMessage(
           chatId,
           "❌ Опрос не найден. Пожалуйста, убедитесь, что вы завершили опрос.",
@@ -1500,18 +1754,21 @@ Click the button below to pay:
     try {
       const formData = new FormData();
 
-      formData.append('chat_id', chatId.toString());
-      formData.append('document', fs.createReadStream(filePath), {
+      formData.append("chat_id", chatId.toString());
+      formData.append("document", fs.createReadStream(filePath), {
         filename: fileName,
-        contentType: fileName.endsWith('.pdf')
-          ? 'application/pdf'
-          : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        contentType: fileName.endsWith(".pdf")
+          ? "application/pdf"
+          : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
       if (caption) {
-        formData.append('caption', caption);
+        formData.append("caption", caption);
       } else {
-        formData.append('caption', fileName.endsWith('.pdf') ? '📄 PDF отчет' : '📊 Аналитический отчет');
+        formData.append(
+          "caption",
+          fileName.endsWith(".pdf") ? "📄 PDF отчет" : "📊 Аналитический отчет",
+        );
       }
 
       const response = await axios.post(
@@ -1523,13 +1780,16 @@ Click the button below to pay:
       );
 
       if (response.status !== 200) {
-        this.logger.error('Telegram sendDocument API error response:', response.data);
+        this.logger.error(
+          "Telegram sendDocument API error response:",
+          response.data,
+        );
         throw new Error(
           `Telegram sendDocument API error: ${response.statusText}`,
         );
       }
     } catch (error) {
-      this.logger.error('Error sending document:', error);
+      this.logger.error("Error sending document:", error);
       throw error;
     }
   }
@@ -1550,16 +1810,16 @@ Click the button below to pay:
     try {
       const formData = new FormData();
 
-      formData.append('chat_id', chatId.toString());
-      formData.append('document', buffer, {
+      formData.append("chat_id", chatId.toString());
+      formData.append("document", buffer, {
         filename: fileName,
-        contentType: 'application/pdf',
+        contentType: "application/pdf",
       });
 
       if (caption) {
-        formData.append('caption', caption);
+        formData.append("caption", caption);
       } else {
-        formData.append('caption', '📄 PDF отчет');
+        formData.append("caption", "📄 PDF отчет");
       }
 
       const response = await axios.post(
@@ -1571,15 +1831,20 @@ Click the button below to pay:
       );
 
       if (response.status !== 200) {
-        this.logger.error('Telegram sendDocument API error response:', response.data);
+        this.logger.error(
+          "Telegram sendDocument API error response:",
+          response.data,
+        );
         throw new Error(
           `Telegram sendDocument API error: ${response.statusText}`,
         );
       }
 
-      this.logger.log(`Successfully sent PDF document (${buffer.length} bytes) to chat ${chatId}`);
+      this.logger.log(
+        `Successfully sent PDF document (${buffer.length} bytes) to chat ${chatId}`,
+      );
     } catch (error) {
-      this.logger.error('Error sending document from buffer:', error);
+      this.logger.error("Error sending document from buffer:", error);
       throw error;
     }
   }
@@ -1592,7 +1857,11 @@ Click the button below to pay:
     return `${this.webAppUrl}/survey?token=${authToken.token}&type=${surveyType}`;
   }
 
-  async getBotInfo(): Promise<{ username: string; id: number; first_name: string }> {
+  async getBotInfo(): Promise<{
+    username: string;
+    id: number;
+    first_name: string;
+  }> {
     try {
       const response = await fetch(
         `https://api.telegram.org/bot${this.botToken}/getMe`,
