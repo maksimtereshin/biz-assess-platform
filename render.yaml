@@ -53,7 +53,7 @@ services:
     preDeployCommand: npm run migration:run # Run database migrations before deploy
 
   # Frontend Service - Static Site (no Docker, no nginx)
-  - type: static
+  - type: web
     name: bizass-frontend
     plan: free
     buildCommand: cd shared && npm ci && npm run build && cd ../frontend && npm ci && npm run build
