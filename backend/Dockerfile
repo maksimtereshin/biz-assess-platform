@@ -95,9 +95,6 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 # Copy AdminJS component source files (required for runtime bundling)
 COPY --from=builder --chown=nestjs:nodejs /app/src/admin/components ./src/admin/components
 
-# Copy migrations directory
-COPY --chown=nestjs:nodejs ./backend/migrations ./migrations
-
 # Create uploads directory for file storage
 RUN mkdir -p uploads && chown nestjs:nodejs uploads
 

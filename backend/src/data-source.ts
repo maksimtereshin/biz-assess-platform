@@ -14,8 +14,9 @@ const migrationFiles = fs.existsSync(migrationsDir)
       .readdirSync(migrationsDir)
       .filter(
         (file) =>
-          file.endsWith(".ts") &&
+          (file.endsWith(".ts") || file.endsWith(".js")) &&
           !file.endsWith(".spec.ts") &&
+          !file.endsWith(".spec.js") &&
           !file.endsWith(".d.ts"),
       )
       .map((file) => path.join(migrationsDir, file))
