@@ -53,8 +53,9 @@ services:
     # preDeployCommand not supported on free tier - run migrations manually after first deploy
 
   # Frontend Service - Static Site (no Docker, no nginx)
-  - type: static
+  - type: web
     name: biz-assess-platform
+    runtime: static
     plan: starter
     buildCommand: cd shared && npm ci && npm run build && cd ../frontend && npm ci && npm run build
     staticPublishPath: frontend/dist
