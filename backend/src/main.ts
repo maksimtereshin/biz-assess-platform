@@ -179,6 +179,7 @@ async function setupAdminJS(app: any) {
       cookie: {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Required for Telegram WebApp
         maxAge: 1000 * 60 * 60 * 24, // 24 hours
       },
     });
