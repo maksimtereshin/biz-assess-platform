@@ -17,7 +17,6 @@ import { AdminModule } from "./admin/admin.module";
 import * as entities from "./entities";
 import { DataSource } from "typeorm";
 import { seedSurveys } from "./data/seed-surveys";
-import { MigrationRunnerService } from "./common/services/migration-runner.service";
 
 @Module({
   imports: [
@@ -79,7 +78,6 @@ import { MigrationRunnerService } from "./common/services/migration-runner.servi
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
-    MigrationRunnerService,
   ],
 })
 export class AppModule implements OnModuleInit {
