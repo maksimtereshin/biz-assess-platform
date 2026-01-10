@@ -13,7 +13,7 @@ async function setupAdminJS(app: any) {
     // Load ALL AdminJS modules from centralized loader
     // This ensures we use the SAME module instance throughout
     const { getAdminJSModules } = await import("./admin/admin-adapter");
-    const { AdminJS, AdminJSExpress, ComponentLoader } =
+    const { AdminJS, AdminJSExpress, ComponentLoader, DefaultAuthProvider } =
       await getAdminJSModules();
 
     // Get DataSource for entity metadata
@@ -321,8 +321,9 @@ async function setupAdminJS(app: any) {
 
     // Create and initialize TelegramAuthProvider for AdminJS authentication
     // This provider handles authentication via Bearer tokens from Telegram SecureStorage
-    // Uses factory function with dynamic import to handle AdminJS ESM module
-    const telegramAuthProvider = await createTelegramAuthProvider(
+    // Uses DefaultAuthProvider from centralized admin-adapter (no dynamic import issues)
+    const telegramAuthProvider = createTelegramAuthProvider(
+      DefaultAuthProvider,
       componentLoader,
       authService,
       adminService,

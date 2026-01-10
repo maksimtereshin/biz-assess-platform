@@ -25,7 +25,7 @@ export async function getAdminJSModules() {
     const AdminJS = (await eval('import("adminjs")')).default;
     const AdminJSTypeorm = await eval('import("@adminjs/typeorm")');
     const AdminJSExpress = await eval('import("@adminjs/express")');
-    const { ComponentLoader } = await eval('import("adminjs")');
+    const { ComponentLoader, DefaultAuthProvider } = await eval('import("adminjs")');
 
     console.log("[AdminJS] Registering TypeORM adapter...");
 
@@ -43,6 +43,7 @@ export async function getAdminJSModules() {
       AdminJSTypeorm,
       AdminJSExpress,
       ComponentLoader,
+      DefaultAuthProvider,
     };
 
     return modulesCache;

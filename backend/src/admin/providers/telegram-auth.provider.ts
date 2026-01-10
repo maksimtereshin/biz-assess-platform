@@ -4,7 +4,7 @@ import { AdminService } from "../admin.service";
 /**
  * Creates TelegramAuthProvider for AdminJS authentication using Telegram SecureStorage + Bearer tokens
  *
- * This factory function uses dynamic import to load AdminJS (ESM module) and create a provider that supports:
+ * This factory function creates a provider that supports:
  * 1. Token-based authentication via URL query parameter (?token=...)
  * 2. Token-based authentication via Authorization header (Bearer ...)
  * 3. Session-based authentication (fallback if cookies work)
@@ -17,18 +17,18 @@ import { AdminService } from "../admin.service";
  * 5. Validates JWT token and returns user object
  * 6. AdminJS stores user in req.session.adminUser automatically
  *
+ * @param DefaultAuthProvider - AdminJS DefaultAuthProvider class (from admin-adapter)
  * @param componentLoader - AdminJS ComponentLoader instance
  * @param authService - AuthService for JWT token validation
  * @param adminService - AdminService for admin user management
- * @returns Promise<DefaultAuthProvider> - Configured AdminJS auth provider
+ * @returns Configured AdminJS auth provider
  */
-export async function createTelegramAuthProvider(
+export function createTelegramAuthProvider(
+  DefaultAuthProvider: any,
   componentLoader: any,
   authService: AuthService,
   adminService: AdminService,
-): Promise<any> {
-  // Dynamically import AdminJS to avoid CommonJS require() issues
-  const { DefaultAuthProvider } = await import("adminjs");
+): any {
 
   // Create and configure the provider
   const provider = new DefaultAuthProvider({
