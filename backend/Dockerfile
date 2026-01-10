@@ -101,6 +101,9 @@ COPY --chown=nestjs:nodejs ./backend/migrations ./migrations
 # Create uploads directory for file storage
 RUN mkdir -p uploads && chown nestjs:nodejs uploads
 
+# Create .adminjs directory for component bundling (AdminJS ComponentLoader needs write access)
+RUN mkdir -p .adminjs && chown nestjs:nodejs .adminjs
+
 # Switch to non-root user
 USER nestjs
 
