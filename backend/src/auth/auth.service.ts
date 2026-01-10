@@ -3,7 +3,7 @@ import { JwtService } from "@nestjs/jwt";
 import { AuthToken, SurveySession } from "bizass-shared";
 import { SurveyService } from "../survey/survey.service";
 import { SurveyType } from "bizass-shared";
-import * as crypto from 'crypto';
+import * as crypto from "crypto";
 
 @Injectable()
 export class AuthService {
@@ -16,21 +16,26 @@ export class AuthService {
    * Authenticates user with Telegram WebApp initData
    * Validates the initData using HMAC-SHA256 signature
    */
-  async authenticateWithTelegram(initData: string): Promise<{ token: string; user: any }> {
-    console.log('🔐 Starting Telegram authentication...');
-    console.log('📱 Received initData length:', initData?.length || 0);
-    console.log('📱 Raw initData (first 200 chars):', initData?.substring(0, 200));
+  async authenticateWithTelegram(
+    initData: string,
+  ): Promise<{ token: string; user: any }> {
+    console.log("🔐 Starting Telegram authentication...");
+    console.log("📱 Received initData length:", initData?.length || 0);
+    console.log(
+      "📱 Raw initData (first 200 chars):",
+      initData?.substring(0, 200),
+    );
 
     // Check if initData is empty or invalid
-    if (!initData || initData.trim() === '') {
-      console.error('❌ Empty or invalid initData received');
-      throw new UnauthorizedException('Empty initData received');
+    if (!initData || initData.trim() === "") {
+      console.error("❌ Empty or invalid initData received");
+      throw new UnauthorizedException("Empty initData received");
     }
 
     try {
       // Parse initData
       const urlParams = new URLSearchParams(initData);
-      console.log('📊 Parsed URL params count:', urlParams.size);
+      console.log("📊 Parsed URL params count:", urlParams.size);
 
       // Log all parameters for debugging
       const params = {};
@@ -39,77 +44,83 @@ export class AuthService {
         console.log(`📄 Param ${key}:`, value);
       }
 
-      const hash = urlParams.get('hash');
-      console.log('🔗 Hash from initData:', hash);
-      urlParams.delete('hash');
+      const hash = urlParams.get("hash");
+      console.log("🔗 Hash from initData:", hash);
+      urlParams.delete("hash");
 
       // Check if hash exists
       if (!hash) {
-        console.error('❌ No hash provided in initData');
-        throw new UnauthorizedException('No hash provided in initData');
+        console.error("❌ No hash provided in initData");
+        throw new UnauthorizedException("No hash provided in initData");
       }
 
       // Get bot token from environment
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
-      console.log('🤖 Bot token configured:', !!botToken);
-      console.log('🤖 Bot token length:', botToken?.length || 0);
+      console.log("🤖 Bot token configured:", !!botToken);
+      console.log("🤖 Bot token length:", botToken?.length || 0);
 
       if (!botToken) {
-        console.error('❌ Bot token not configured');
-        throw new UnauthorizedException('Bot token not configured');
+        console.error("❌ Bot token not configured");
+        throw new UnauthorizedException("Bot token not configured");
       }
 
       // Create data string for verification
       const dataCheckString = Array.from(urlParams.entries())
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([key, value]) => `${key}=${value}`)
-        .join('\n');
+        .join("\n");
 
-      console.log('📝 Data check string:', dataCheckString);
+      console.log("📝 Data check string:", dataCheckString);
 
       // Create secret key from bot token
-      const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
-      console.log('🔑 Secret key generated (length):', secretKey.length);
+      const secretKey = crypto
+        .createHmac("sha256", "WebAppData")
+        .update(botToken)
+        .digest();
+      console.log("🔑 Secret key generated (length):", secretKey.length);
 
       // Calculate expected hash
-      const expectedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
-      console.log('🔍 Expected hash:', expectedHash);
-      console.log('🔍 Received hash:', hash);
+      const expectedHash = crypto
+        .createHmac("sha256", secretKey)
+        .update(dataCheckString)
+        .digest("hex");
+      console.log("🔍 Expected hash:", expectedHash);
+      console.log("🔍 Received hash:", hash);
 
       // Verify hash
       if (hash !== expectedHash) {
-        console.error('❌ Hash verification failed!');
-        console.error('❌ Expected:', expectedHash);
-        console.error('❌ Received:', hash);
-        throw new UnauthorizedException('Invalid Telegram initData signature');
+        console.error("❌ Hash verification failed!");
+        console.error("❌ Expected:", expectedHash);
+        console.error("❌ Received:", hash);
+        throw new UnauthorizedException("Invalid Telegram initData signature");
       }
 
-      console.log('✅ Hash verification successful!');
+      console.log("✅ Hash verification successful!");
 
       // Parse user data
-      const userParam = urlParams.get('user');
-      console.log('👤 User param from initData:', userParam);
+      const userParam = urlParams.get("user");
+      console.log("👤 User param from initData:", userParam);
 
       if (!userParam) {
-        console.error('❌ No user data in initData');
-        throw new UnauthorizedException('No user data in initData');
+        console.error("❌ No user data in initData");
+        throw new UnauthorizedException("No user data in initData");
       }
 
       const userData = JSON.parse(userParam);
-      console.log('👤 Parsed user data:', userData);
+      console.log("👤 Parsed user data:", userData);
 
       const telegramId = userData.id;
-      console.log('🆔 Telegram ID:', telegramId);
+      console.log("🆔 Telegram ID:", telegramId);
 
       if (!telegramId) {
-        console.error('❌ No user ID in Telegram data');
-        throw new UnauthorizedException('No user ID in Telegram data');
+        console.error("❌ No user ID in Telegram data");
+        throw new UnauthorizedException("No user ID in Telegram data");
       }
 
       // Generate auth token
-      console.log('🎫 Generating auth token...');
+      console.log("🎫 Generating auth token...");
       const authToken = this.generateAuthToken(telegramId);
-      console.log('🎫 Auth token generated successfully');
+      console.log("🎫 Auth token generated successfully");
 
       // Return user info as expected by frontend
       const user = {
@@ -126,17 +137,16 @@ export class AuthService {
         },
       };
 
-      console.log('✅ Authentication successful for user:', telegramId);
-      console.log('👤 Returning user object:', user);
+      console.log("✅ Authentication successful for user:", telegramId);
+      console.log("👤 Returning user object:", user);
 
       return {
         token: authToken.token,
-        user
+        user,
       };
-
     } catch (error) {
-      console.error('❌ Telegram authentication error:', error);
-      throw new UnauthorizedException('Failed to authenticate with Telegram');
+      console.error("❌ Telegram authentication error:", error);
+      throw new UnauthorizedException("Failed to authenticate with Telegram");
     }
   }
 
@@ -149,11 +159,11 @@ export class AuthService {
     const payload = { telegramId };
 
     // Longer expiration in development for easier testing
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isDevelopment = process.env.NODE_ENV === "development";
     const expirationTime = isDevelopment ? 24 * 60 * 60 * 1000 : 5 * 60 * 1000; // 24 hours vs 5 minutes
 
     const token = this.jwtService.sign(payload, {
-      expiresIn: isDevelopment ? '24h' : '5m'
+      expiresIn: isDevelopment ? "24h" : "5m",
     });
     const expiresAt = new Date(Date.now() + expirationTime).toISOString();
 
@@ -172,11 +182,11 @@ export class AuthService {
   generateAdminAuthToken(telegramUsername: string): string {
     const payload = {
       username: telegramUsername,
-      role: 'admin',
+      role: "admin",
     };
 
     const token = this.jwtService.sign(payload, {
-      expiresIn: '15m',
+      expiresIn: "4h", // Extended for admin panel session (Telegram SecureStorage)
     });
 
     return token;
@@ -191,8 +201,8 @@ export class AuthService {
       const payload = this.jwtService.verify(token);
 
       // Ensure token has admin role
-      if (payload.role !== 'admin') {
-        throw new UnauthorizedException('Token does not have admin role');
+      if (payload.role !== "admin") {
+        throw new UnauthorizedException("Token does not have admin role");
       }
 
       return {
@@ -200,7 +210,7 @@ export class AuthService {
         role: payload.role,
       };
     } catch (error) {
-      throw new UnauthorizedException('Invalid or expired admin token');
+      throw new UnauthorizedException("Invalid or expired admin token");
     }
   }
 

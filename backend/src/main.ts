@@ -187,147 +187,22 @@ async function setupAdminJS(app: any) {
     // Apply session middleware to all routes
     app.use(sessionMiddleware);
 
-    // Custom authentication middleware for AdminJS
+    // Middleware to validate Authorization header for admin requests
+    // Replaces session-based authentication with JWT token validation
     const adminAuthMiddleware = async (req: any, res: any, next: any) => {
-      // Skip authentication for AdminJS assets (CSS, JS, etc.)
-      if (
-        req.path.includes("/admin/frontend/assets/") ||
-        req.path.includes(".css") ||
-        req.path.includes(".js")
-      ) {
-        return next();
-      }
-
-      const session = req.session;
-
-      // Log session info for debugging
-      logger.log(
-        `[ADMIN AUTH] Request to ${req.path}, Session ID: ${req.sessionID}`,
-      );
-      logger.log(
-        `[ADMIN AUTH] Session.adminUser exists: ${!!session?.adminUser}`,
-      );
-      if (session?.adminUser) {
-        logger.log(
-          `[ADMIN AUTH] Session.adminUser: ${JSON.stringify(session.adminUser)}`,
-        );
-      }
-
-      // Check if user already authenticated in session
-      if (session?.adminUser) {
-        logger.log(
-          `[ADMIN AUTH] User authenticated via session, allowing access`,
-        );
-        return next();
-      }
-
-      // Extract token from query parameter (for first-time login from Telegram bot)
-      const token = req.query.token as string;
-
-      if (!token) {
-        // No token and no session - forbidden
-        return res.status(403).send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <title>Доступ запрещен</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-              h1 { color: #d32f2f; }
-            </style>
-          </head>
-          <body>
-            <h1>Доступ запрещен</h1>
-            <p>У вас нет прав для доступа к админ-панели.</p>
-            <p>Войдите через кнопку "🔧 Админ панель" в Telegram боте.</p>
-          </body>
-          </html>
-        `);
-      }
-
       try {
-        // Validate JWT token
-        const payload = authService.validateAdminToken(token);
-        logger.log(
-          `[ADMIN AUTH] Token validated for username: "${payload.username}"`,
-        );
-
-        // Check if user is admin (normalize username for consistency with database)
-        const normalizedUsername = payload.username?.trim().toLowerCase();
-        logger.log(`[ADMIN AUTH] Normalized username: "${normalizedUsername}"`);
-
-        const isAdmin = await adminService.isAdmin(normalizedUsername);
-        logger.log(
-          `[ADMIN AUTH] Admin check result for "${normalizedUsername}": ${isAdmin}`,
-        );
-
-        if (!isAdmin) {
-          logger.warn(`[ADMIN AUTH] Access denied for "${normalizedUsername}"`);
-          return res.status(403).send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="UTF-8">
-              <title>Доступ запрещен</title>
-              <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                h1 { color: #d32f2f; }
-              </style>
-            </head>
-            <body>
-              <h1>Доступ запрещен</h1>
-              <p>Ваш Telegram username не найден в списке администраторов.</p>
-            </body>
-            </html>
-          `);
-        }
-
-        // Get admin details
-        const adminUser = await adminService.findByUsername(normalizedUsername);
-        logger.log(
-          `[ADMIN AUTH] findByUsername result: ${adminUser ? `FOUND (id: ${adminUser.id}, username: ${adminUser.telegram_username})` : "NULL"}`,
-        );
-
-        if (!adminUser) {
-          logger.error(
-            `[ADMIN AUTH] Admin not found for "${normalizedUsername}" despite isAdmin=true`,
-          );
-          return res.status(403).send("Доступ запрещен");
-        }
-
-        // Save admin user to session
-        session.adminUser = {
-          id: adminUser.id,
-          username: adminUser.telegram_username,
-          email: `${adminUser.telegram_username}@telegram.user`, // AdminJS expects email
-        };
-
-        // CRITICAL FIX: Save session and use client-side redirect to preserve cookies in Telegram WebView
-        session.save((err) => {
-          if (err) {
-            logger.error("[ADMIN AUTH] Failed to save session:", err);
-            return res.status(500).send("Internal server error");
-          }
-
-          logger.log(
-            `[ADMIN AUTH] Session saved successfully for "${normalizedUsername}"`,
-          );
-          logger.log(`[ADMIN AUTH] Session ID: ${req.sessionID}`);
-          logger.log(
-            `[ADMIN AUTH] Session data: ${JSON.stringify(session.adminUser)}`,
-          );
-          logger.log(
-            "[ADMIN AUTH] Token authentication successful, using client-side redirect",
-          );
-
-          // Use client-side redirect to preserve session cookies in Telegram WebView
+        // Extract token from Authorization header
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          // If no Authorization header, return HTML that retrieves token from SecureStorage
+          // and injects it into all fetch requests
           return res.send(`
             <!DOCTYPE html>
             <html>
             <head>
               <meta charset="UTF-8">
-              <title>Loading Admin Panel...</title>
+              <title>BizAssess Admin Panel</title>
+              <script src="https://telegram.org/js/telegram-web-app.js"></script>
               <style>
                 body {
                   font-family: Arial, sans-serif;
@@ -352,21 +227,258 @@ async function setupAdminJS(app: any) {
                   0% { transform: rotate(0deg); }
                   100% { transform: rotate(360deg); }
                 }
+                .error {
+                  color: #d32f2f;
+                  padding: 20px;
+                  text-align: center;
+                }
               </style>
               <script>
-                // Client-side redirect removes token from URL and preserves session cookies
-                window.location.replace('/admin');
+                // Check if Telegram WebApp is available
+                if (typeof Telegram === 'undefined' || !Telegram.WebApp || !Telegram.WebApp.SecureStorage) {
+                  document.body.innerHTML = '<div class="error"><h1>Ошибка</h1><p>Telegram WebApp недоступен. Пожалуйста, откройте админ-панель через Telegram бот.</p></div>';
+                } else {
+                  // Retrieve admin token from Telegram SecureStorage
+                  Telegram.WebApp.SecureStorage.getItem('admin_token', function(error, token) {
+                    if (error || !token) {
+                      console.error('No admin token found in SecureStorage:', error);
+                      document.body.innerHTML = '<div class="error"><h1>Требуется авторизация</h1><p>Токен доступа не найден. Пожалуйста, войдите через Telegram бот заново.</p></div>';
+                      return;
+                    }
+
+                    console.log('[ADMIN AUTH] Token retrieved from SecureStorage');
+
+                    // Override fetch to inject Authorization header into ALL requests
+                    const originalFetch = window.fetch;
+                    window.fetch = function(input, init) {
+                      init = init || {};
+                      init.headers = init.headers || {};
+
+                      // Add Authorization header with token from SecureStorage
+                      if (init.headers instanceof Headers) {
+                        init.headers.set('Authorization', 'Bearer ' + token);
+                      } else if (Array.isArray(init.headers)) {
+                        init.headers.push(['Authorization', 'Bearer ' + token]);
+                      } else {
+                        init.headers['Authorization'] = 'Bearer ' + token;
+                      }
+
+                      console.log('[ADMIN AUTH] Injecting Authorization header into fetch request');
+                      return originalFetch(input, init);
+                    };
+
+                    // Fetch AdminJS HTML with Authorization header and replace page content
+                    console.log('[ADMIN AUTH] Loading AdminJS with Authorization header');
+                    fetch(window.location.href, {
+                      headers: {
+                        'Authorization': 'Bearer ' + token
+                      }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                      // Replace entire document with AdminJS HTML
+                      document.open();
+                      document.write(html);
+                      document.close();
+                    })
+                    .catch(error => {
+                      console.error('[ADMIN AUTH] Failed to load AdminJS:', error);
+                      document.body.innerHTML = '<div class="error"><h1>Ошибка загрузки</h1><p>Не удалось загрузить админ-панель. Пожалуйста, попробуйте снова.</p></div>';
+                    });
+                  });
+                }
               </script>
             </head>
             <body>
               <div class="loader">
                 <div class="spinner"></div>
-                <p>Loading admin panel...</p>
+                <p>Загрузка админ-панели...</p>
               </div>
             </body>
             </html>
           `);
-        });
+        }
+
+        const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+        // Validate JWT token signature and expiration
+        const payload = authService.validateAdminToken(token);
+        const normalizedUsername = payload.username?.trim().toLowerCase();
+
+        // Verify user is still an admin (in case they were removed)
+        const isAdmin = await adminService.isAdmin(normalizedUsername);
+        if (!isAdmin) {
+          logger.warn(`[ADMIN AUTH] Access denied for "${normalizedUsername}"`);
+          return res.status(403).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>Доступ запрещен</title>
+              <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                h1 { color: #d32f2f; }
+              </style>
+            </head>
+            <body>
+              <h1>Доступ запрещен</h1>
+              <p>Ваш Telegram username не найден в списке администраторов.</p>
+            </body>
+            </html>
+          `);
+        }
+
+        // Get full admin details from database
+        const adminUser = await adminService.findByUsername(normalizedUsername);
+
+        if (!adminUser) {
+          return res.status(401).send("Admin user not found");
+        }
+
+        logger.log(
+          `[ADMIN AUTH] Token validated for admin: "${normalizedUsername}"`,
+        );
+
+        // Attach admin to request object for AdminJS
+        (req as any).adminUser = {
+          id: adminUser.id,
+          username: adminUser.telegram_username,
+          email: `${adminUser.telegram_username}@telegram.user`,
+        };
+
+        next();
+      } catch (error) {
+        logger.error("[ADMIN AUTH] Token validation error:", error);
+        return res.status(401).send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Ошибка авторизации</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+              h1 { color: #d32f2f; }
+            </style>
+          </head>
+          <body>
+            <h1>Ошибка авторизации</h1>
+            <p>Токен доступа недействителен или истек.</p>
+            <p>Пожалуйста, войдите через Telegram бот заново.</p>
+          </body>
+          </html>
+        `);
+      }
+    };
+
+    // Token handler for initial authentication from Telegram bot
+    // Stores JWT token in Telegram SecureStorage instead of session cookies
+    const adminTokenHandler = async (req: any, res: any, next: any) => {
+      const token = req.query.token as string;
+
+      // If no token in query, continue to AdminJS (will be authenticated via AdminTokenAuthMiddleware)
+      if (!token) {
+        return next();
+      }
+
+      try {
+        // Validate token before storing
+        const payload = authService.validateAdminToken(token);
+        const normalizedUsername = payload.username?.trim().toLowerCase();
+
+        // Verify user is admin
+        const isAdmin = await adminService.isAdmin(normalizedUsername);
+        if (!isAdmin) {
+          logger.warn(`[ADMIN AUTH] Access denied for "${normalizedUsername}"`);
+          return res.status(403).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>Доступ запрещен</title>
+              <style>
+                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                h1 { color: #d32f2f; }
+              </style>
+            </head>
+            <body>
+              <h1>Доступ запрещен</h1>
+              <p>Ваш Telegram username не найден в списке администраторов.</p>
+            </body>
+            </html>
+          `);
+        }
+
+        logger.log(
+          `[ADMIN AUTH] Token validated for admin: "${normalizedUsername}"`,
+        );
+        logger.log(`[ADMIN AUTH] Storing token in Telegram SecureStorage`);
+
+        // Return HTML page that stores token in Telegram SecureStorage
+        return res.send(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Loading Admin Panel...</title>
+            <script src="https://telegram.org/js/telegram-web-app.js"></script>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #f5f5f5;
+              }
+              .loader { text-align: center; }
+              .spinner {
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #3498db;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            </style>
+            <script>
+              const token = "${token}";
+
+              // Check if Telegram WebApp is available
+              if (typeof Telegram === 'undefined' || !Telegram.WebApp || !Telegram.WebApp.SecureStorage) {
+                console.error('Telegram WebApp not available');
+                alert('Failed to access Telegram WebApp. Please open this page from Telegram bot.');
+              } else {
+                // Store token in Telegram SecureStorage
+                Telegram.WebApp.SecureStorage.setItem('admin_token', token, function(error) {
+                  if (error) {
+                    console.error('Failed to store token:', error);
+                    alert('Failed to save authentication. Please try again.');
+                    return;
+                  }
+
+                  console.log('Token stored successfully in SecureStorage');
+
+                  // Remove token from URL and reload page
+                  window.history.replaceState({}, document.title, '/admin');
+                  window.location.reload();
+                });
+              }
+            </script>
+          </head>
+          <body>
+            <div class="loader">
+              <div class="spinner"></div>
+              <p>Authenticating...</p>
+            </div>
+          </body>
+          </html>
+        `);
       } catch (error) {
         console.error("Admin authentication error:", error);
         return res.status(403).send(`
@@ -393,14 +505,15 @@ async function setupAdminJS(app: any) {
     // AdminJS authentication provider
     const authenticate = async () => {
       // We don't use email/password authentication
-      // Authentication is handled by adminAuthMiddleware via Telegram tokens
+      // Authentication is handled by adminTokenHandler via Telegram SecureStorage tokens
       return null;
     };
 
     // Provide authenticated admin user to AdminJS context
+    // Now reads from req.adminUser (set by adminAuthMiddleware) instead of session
     const getCurrentAdmin = async (req: any) => {
-      if (req.session?.adminUser) {
-        return req.session.adminUser;
+      if (req.adminUser) {
+        return req.adminUser;
       }
       return null;
     };
@@ -431,7 +544,10 @@ async function setupAdminJS(app: any) {
       getCurrentAdmin,
     );
 
-    // Apply custom auth middleware before AdminJS routes
+    // Apply token handler first (for initial authentication with ?token= query param)
+    app.use("/admin", adminTokenHandler);
+
+    // Apply auth middleware (validates Authorization header for all subsequent requests)
     app.use("/admin", adminAuthMiddleware);
 
     // Mount AdminJS router

@@ -16,35 +16,36 @@ export class AdminAuthProvider {
   constructor(private adminService: AdminService) {}
 
   /**
-   * Authenticates admin user using session data
+   * Authenticates admin user using request data
    * Called by AdminJS on each request to check authentication status
    *
-   * @param context - Request context with session
+   * @param context - Request context with request object
    * @returns Admin user object or null if not authenticated
    */
-  async authenticate(context: any): Promise<{ username: string; role: string } | null> {
-    const { session } = context;
+  async authenticate(
+    context: any,
+  ): Promise<{ username: string; role: string } | null> {
+    const { request } = context;
 
-    // Check if admin user exists in session
-    if (!session?.adminUser) {
+    // Check if admin user exists in request (set by adminAuthMiddleware)
+    if (!request?.adminUser) {
       return null;
     }
 
-    const { username } = session.adminUser;
+    const { username } = request.adminUser;
 
     // Verify user is still an admin (in case they were removed from admins table)
     const isAdmin = await this.adminService.isAdmin(username);
 
     if (!isAdmin) {
-      // Clear session if user is no longer admin
-      delete session.adminUser;
+      // User is no longer admin (token validation will fail on next request)
       return null;
     }
 
     // Return admin user info for AdminJS
     return {
       username,
-      role: 'admin',
+      role: "admin",
     };
   }
 
