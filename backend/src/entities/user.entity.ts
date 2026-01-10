@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   OneToMany,
+  BaseEntity,
 } from "typeorm";
 import { SurveySession } from "./survey-session.entity";
 import { Payment } from "./payment.entity";
@@ -11,7 +12,7 @@ import { ReferralCode } from "./referral-code.entity";
 import { ReferralUsage } from "./referral-usage.entity";
 
 @Entity("users")
-export class User {
+export class User extends BaseEntity {
   @PrimaryColumn({ type: "bigint" })
   telegram_id: number;
 

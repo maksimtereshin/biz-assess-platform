@@ -5,11 +5,12 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  BaseEntity,
 } from "typeorm";
 import { SurveySession } from "./survey-session.entity";
 
 @Entity("answers")
-export class Answer {
+export class Answer extends BaseEntity {
   @PrimaryColumn({ type: "uuid" })
   session_id: string;
 

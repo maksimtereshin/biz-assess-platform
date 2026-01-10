@@ -8,3 +8,5 @@
 - **Query Parameters**: Use query parameters for filtering, sorting, pagination, and search rather than creating separate endpoints
 - **HTTP Status Codes**: Return appropriate, consistent HTTP status codes that accurately reflect the response (200, 201, 400, 404, 500, etc.)
 - **Rate Limiting Headers**: Include rate limit information in response headers to help clients manage their usage
+
+**Related:** See [Core Engineering Principles](../global/principles.md) - especially OCP for API versioning and ISP for endpoint design

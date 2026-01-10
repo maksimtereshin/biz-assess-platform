@@ -165,6 +165,46 @@ export class AuthService {
   }
 
   /**
+   * Generates a JWT token for admin authentication
+   * Used for automatic login to admin panel from Telegram bot
+   * Token expires in 15 minutes (sufficient for transition from bot to admin panel)
+   */
+  generateAdminAuthToken(telegramUsername: string): string {
+    const payload = {
+      username: telegramUsername,
+      role: 'admin',
+    };
+
+    const token = this.jwtService.sign(payload, {
+      expiresIn: '15m',
+    });
+
+    return token;
+  }
+
+  /**
+   * Validates an admin JWT token and extracts the username
+   * Throws UnauthorizedException if token is invalid or expired
+   */
+  validateAdminToken(token: string): { username: string; role: string } {
+    try {
+      const payload = this.jwtService.verify(token);
+
+      // Ensure token has admin role
+      if (payload.role !== 'admin') {
+        throw new UnauthorizedException('Token does not have admin role');
+      }
+
+      return {
+        username: payload.username,
+        role: payload.role,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired admin token');
+    }
+  }
+
+  /**
    * Validates a JWT token and extracts the Telegram ID
    */
   validateToken(token: string): { telegramId: number } | null {

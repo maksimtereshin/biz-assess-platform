@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SurveyResults, CategoryResult } from 'bizass-shared';
-import * as PDFDocument from 'pdfkit';
+import PDFDocument from 'pdfkit';
 import { Chart, registerables } from 'chart.js';
 import { createCanvas } from 'canvas';
 import { AnalyticsCalculator } from './analytics-calculator.util';

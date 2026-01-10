@@ -1,6 +1,7 @@
 node_modules/
 .env
 .env.*
+!.env.*.example
 */node_modules/
 dist/
 
@@ -8,3 +9,15 @@ dist/
 *.*bak*
 
 *.fix*
+
+# MCP Configuration (credentials)
+.env.mcp
+.mcp.json
+.mcp.json.local
+
+# Claude Code Configuration (local settings and hook logs)
+.claude/settings.local.json
+.claude/hooks/*.log
+.claude/hooks/performance.log
+
+.playwright*/

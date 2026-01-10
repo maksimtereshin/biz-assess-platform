@@ -12,6 +12,7 @@ import {
   Answer,
   User,
 } from "../entities";
+import { SurveyVersion, SurveyVersionStatus } from "../entities/survey-version.entity";
 import { AnalyticsCalculator } from "../common/utils/analytics-calculator.util";
 import * as fs from "fs";
 import * as path from "path";
@@ -19,6 +20,10 @@ import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class SurveyService {
+  // Cache for latest published versions (TTL handled by application restart)
+  private versionCache: Map<string, { version: SurveyVersion; cachedAt: number }> = new Map();
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
   constructor(
     @InjectRepository(SurveyEntity)
     private surveyRepository: Repository<SurveyEntity>,
@@ -28,8 +33,65 @@ export class SurveyService {
     private answerRepository: Repository<Answer>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(SurveyVersion)
+    private versionRepository: Repository<SurveyVersion>,
     private analyticsCalculator: AnalyticsCalculator,
   ) {}
+
+  /**
+   * Gets the latest published version for a survey type
+   * Uses caching to improve performance (TTL 5 minutes)
+   */
+  async getLatestPublishedVersion(surveyType: string): Promise<SurveyVersion> {
+    const cacheKey = surveyType.toUpperCase();
+    const cached = this.versionCache.get(cacheKey);
+
+    // Return cached version if still valid
+    if (cached && Date.now() - cached.cachedAt < this.CACHE_TTL_MS) {
+      return cached.version;
+    }
+
+    // Get survey by type
+    const survey = await this.surveyRepository.findOne({
+      where: { type: surveyType.toUpperCase() },
+      relations: ["latest_published_version"],
+    });
+    if (!survey) {
+      throw new NotFoundException(`Survey type ${surveyType} not found`);
+    }
+
+    // Get latest published version
+    if (!survey.latest_published_version_id) {
+      throw new NotFoundException(
+        `No published version found for survey type ${surveyType}`,
+      );
+    }
+
+    const version = await this.versionRepository.findOne({
+      where: { id: survey.latest_published_version_id },
+    });
+    if (!version) {
+      throw new NotFoundException(
+        `Published version ${survey.latest_published_version_id} not found`,
+      );
+    }
+
+    // Update cache
+    this.versionCache.set(cacheKey, {
+      version,
+      cachedAt: Date.now(),
+    });
+
+    return version;
+  }
+
+  /**
+   * Invalidates the version cache for a specific survey type
+   * Called after publishing a new version
+   */
+  invalidateVersionCache(surveyType: string): void {
+    this.versionCache.delete(surveyType.toUpperCase());
+  }
 
   async createNewSession(
     userId: number,
@@ -56,11 +118,15 @@ export class SurveyService {
       throw new NotFoundException(`Survey type ${type} not found`);
     }
 
-    // Create new session
+    // Get latest published version
+    const latestVersion = await this.getLatestPublishedVersion(type);
+
+    // Create new session with survey_version_id
     const session = this.sessionRepository.create({
       id: uuidv4(),
       user_telegram_id: userId,
       survey_id: survey.id,
+      survey_version_id: latestVersion.id,
       status: SessionStatus.IN_PROGRESS,
     });
 
@@ -116,18 +182,46 @@ export class SurveyService {
     }
   }
 
+  /**
+   * Gets survey structure from the latest published version
+   * Replaces file-based approach with database version
+   */
   async getSurveyStructure(type: string): Promise<Survey> {
-    // For now, read from hardcoded JSON file
-    // TODO: Move to database in future iterations
-    const dataPath = path.join(__dirname, "../data/survey-data.json");
-    const surveyData = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+    const version = await this.getLatestPublishedVersion(type);
 
-    const survey = surveyData[type.toUpperCase()];
-    if (!survey) {
-      throw new NotFoundException(`Survey type ${type} not found`);
+    return {
+      id: version.survey_id,
+      type: version.type as SurveyType,
+      name: version.name,
+      structure: version.structure,
+    };
+  }
+
+  /**
+   * Gets survey structure for a specific session
+   * Uses the version associated with the session (prevents breaking active sessions)
+   */
+  async getSurveyStructureForSession(sessionId: string): Promise<Survey> {
+    const session = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+      relations: ["survey_version"],
+    });
+    if (!session) {
+      throw new NotFoundException(`Session ${sessionId} not found`);
     }
 
-    return survey;
+    if (!session.survey_version) {
+      throw new NotFoundException(
+        `Survey version for session ${sessionId} not found`,
+      );
+    }
+
+    return {
+      id: session.survey_version.survey_id,
+      type: session.survey_version.type as SurveyType,
+      name: session.survey_version.name,
+      structure: session.survey_version.structure,
+    };
   }
 
   async getSession(sessionId: string): Promise<SurveySession> {
@@ -239,6 +333,7 @@ export class SurveyService {
       .createQueryBuilder('session')
       .leftJoinAndSelect('session.answers', 'answers')
       .leftJoinAndSelect('session.survey', 'survey')
+      .leftJoinAndSelect('session.survey_version', 'survey_version')
       .where('session.id = :sessionId', { sessionId })
       .getOne();
 
@@ -323,14 +418,18 @@ export class SurveyService {
       throw new NotFoundException(`Survey type ${type} not found`);
     }
 
+    // Get latest published version
+    const latestVersion = await this.getLatestPublishedVersion(type);
+
     // Check if payment is required
     const requiresPayment = await this.requiresPayment(userId);
 
-    // Create new session with payment requirement flag
+    // Create new session with payment requirement flag and survey_version_id
     const session = this.sessionRepository.create({
       id: uuidv4(),
       user_telegram_id: userId,
       survey_id: survey.id,
+      survey_version_id: latestVersion.id,
       status: SessionStatus.IN_PROGRESS,
       requires_payment: requiresPayment,
     });
@@ -372,14 +471,15 @@ export class SurveyService {
   /**
    * Gets comprehensive survey results with CSV content for display
    * Implements clean architecture principles and leverages existing analytics
+   * Uses session's specific version to prevent breaking active sessions
    */
   async getSurveyResults(sessionId: string): Promise<SurveyResults> {
     // Get session with answers using optimized query
     const session = await this.getSessionWithAnswers(sessionId);
 
-    // Get survey structure
+    // Get survey structure from session's version (not latest published)
     const surveyType = session.survey.type.toLowerCase() as 'express' | 'full';
-    const surveyStructure = await this.getSurveyStructure(surveyType);
+    const surveyStructure = await this.getSurveyStructureForSession(sessionId);
 
     // Convert answers to the format expected by analytics calculator
     const answers = session.answers.map(answer => ({
@@ -399,14 +499,15 @@ export class SurveyService {
   /**
    * Gets detailed category results for category detail pages
    * Follows single responsibility principle - delegates to AnalyticsCalculator
+   * Uses session's specific version to prevent breaking active sessions
    */
   async getCategoryDetails(sessionId: string, categoryName: string): Promise<CategoryResult | null> {
     // Get session with answers using optimized query
     const session = await this.getSessionWithAnswers(sessionId);
 
-    // Get survey structure
+    // Get survey structure from session's version (not latest published)
     const surveyType = session.survey.type.toLowerCase() as 'express' | 'full';
-    const surveyStructure = await this.getSurveyStructure(surveyType);
+    const surveyStructure = await this.getSurveyStructureForSession(sessionId);
 
     // Convert answers to the format expected by analytics calculator
     const answers = session.answers.map(answer => ({

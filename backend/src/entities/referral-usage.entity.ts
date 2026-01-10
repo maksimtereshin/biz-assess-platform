@@ -5,12 +5,13 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  BaseEntity,
 } from "typeorm";
 import { ReferralCode } from "./referral-code.entity";
 import { User } from "./user.entity";
 
 @Entity("referral_usage")
-export class ReferralUsage {
+export class ReferralUsage extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 

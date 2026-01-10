@@ -6,13 +6,14 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  BaseEntity,
 } from "typeorm";
 import { User } from "./user.entity";
 import { Report } from "./report.entity";
 import { SurveySession } from "./survey-session.entity";
 
 @Entity("payments")
-export class Payment {
+export class Payment extends BaseEntity {
   @PrimaryColumn({ type: "uuid" })
   id: string;
 
