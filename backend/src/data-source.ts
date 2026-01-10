@@ -13,10 +13,18 @@ const migrationFiles = fs.existsSync(migrationsDir)
   ? fs
       .readdirSync(migrationsDir)
       .filter(
-        (file) => file.endsWith(".ts") && !file.endsWith(".spec.ts") && !file.endsWith(".d.ts")
+        (file) =>
+          file.endsWith(".ts") &&
+          !file.endsWith(".spec.ts") &&
+          !file.endsWith(".d.ts"),
       )
       .map((file) => path.join(migrationsDir, file))
   : [];
+
+// Filter out non-entity exports (enums, types, etc)
+const entityClasses = Object.values(entities).filter(
+  (exported) => typeof exported === "function",
+);
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -25,7 +33,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || "postgres",
   password: process.env.DB_PASSWORD || "password",
   database: process.env.DB_NAME || "bizass_platform",
-  entities: Object.values(entities),
+  entities: entityClasses,
   migrations: migrationFiles,
   migrationsTableName: "migrations",
   synchronize: false, // Never use synchronize with migrations

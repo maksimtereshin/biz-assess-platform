@@ -13,3 +13,7 @@ export { Report } from "./report.entity";
 export { Payment } from "./payment.entity";
 export { ReferralCode } from "./referral-code.entity";
 export { ReferralUsage } from "./referral-usage.entity";
+export { BotContent } from "./bot-content.entity";
+
+// Note: ContentType enum is exported from bot-content.entity.ts directly
+// Do NOT export enums here as they will be included in TypeORM entities array

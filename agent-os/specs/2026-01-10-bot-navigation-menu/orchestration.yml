@@ -1,0 +1,9 @@
+task_groups:
+  - name: Database Layer - Task Group 1 Content Management Database Schema
+    claude_code_subagent: implementer
+  - name: Backend Service Layer - Task Group 2 Telegram Navigation Service Updates
+    claude_code_subagent: implementer
+  - name: Integration Testing Layer - Task Group 3 Telegram MCP Bot Testing
+    claude_code_subagent: implementer
+  - name: Quality Assurance Layer - Task Group 4 Code Quality and Gap Analysis
+    claude_code_subagent: implementer

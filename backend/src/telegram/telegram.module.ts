@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { TelegramController } from "./telegram.controller";
 import { TelegramService } from "./telegram.service";
+import { ContentService } from "./content.service";
 import { CalendarService } from "./calendar/calendar.service";
 import { AuthModule } from "../auth/auth.module";
 import { SurveyModule } from "../survey/survey.module";
@@ -10,11 +11,11 @@ import { AnalyticsModule } from "../analytics/analytics.module";
 import { ExcelModule } from "../excel/excel.module";
 import { ReportModule } from "../report/report.module";
 import { AdminModule } from "../admin/admin.module";
-import { User } from "../entities";
+import { User, BotContent } from "../entities";
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, BotContent]),
     AuthModule,
     SurveyModule,
     PaymentModule,
@@ -24,7 +25,7 @@ import { User } from "../entities";
     AdminModule,
   ],
   controllers: [TelegramController],
-  providers: [TelegramService, CalendarService],
+  providers: [TelegramService, ContentService, CalendarService],
   exports: [TelegramService],
 })
 export class TelegramModule {}
