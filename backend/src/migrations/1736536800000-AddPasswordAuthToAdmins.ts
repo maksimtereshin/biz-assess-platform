@@ -52,27 +52,33 @@ export class AddPasswordAuthToAdmins1736536800000 implements MigrationInterface 
     }
     console.log("=".repeat(80) + "\n");
 
-    // 5. Write to file for persistence (git-ignored path)
-    const outputPath = path.join(process.cwd(), "admin-passwords.txt");
+    // 5. Try to write to file for persistence (use /tmp for write permissions)
+    try {
+      const outputPath = path.join("/tmp", "admin-passwords.txt");
 
-    let output = "=".repeat(80) + "\n";
-    output += "GENERATED ADMIN PASSWORDS\n";
-    output += "Generated at: " + new Date().toISOString() + "\n";
-    output +=
-      "IMPORTANT: Change these passwords immediately after first login!\n";
-    output += "=".repeat(80) + "\n\n";
+      let output = "=".repeat(80) + "\n";
+      output += "GENERATED ADMIN PASSWORDS\n";
+      output += "Generated at: " + new Date().toISOString() + "\n";
+      output +=
+        "IMPORTANT: Change these passwords immediately after first login!\n";
+      output += "=".repeat(80) + "\n\n";
 
-    for (const { username, password } of generatedPasswords) {
-      output += `Username: ${username}\n`;
-      output += `Password: ${password}\n`;
-      output += "-".repeat(80) + "\n";
+      for (const { username, password } of generatedPasswords) {
+        output += `Username: ${username}\n`;
+        output += `Password: ${password}\n`;
+        output += "-".repeat(80) + "\n";
+      }
+
+      fs.writeFileSync(outputPath, output, "utf-8");
+      console.log(`📝 Passwords also saved to: ${outputPath}`);
+      console.log(
+        "⚠️  IMPORTANT: Copy passwords from logs above and delete temp file!\n",
+      );
+    } catch (error) {
+      console.warn(
+        "⚠️  Could not save passwords to file. Please copy them from the console output above!",
+      );
     }
-
-    fs.writeFileSync(outputPath, output, "utf-8");
-    console.log(`📝 Passwords also saved to: ${outputPath}`);
-    console.log(
-      "⚠️  IMPORTANT: Delete this file after saving passwords securely!\n",
-    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
