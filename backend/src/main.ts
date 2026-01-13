@@ -6,7 +6,7 @@ import * as path from "path";
 import { AuthService } from "./auth/auth.service";
 import { AdminService } from "./admin/admin.service";
 import { SurveyVersionService } from "./survey/survey-version.service";
-import { createTelegramAuthProvider } from "./admin/providers/telegram-auth.provider";
+import { createAuthProvider } from "./admin/providers/auth.provider";
 
 async function setupAdminJS(app: any) {
   try {
@@ -188,135 +188,11 @@ async function setupAdminJS(app: any) {
     // Apply session middleware to all routes
     app.use(sessionMiddleware);
 
-    // Token handler for initial authentication from Telegram bot
-    // Stores JWT token in Telegram SecureStorage instead of session cookies
-    const adminTokenHandler = async (req: any, res: any, next: any) => {
-      const token = req.query.token as string;
-
-      // If no token in query, continue to AdminJS (will be authenticated via AdminTokenAuthMiddleware)
-      if (!token) {
-        return next();
-      }
-
-      try {
-        // Validate token before storing
-        const payload = authService.validateAdminToken(token);
-        const normalizedUsername = payload.username?.trim().toLowerCase();
-
-        // Verify user is admin
-        const isAdmin = await adminService.isAdmin(normalizedUsername);
-        if (!isAdmin) {
-          logger.warn(`[ADMIN AUTH] Access denied for "${normalizedUsername}"`);
-          return res.status(403).send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="UTF-8">
-              <title>Доступ запрещен</title>
-              <style>
-                body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                h1 { color: #d32f2f; }
-              </style>
-            </head>
-            <body>
-              <h1>Доступ запрещен</h1>
-              <p>Ваш Telegram username не найден в списке администраторов.</p>
-            </body>
-            </html>
-          `);
-        }
-
-        logger.log(
-          `[ADMIN AUTH] Token validated for admin: "${normalizedUsername}"`,
-        );
-        logger.log(`[ADMIN AUTH] Storing token in SecureStorage and redirecting`);
-
-        // Return HTML page that stores token in SecureStorage and redirects
-        return res.send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <title>Вход в админ-панель</title>
-            <script src="https://telegram.org/js/telegram-web-app.js"></script>
-            <style>
-              body {
-                font-family: Arial, sans-serif;
-                text-align: center;
-                padding: 50px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-              }
-              .loader {
-                border: 4px solid rgba(255,255,255,0.3);
-                border-top: 4px solid white;
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                animation: spin 1s linear infinite;
-                margin: 20px auto;
-              }
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            </style>
-          </head>
-          <body>
-            <h1>Загрузка админ-панели...</h1>
-            <div class="loader"></div>
-            <p>Пожалуйста, подождите</p>
-            <script>
-              console.log('[ADMIN AUTH] Storing token in SecureStorage');
-
-              if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.SecureStorage) {
-                window.Telegram.WebApp.SecureStorage.setItem('admin_token', '${token}', function(error) {
-                  if (error) {
-                    console.error('[ADMIN AUTH] Failed to store token:', error);
-                    alert('Ошибка сохранения токена. Попробуйте снова.');
-                  } else {
-                    console.log('[ADMIN AUTH] Token stored successfully, redirecting to /admin');
-                    window.location.href = '/admin';
-                  }
-                });
-              } else {
-                console.warn('[ADMIN AUTH] Telegram WebApp not available, redirecting anyway');
-                window.location.href = '/admin';
-              }
-            </script>
-          </body>
-          </html>
-        `);
-      } catch (error) {
-        console.error("Admin authentication error:", error);
-        return res.status(403).send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <title>Ошибка авторизации</title>
-            <style>
-              body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-              h1 { color: #d32f2f; }
-            </style>
-          </head>
-          <body>
-            <h1>Ошибка авторизации</h1>
-            <p>Токен доступа недействителен или истек.</p>
-            <p>Пожалуйста, войдите через Telegram бот заново.</p>
-          </body>
-          </html>
-        `);
-      }
-    };
-
-    // Create and initialize TelegramAuthProvider for AdminJS authentication
-    // This provider handles authentication via Bearer tokens from Telegram SecureStorage
-    // Uses DefaultAuthProvider from centralized admin-adapter (no dynamic import issues)
-    const telegramAuthProvider = createTelegramAuthProvider(
+    // Create simple username/password authentication provider
+    // Replaces complex Telegram authentication with standard login form
+    const authProvider = createAuthProvider(
       DefaultAuthProvider,
       componentLoader,
-      authService,
       adminService,
     );
 
@@ -324,12 +200,12 @@ async function setupAdminJS(app: any) {
     const sessionSecret =
       process.env.ADMIN_SESSION_SECRET || "complex-secret-change-in-production";
 
-    // Build AdminJS router with TelegramAuthProvider
+    // Build AdminJS router with simple auth provider
     // @ts-ignore
     const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
       admin,
       {
-        provider: telegramAuthProvider,
+        provider: authProvider,
         cookiePassword: sessionSecret,
       },
       null,
@@ -340,79 +216,12 @@ async function setupAdminJS(app: any) {
         cookie: {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          sameSite: "lax", // Standard session cookies (not Telegram WebView)
         },
       },
     );
 
-    // Apply token handler first (for initial authentication with ?token= query param)
-    app.use("/admin", adminTokenHandler);
-
-    // HTML injection middleware - intercepts AdminJS HTML responses and injects Bearer token script
-    app.use("/admin", (req: any, res: any, next: any) => {
-      // Only intercept HTML responses, not static assets
-      if (req.path && (req.path.endsWith('.js') || req.path.endsWith('.css') ||
-          req.path.endsWith('.map') || req.path.endsWith('.png') || req.path.endsWith('.svg'))) {
-        return next();
-      }
-
-      const originalSend = res.send;
-      res.send = function (data: any) {
-        // Only modify HTML responses
-        if (typeof data === 'string' && data.includes('<!DOCTYPE html>')) {
-          // Inject script into <head> BEFORE any other scripts
-          const scriptToInject = `
-            <script src="https://telegram.org/js/telegram-web-app.js"></script>
-            <script>
-              console.log('[ADMIN AUTH] Initializing Telegram SecureStorage fetch override');
-
-              // Get token from SecureStorage
-              if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.SecureStorage) {
-                window.Telegram.WebApp.SecureStorage.getItem('admin_token', function(error, token) {
-                  if (error) {
-                    console.error('[ADMIN AUTH] Failed to get token from SecureStorage:', error);
-                    return;
-                  }
-
-                  if (token) {
-                    console.log('[ADMIN AUTH] Token retrieved from SecureStorage, overriding fetch');
-
-                    // Override fetch to add Authorization header
-                    const originalFetch = window.fetch;
-                    window.fetch = function(input, init) {
-                      // Add Authorization header to all requests
-                      init = init || {};
-                      init.headers = init.headers || {};
-                      if (typeof init.headers === 'object' && !Array.isArray(init.headers)) {
-                        init.headers['Authorization'] = 'Bearer ' + token;
-                      }
-
-                      console.log('[ADMIN AUTH] Fetch request with Bearer token:', typeof input === 'string' ? input : input.url);
-                      return originalFetch(input, init);
-                    };
-
-                    console.log('[ADMIN AUTH] Fetch override installed successfully');
-                  } else {
-                    console.warn('[ADMIN AUTH] No token found in SecureStorage');
-                  }
-                });
-              } else {
-                console.warn('[ADMIN AUTH] Telegram WebApp API not available');
-              }
-            </script>
-          `;
-
-          // Inject right after <head> tag
-          data = data.replace('<head>', '<head>' + scriptToInject);
-        }
-
-        return originalSend.call(this, data);
-      };
-
-      next();
-    });
-
-    // Mount AdminJS router (authentication handled by TelegramAuthProvider)
+    // Mount AdminJS router (authentication handled by simple auth provider)
     app.use(admin.options.rootPath, adminRouter);
 
     const logger = new Logger("AdminJS");

@@ -21,3 +21,7 @@ dist/
 .claude/hooks/performance.log
 
 .playwright*/
+
+# Admin password generation output
+admin-passwords.txt
+backend/admin-passwords.txt

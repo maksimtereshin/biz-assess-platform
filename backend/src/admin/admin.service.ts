@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, ILike } from "typeorm";
+import * as bcrypt from "bcryptjs";
 import { Admin } from "../entities/admin.entity";
 
 @Injectable()
@@ -116,6 +117,121 @@ export class AdminService {
       relations: ["created_by"],
       order: { created_at: "DESC" },
     });
+  }
+
+  /**
+   * Authenticates admin with telegram_username and password
+   * @param username - Telegram username for login
+   * @param password - Plain text password
+   * @returns Admin entity if valid, null otherwise
+   */
+  async authenticateWithCredentials(
+    username: string,
+    password: string,
+  ): Promise<Admin | null> {
+    const normalizedUsername = username.trim().toLowerCase();
+
+    // Must explicitly select password_hash (excluded by default with select: false)
+    const admin = await this.adminRepository
+      .createQueryBuilder("admin")
+      .addSelect("admin.password_hash")
+      .where("LOWER(admin.telegram_username) = :username", {
+        username: normalizedUsername,
+      })
+      .getOne();
+
+    if (!admin) {
+      this.logger.warn(
+        `[AUTH] Login attempt for non-existent user: ${normalizedUsername}`,
+      );
+      return null;
+    }
+
+    // Verify password with bcrypt
+    const isValid = await bcrypt.compare(password, admin.password_hash);
+    if (!isValid) {
+      this.logger.warn(
+        `[AUTH] Invalid password for user: ${normalizedUsername}`,
+      );
+      return null;
+    }
+
+    this.logger.log(`[AUTH] Successful authentication: ${normalizedUsername}`);
+
+    // Remove password_hash before returning
+    delete (admin as any).password_hash;
+
+    return admin;
+  }
+
+  /**
+   * Updates admin password with validation
+   * @param userId - Admin ID
+   * @param oldPassword - Current password for verification
+   * @param newPassword - New password
+   * @throws BadRequestException if validation fails
+   * @throws NotFoundException if admin not found
+   */
+  async updatePassword(
+    userId: number,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    // Validate new password strength
+    this.validatePassword(newPassword);
+
+    // Get admin with password hash
+    const admin = await this.adminRepository
+      .createQueryBuilder("admin")
+      .addSelect("admin.password_hash")
+      .where("admin.id = :userId", { userId })
+      .getOne();
+
+    if (!admin) {
+      throw new NotFoundException(`Admin with ID ${userId} not found`);
+    }
+
+    // Verify old password
+    const isValidOldPassword = await bcrypt.compare(
+      oldPassword,
+      admin.password_hash,
+    );
+
+    if (!isValidOldPassword) {
+      throw new BadRequestException("Current password is incorrect");
+    }
+
+    // Hash and update new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    await this.adminRepository.update(userId, {
+      password_hash: newPasswordHash,
+    });
+
+    this.logger.log(`[AUTH] Password updated for admin ID: ${userId}`);
+  }
+
+  /**
+   * Validates password strength
+   * @param password - Password to validate
+   * @throws BadRequestException if password doesn't meet requirements
+   */
+  validatePassword(password: string): void {
+    if (password.length < 8) {
+      throw new BadRequestException(
+        "Password must be at least 8 characters long",
+      );
+    }
+
+    // Check for at least one letter and one number
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+
+    if (!hasLetter || !hasNumber) {
+      throw new BadRequestException(
+        "Password must contain at least one letter and one number",
+      );
+    }
   }
 
   /**

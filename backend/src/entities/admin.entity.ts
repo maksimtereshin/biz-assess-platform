@@ -18,6 +18,9 @@ export class Admin extends BaseEntity {
   @Column({ type: "varchar", length: 255, unique: true })
   telegram_username: string;
 
+  @Column({ type: "varchar", length: 255, select: false })
+  password_hash: string;
+
   @CreateDateColumn({ type: "timestamptz" })
   created_at: Date;
 

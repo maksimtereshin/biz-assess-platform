@@ -27,6 +27,9 @@ export const AdminResourceOptions: ResourceOptions = {
         label: "Telegram Username",
       },
     },
+    password_hash: {
+      isVisible: false, // NEVER show password hash in UI for security
+    },
     created_at: {
       isVisible: { list: true, filter: false, show: true, edit: false },
       props: {
