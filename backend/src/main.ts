@@ -1,9 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe, Logger } from "@nestjs/common";
 import { AppModule } from "./app.module";
-import session from "express-session";
 import * as path from "path";
-import { AuthService } from "./auth/auth.service";
 import { AdminService } from "./admin/admin.service";
 import { SurveyVersionService } from "./survey/survey-version.service";
 import { createAuthProvider } from "./admin/providers/auth.provider";
@@ -16,12 +14,7 @@ async function setupAdminJS(app: any) {
     const { AdminJS, AdminJSExpress, ComponentLoader, DefaultAuthProvider } =
       await getAdminJSModules();
 
-    // Get DataSource for entity metadata
-    const { DataSource: TypeOrmDataSource } = await import("typeorm");
-    const dataSource = app.get(TypeOrmDataSource);
-
-    // Get AuthService and AdminService for authentication
-    const authService = app.get(AuthService);
+    // Get AdminService for authentication
     const adminService = app.get(AdminService);
 
     // Get SurveyVersionService for custom actions
@@ -169,24 +162,6 @@ async function setupAdminJS(app: any) {
       );
       console.log("[DEBUG] Components will be bundled on-demand");
     }
-
-    // Configure session middleware for AdminJS
-    const sessionMiddleware = session({
-      secret:
-        process.env.ADMIN_SESSION_SECRET ||
-        "complex-secret-change-in-production",
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Required for Telegram WebApp
-        maxAge: 1000 * 60 * 60 * 24, // 24 hours
-      },
-    });
-
-    // Apply session middleware to all routes
-    app.use(sessionMiddleware);
 
     // Create simple username/password authentication provider
     // Replaces complex Telegram authentication with standard login form
