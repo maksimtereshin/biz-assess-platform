@@ -5,6 +5,7 @@ import * as path from "path";
 import { AdminService } from "./admin/admin.service";
 import { SurveyVersionService } from "./survey/survey-version.service";
 import { createAuthProvider } from "./admin/providers/auth.provider";
+import * as session from "express-session";
 
 async function setupAdminJS(app: any) {
   try {
@@ -175,7 +176,25 @@ async function setupAdminJS(app: any) {
     const sessionSecret =
       process.env.ADMIN_SESSION_SECRET || "complex-secret-change-in-production";
 
-    // Build AdminJS router with simple auth provider
+    // Configure PostgreSQL session store
+    const connectPgSimple = require('connect-pg-simple');
+    const PgSession = connectPgSimple(session);
+
+    const sessionStore = new PgSession({
+      conObject: {
+        host: process.env.DB_HOST || "localhost",
+        port: parseInt(process.env.DB_PORT) || 5432,
+        user: process.env.DB_USERNAME || "postgres",
+        password: process.env.DB_PASSWORD || "password",
+        database: process.env.DB_NAME || "bizass_platform",
+      },
+      tableName: 'session',
+      createTableIfMissing: true, // Auto-create table on first run
+      ttl: 7 * 24 * 60 * 60, // 7 days
+      pruneSessionInterval: 60 * 60, // Cleanup expired sessions hourly
+    });
+
+    // Build AdminJS router with PostgreSQL session store
     // @ts-ignore
     const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
       admin,
@@ -185,6 +204,7 @@ async function setupAdminJS(app: any) {
       },
       null,
       {
+        store: sessionStore, // KEY CHANGE: Use PostgreSQL instead of memory
         resave: false,
         saveUninitialized: false,
         secret: sessionSecret,
@@ -192,6 +212,7 @@ async function setupAdminJS(app: any) {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax", // Standard session cookies (not Telegram WebView)
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         },
       },
     );
