@@ -177,7 +177,7 @@ async function setupAdminJS(app: any) {
       process.env.ADMIN_SESSION_SECRET || "complex-secret-change-in-production";
 
     // Configure PostgreSQL session store
-    const connectPgSimple = require('connect-pg-simple');
+    const connectPgSimple = require("connect-pg-simple");
     const PgSession = connectPgSimple(session);
 
     const sessionStore = new PgSession({
@@ -188,7 +188,7 @@ async function setupAdminJS(app: any) {
         password: process.env.DB_PASSWORD || "password",
         database: process.env.DB_NAME || "bizass_platform",
       },
-      tableName: 'session',
+      tableName: "session",
       createTableIfMissing: true, // Auto-create table on first run
       ttl: 7 * 24 * 60 * 60, // 7 days
       pruneSessionInterval: 60 * 60, // Cleanup expired sessions hourly
@@ -211,7 +211,7 @@ async function setupAdminJS(app: any) {
         cookie: {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          sameSite: "lax", // Standard session cookies (not Telegram WebView)
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Allows cookies in Telegram WebApp (production), normal behavior in dev
           maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         },
       },
