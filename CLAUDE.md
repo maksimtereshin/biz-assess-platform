@@ -811,21 +811,95 @@ import { Survey, SurveySession, User } from 'bizass-shared';
 
 ### Render.com Blueprint Deployment
 - Configured via `render.yaml` for automatic deployment
-- **Services**: PostgreSQL database, backend API, frontend static site
-- **Environment**: Set `TELEGRAM_BOT_TOKEN` manually in Render dashboard
+- **Services**: PostgreSQL database, backend API, frontend static site, Kottster admin panel
+- **Cost**: $21/month ($7 backend + $0 frontend + $7 database + $7 admin panel)
 - **URLs**:
   - Backend: `https://bizass-backend.onrender.com`
-  - Frontend: `https://bizass-frontend.onrender.com`
+  - Frontend: `https://biz-assess-platform.onrender.com`
+  - Admin Panel: `https://bizass-admin-panel.onrender.com`
+
+**Environment Variables - Manual Setup Required:**
+
+Backend Service:
+- `TELEGRAM_BOT_TOKEN` - Telegram bot token from BotFather
+- `ADMIN_TELEGRAM_USERNAME` - First admin Telegram username (optional)
+
+Kottster Admin Panel:
+- `KOTTSTER_API_TOKEN` - Generate with: `openssl rand -base64 32`
+- `ROOT_USERNAME` - Secure admin username (NEVER use "admin")
+- `ROOT_PASSWORD` - Strong password (NEVER use "admin")
+
+**Deployment Guide**: See [DEPLOYMENT.md](./DEPLOYMENT.md) for comprehensive deployment instructions
+
+### Kottster Admin Panel
+
+**Version:** v3.5.1 (Production-ready as of 2026-01-15)
+
+Low-code admin interface for managing platform data without direct database access.
+
+**Features:**
+- **Visual CRUD Interface**: Manage all platform data through auto-generated UI
+- **Managed Tables**: Users, Surveys, Survey Sessions, Reports, Payments, Bot Content
+- **Database Schema**: Automatically synced from `kottster-app.json`
+- **Authentication**: SQLite-based identity provider with secure credentials
+
+**Production Configuration:**
+- Location: `/kottster-app/`
+- Port: 5480
+- Dockerfile: Multi-stage build with health checks
+- Database: Shares PostgreSQL with backend (read/write access)
+- Security: All secrets managed via environment variables
+
+**Critical Security Notes:**
+- ❌ **NEVER** use default `admin/admin` credentials in production
+- ✅ Generate secure secrets: `openssl rand -base64 32`
+- ✅ Store credentials in Render dashboard environment variables
+- ✅ All hard-coded secrets removed from source code (v1.0)
+
+**Local Development:**
+```bash
+cd kottster-app
+npm install
+cp .env.example .env
+# Edit .env with local PostgreSQL credentials
+npm run dev
+# Access at http://localhost:5480
+```
+
+**Production Deployment:**
+- Deployed automatically via `render.yaml`
+- Environment variables auto-injected from PostgreSQL service
+- Health check endpoint: `/` (verifies main page loads)
+- Non-root user execution for security
+
+**Access Control:**
+- Single admin user (configured via ROOT_USERNAME/ROOT_PASSWORD)
+- No role-based access control (all admins have full access)
+- Session-based authentication with SQLite storage
+
+**Managed Data Tables:**
+1. **Users** - Telegram user data (telegram_id, username, created_at)
+2. **Surveys** - Survey definitions (structure JSON, versions)
+3. **Survey Sessions** - User survey sessions (status, answers, completion)
+4. **Reports** - Generated reports (payment status, storage URL)
+5. **Payments** - Telegram payment transactions (charge_id, amount, status)
+6. **Bot Content** - Localized bot messages (content_key, language, value)
+
+**Alternative Admin Solution:**
+- Backend includes embedded **AdminJS** at `/admin` endpoint
+- Kottster is an alternative low-code solution
+- Both provide similar functionality; use Kottster for visual UI, AdminJS for Telegram auth
 
 ### Docker Configuration
 - **Multi-stage builds** for optimized production images
-- **nginx** reverse proxy for frontend with API proxying
-- **Environment-aware**: Different configs for dev vs production
+- **Security**: Non-root users, health checks, environment-based secrets
+- **Kottster Dockerfile**: Node 22-alpine with SQLite identity store
 
 ### Database Setup
 - PostgreSQL with TypeORM migrations
 - Auto-seeding of survey data on startup
 - Connection via environment variables or Docker networking
+- Shared database for backend and Kottster admin panel
 
 ## Important Development Notes
 

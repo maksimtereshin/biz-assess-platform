@@ -1,127 +1,225 @@
-# Deployment Guide for Render.com
+# Production Deployment Guide
 
-This guide covers deploying the Business Assessment Platform to Render.com.
+Comprehensive guide for deploying biz-assess-platform to Render.com.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Environment Variables](#environment-variables)
+- [Deployment Steps](#deployment-steps)
+- [Post-Deployment Verification](#post-deployment-verification)
+- [Cost Breakdown](#cost-breakdown)
+- [Troubleshooting](#troubleshooting)
+- [Security Best Practices](#security-best-practices)
+
+---
+
+## Overview
+
+The biz-assess-platform consists of four main services deployed on Render.com:
+
+1. **Backend API** (NestJS) - Telegram bot and API server
+2. **Frontend** (React + Vite) - Static site for Telegram WebApp
+3. **PostgreSQL Database** - Managed database service
+4. **Kottster Admin Panel** - Low-code admin interface for data management
+
+**Total Monthly Cost:** $21/month ($7 backend + $0 frontend + $7 database + $7 admin panel)
+
+---
+
+## Architecture
+
+**Service URLs:**
+- Frontend: `https://biz-assess-platform.onrender.com`
+- Backend API: `https://bizass-backend.onrender.com`
+- Admin Panel: `https://bizass-admin-panel.onrender.com`
+- Database: Internal only (not publicly accessible)
+
+---
 
 ## Prerequisites
 
-1. **Render.com Account**: Sign up at [render.com](https://render.com)
-2. **GitHub Repository**: Push your code to a GitHub repository
-3. **Environment Variables**: Prepare the necessary environment variables
+### 1. GitHub Repository
+
+Ensure your code is pushed to GitHub:
+```bash
+git status
+git add .
+git commit -m "Prepare for production deployment"
+git push origin main
+```
+
+### 2. Telegram Bot Token
+
+Get your bot token from [@BotFather](https://t.me/BotFather):
+1. Send `/newbot` to BotFather
+2. Follow the prompts to create your bot
+3. Save the bot token (format: `1234567890:ABCdefGHIjklMNOpqrsTUVwxyz`)
+
+### 3. Generate Secure Secrets
+
+Generate secure random values for Kottster admin panel:
+
+```bash
+# Generate secret key (32 bytes)
+openssl rand -base64 32
+
+# Generate API token (32 bytes)
+openssl rand -base64 32
+
+# Generate JWT salt (16 bytes)
+openssl rand -base64 16
+```
+
+Save these values - you'll need them in Render dashboard.
+
+### 4. Choose Admin Credentials
+
+**CRITICAL:** Do NOT use default `admin/admin` credentials in production.
+
+Choose secure credentials:
+- **Username:** Unique, not "admin" (e.g., `admin_yourname_2026`)
+- **Password:** Strong password with at least 16 characters
+
+---
+
+## Environment Variables
+
+### Backend Service (bizass-backend)
+
+**Auto-configured by Render:**
+- Database credentials (DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME)
+- DATABASE_URL, JWT_SECRET, ADMIN_SESSION_SECRET
+
+**Manually set:**
+- `TELEGRAM_BOT_TOKEN` - Your bot token from BotFather
+- `ADMIN_TELEGRAM_USERNAME` - First admin Telegram username (optional)
+
+### Kottster Admin Panel (bizass-admin-panel)
+
+**Auto-configured:**
+- Database credentials
+- KOTTSTER_SECRET_KEY, KOTTSTER_JWT_SALT
+
+**Manually set:**
+- `KOTTSTER_API_TOKEN` - From `openssl rand -base64 32`
+- `ROOT_USERNAME` - Your secure admin username (NOT "admin")
+- `ROOT_PASSWORD` - Your strong password (NOT "admin")
+
+---
 
 ## Deployment Steps
 
-### 1. Connect GitHub Repository
+### Step 1: Connect GitHub to Render
 
-1. Log into your Render dashboard
+1. Go to [Render Dashboard](https://dashboard.render.com/)
 2. Click "New" → "Blueprint"
-3. Connect your GitHub repository containing this project
+3. Connect your GitHub account
+4. Select repository: `your-username/biz-assess-platform`
+5. Render will detect `render.yaml`
+6. Click "Apply"
 
-### 2. Deploy Using Blueprint
+### Step 2: Set Manual Environment Variables
 
-The `render.yaml` file will automatically configure:
-- **Database**: PostgreSQL database (`bizass-postgres`)
-- **Backend**: Node.js API service (`bizass-backend`)
-- **Frontend**: Static site service (`bizass-frontend`)
+#### Backend (bizass-backend)
+1. Navigate to bizass-backend → Environment
+2. Add:
+   - `TELEGRAM_BOT_TOKEN` = `your_bot_token`
+   - `ADMIN_TELEGRAM_USERNAME` = `your_username`
+3. Save Changes
 
-### 3. Configure Environment Variables
+#### Admin Panel (bizass-admin-panel)
+1. Navigate to bizass-admin-panel → Environment
+2. Add:
+   - `KOTTSTER_API_TOKEN` = `[from openssl]`
+   - `ROOT_USERNAME` = `your_secure_username`
+   - `ROOT_PASSWORD` = `your_strong_password`
+3. Save Changes
 
-After deployment, manually set these environment variables in the Render dashboard:
+### Step 3: Configure Telegram Webhook
 
-#### Backend Service (`bizass-backend`)
-- `TELEGRAM_BOT_TOKEN`: Your Telegram bot token (set via Render dashboard)
+```bash
+curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+  -d "url=https://bizass-backend.onrender.com/api/telegram/webhook"
+```
 
-All other environment variables are automatically configured through the render.yaml file.
-
-### 4. Database Setup
-
-The PostgreSQL database will be automatically:
-- Created with the name `bizass_platform`
-- Connected to the backend service
-- Initialized with the uuid-ossp extension
-
-## File Structure
-
-### Docker Configuration
-- `backend/Dockerfile`: Multi-stage production build for backend
-- `frontend/Dockerfile`: Multi-stage production build for frontend with nginx
-- `frontend/nginx.conf`: Nginx configuration for serving React app
-- `.dockerignore`: Optimized Docker build context
-
-### Deployment Configuration
-- `render.yaml`: Render.com blueprint configuration
-- `DEPLOYMENT.md`: This deployment guide
-
-## Production Features
-
-### Backend
-- Multi-stage Docker build for smaller image size
-- Non-root user for security
-- Health checks configured
-- Canvas dependencies for PDF generation
-- CORS configured for frontend communication
-
-### Frontend  
-- Nginx server for static file serving
-- Gzip compression enabled
-- Security headers configured
-- React Router support (try_files)
-- Cache headers for static assets
-
-### Database
-- PostgreSQL with persistent storage
-- UUID extension enabled
-- Automatic connection to backend
-
-## Environment Variables Reference
-
-### Auto-configured by Render
-- `NODE_ENV=production`
-- `PORT=3001` (backend)
-- Database connection variables (auto-populated from database service)
-- `JWT_SECRET` (auto-generated)
-- `FRONTEND_URL` and `VITE_API_URL` (auto-configured between services)
-
-### Manual Configuration Required
-- `TELEGRAM_BOT_TOKEN`: Set in Render dashboard for the backend service
+---
 
 ## Post-Deployment Verification
 
-1. **Health Check**: Visit `https://your-backend.onrender.com/health`
-2. **Frontend**: Visit `https://your-frontend.onrender.com`
-3. **Database**: Backend logs should show successful database connection
+### Health Checks
+
+```bash
+# Backend
+curl https://bizass-backend.onrender.com/api/health
+
+# Frontend headers
+curl -I https://biz-assess-platform.onrender.com
+
+# Admin panel
+curl https://bizass-admin-panel.onrender.com/
+```
+
+### Manual Testing
+
+- [ ] Telegram bot responds to `/start`
+- [ ] WebApp opens survey interface
+- [ ] Complete survey flow works
+- [ ] Admin panel login successful
+- [ ] Database tables visible in admin
+
+---
+
+## Cost Breakdown
+
+| Service | Plan | Monthly Cost |
+|---------|------|--------------|
+| Backend | Starter | $7 |
+| Frontend | Free | $0 |
+| PostgreSQL | Basic 256MB | $7 |
+| Admin Panel | Starter | $7 |
+| **Total** | | **$21** |
+
+---
 
 ## Troubleshooting
 
-### Common Issues
+### Backend Issues
+- Check logs in Render dashboard
+- Verify TELEGRAM_BOT_TOKEN is set
+- Test webhook with getWebhookInfo
 
-1. **Build Failures**
-   - Check that shared library builds successfully
-   - Verify all dependencies are installed
-   - Check Docker build logs
+### Admin Panel Issues
+- Verify ROOT_USERNAME and ROOT_PASSWORD
+- Check database connection in logs
+- Ensure DB_HOST points to PostgreSQL service
 
-2. **Database Connection Issues**
-   - Verify database service is running
-   - Check environment variable configuration
-   - Review connection logs
+### Frontend Issues
+- Verify VITE_API_URL points to backend
+- Check security headers with curl -I
+- Verify sourcemaps are disabled
 
-3. **CORS Issues**
-   - Verify FRONTEND_URL is correctly set
-   - Check that domain names match between services
+---
 
-### Logs Access
-- Backend logs: Available in Render dashboard under the backend service
-- Frontend logs: Available in Render dashboard under the frontend service
-- Database logs: Available in Render dashboard under the database service
+## Security Best Practices
 
-## Scaling Considerations
+- ✅ Never use `admin/admin` in production
+- ✅ Rotate secrets every 90 days
+- ✅ Sourcemaps disabled (no code exposure)
+- ✅ Security headers configured
+- ✅ Database not publicly accessible
+- ✅ HTTPS enforced on all services
 
-- **Free Plan**: Suitable for development and testing (services spin down after inactivity)
-- **Paid Plans**: Recommended for production (always-on services, better performance)
-- **Database**: Free tier has limitations; consider upgrading for production workloads
+---
 
-## Security Notes
+## Support
 
-- All services run with non-root users where applicable
-- Environment variables are managed securely through Render
-- Database connections use SSL in production
-- Security headers are configured in nginx
+- [Render Documentation](https://render.com/docs)
+- [CLAUDE.md](./CLAUDE.md) - Development guide
+- [GitHub Issues](https://github.com/your-repo/issues)
+
+---
+
+**Version:** 1.0 (2026-01-15)

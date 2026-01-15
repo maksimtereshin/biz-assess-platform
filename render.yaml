@@ -61,6 +61,65 @@ services:
     envVars:
       - key: VITE_API_URL
         value: "https://bizass-backend.onrender.com"
+    # Security headers for production
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: geolocation=(), microphone=(), camera=()
+
+  # Kottster Admin Panel Service
+  - type: web
+    name: bizass-admin-panel
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./kottster-app/Dockerfile
+    dockerContext: ./kottster-app
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5480
+      - key: DB_HOST
+        fromDatabase:
+          name: bizass-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: bizass-postgres
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: bizass-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: bizass-postgres
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: bizass-postgres
+          property: database
+      - key: KOTTSTER_SECRET_KEY
+        generateValue: true # Auto-generated secret key
+      - key: KOTTSTER_API_TOKEN
+        sync: false # Set manually in Render dashboard
+      - key: KOTTSTER_JWT_SALT
+        generateValue: true # Auto-generated JWT salt
+      - key: ROOT_USERNAME
+        sync: false # Set manually in Render dashboard - NEVER use 'admin'
+      - key: ROOT_PASSWORD
+        sync: false # Set manually in Render dashboard - NEVER use 'admin'
+    healthCheckPath: /
+    # Health check verifies the main page loads successfully
 
 databases:
   - name: bizass-postgres

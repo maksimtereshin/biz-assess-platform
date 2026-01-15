@@ -1,0 +1,568 @@
+{
+  "id": "953d127c-cef5-4336-9680-95e9e1fa7e9c",
+  "meta": {
+    "name": "Admin Panel",
+    "icon": "https://web.kottster.app/icon.png"
+  },
+  "pages": [
+    {
+      "version": "1",
+      "key": "users",
+      "title": "Users",
+      "icon": "users",
+      "type": "table",
+      "config": {
+        "table": "users",
+        "dataSource": "postgres_al4d",
+        "fetchStrategy": "databaseTable",
+        "primaryKeyColumn": "telegram_id",
+        "allowInsert": true,
+        "allowUpdate": true,
+        "allowDelete": true,
+        "columns": [
+          {
+            "column": "telegram_id",
+            "label": "Telegram ID",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 1
+          },
+          {
+            "column": "first_name",
+            "label": "First Name",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 2
+          },
+          {
+            "column": "username",
+            "label": "Username",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "optional",
+            "position": 3
+          },
+          {
+            "column": "created_at",
+            "label": "Created At",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 4
+          }
+        ]
+      }
+    },
+    {
+      "version": "1",
+      "key": "surveys",
+      "title": "Surveys",
+      "icon": "clipboard-list",
+      "type": "table",
+      "config": {
+        "table": "surveys",
+        "dataSource": "postgres_al4d",
+        "fetchStrategy": "databaseTable",
+        "primaryKeyColumn": "id",
+        "allowInsert": true,
+        "allowUpdate": true,
+        "allowDelete": true,
+        "columns": [
+          {
+            "column": "id",
+            "label": "ID",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 1
+          },
+          {
+            "column": "type",
+            "label": "Survey Type",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 2
+          },
+          {
+            "column": "name",
+            "label": "Name",
+            "sortable": true,
+            "searchable": true,
+            "filterable": false,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 3
+          },
+          {
+            "column": "structure",
+            "label": "Survey Structure (JSON)",
+            "sortable": false,
+            "searchable": false,
+            "filterable": false,
+            "hiddenInTable": true,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 4
+          },
+          {
+            "column": "latest_published_version_id",
+            "label": "Latest Version",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "optional",
+            "position": 5
+          },
+          {
+            "column": "deleted_at",
+            "label": "Deleted At",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "optional",
+            "position": 6
+          }
+        ]
+      }
+    },
+    {
+      "version": "1",
+      "key": "survey_sessions",
+      "title": "Survey Sessions",
+      "icon": "file-text",
+      "type": "table",
+      "config": {
+        "table": "survey_sessions",
+        "dataSource": "postgres_al4d",
+        "fetchStrategy": "databaseTable",
+        "primaryKeyColumn": "id",
+        "allowInsert": true,
+        "allowUpdate": true,
+        "allowDelete": true,
+        "columns": [
+          {
+            "column": "id",
+            "label": "Session ID",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 1
+          },
+          {
+            "column": "user_telegram_id",
+            "label": "User (Telegram ID)",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 2
+          },
+          {
+            "column": "survey_id",
+            "label": "Survey ID",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 3
+          },
+          {
+            "column": "survey_version_id",
+            "label": "Version ID",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "optional",
+            "position": 4
+          },
+          {
+            "column": "status",
+            "label": "Status",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 5
+          },
+          {
+            "column": "requires_payment",
+            "label": "Requires Payment",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "optional",
+            "position": 6
+          },
+          {
+            "column": "created_at",
+            "label": "Created",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 7
+          },
+          {
+            "column": "updated_at",
+            "label": "Updated",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 8
+          }
+        ]
+      }
+    },
+    {
+      "version": "1",
+      "key": "reports",
+      "title": "Reports",
+      "icon": "file-chart-line",
+      "type": "table",
+      "config": {
+        "table": "reports",
+        "dataSource": "postgres_al4d",
+        "fetchStrategy": "databaseTable",
+        "primaryKeyColumn": "id",
+        "allowInsert": true,
+        "allowUpdate": true,
+        "allowDelete": true,
+        "columns": [
+          {
+            "column": "id",
+            "label": "Report ID",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 1
+          },
+          {
+            "column": "session_id",
+            "label": "Session ID",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 2
+          },
+          {
+            "column": "payment_status",
+            "label": "Payment Status",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 3
+          },
+          {
+            "column": "storage_url",
+            "label": "Storage URL",
+            "sortable": false,
+            "searchable": false,
+            "filterable": false,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "optional",
+            "position": 4
+          },
+          {
+            "column": "analytics_summary",
+            "label": "Analytics Summary (JSON)",
+            "sortable": false,
+            "searchable": false,
+            "filterable": false,
+            "hiddenInTable": true,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 5
+          },
+          {
+            "column": "created_at",
+            "label": "Created At",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 6
+          }
+        ]
+      }
+    },
+    {
+      "version": "1",
+      "key": "payments",
+      "title": "Payments",
+      "icon": "credit-card",
+      "type": "table",
+      "config": {
+        "table": "payments",
+        "dataSource": "postgres_al4d",
+        "fetchStrategy": "databaseTable",
+        "primaryKeyColumn": "id",
+        "allowInsert": true,
+        "allowUpdate": true,
+        "allowDelete": true,
+        "columns": [
+          {
+            "column": "id",
+            "label": "Payment ID",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 1
+          },
+          {
+            "column": "user_telegram_id",
+            "label": "User (Telegram ID)",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 2
+          },
+          {
+            "column": "survey_session_id",
+            "label": "Session ID",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "optional",
+            "position": 3
+          },
+          {
+            "column": "report_id",
+            "label": "Report ID",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "optional",
+            "position": 4
+          },
+          {
+            "column": "telegram_charge_id",
+            "label": "Telegram Charge ID",
+            "sortable": false,
+            "searchable": true,
+            "filterable": false,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 5
+          },
+          {
+            "column": "amount",
+            "label": "Amount",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 6
+          },
+          {
+            "column": "currency",
+            "label": "Currency",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 7
+          },
+          {
+            "column": "status",
+            "label": "Status",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 8
+          },
+          {
+            "column": "created_at",
+            "label": "Created",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 9
+          },
+          {
+            "column": "updated_at",
+            "label": "Updated",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 10
+          }
+        ]
+      }
+    },
+    {
+      "version": "1",
+      "key": "bot_content",
+      "title": "Bot Content",
+      "icon": "message-square",
+      "type": "table",
+      "config": {
+        "table": "bot_content",
+        "dataSource": "postgres_al4d",
+        "fetchStrategy": "databaseTable",
+        "primaryKeyColumn": "id",
+        "allowInsert": true,
+        "allowUpdate": true,
+        "allowDelete": true,
+        "columns": [
+          {
+            "column": "id",
+            "label": "ID",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 1
+          },
+          {
+            "column": "content_key",
+            "label": "Content Key",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 2
+          },
+          {
+            "column": "content_type",
+            "label": "Type",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 3
+          },
+          {
+            "column": "language",
+            "label": "Language",
+            "sortable": true,
+            "searchable": true,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 4
+          },
+          {
+            "column": "content_value",
+            "label": "Content Value",
+            "sortable": false,
+            "searchable": true,
+            "filterable": false,
+            "hiddenInTable": false,
+            "hiddenInForm": false,
+            "fieldRequirement": "notEmpty",
+            "position": 5
+          },
+          {
+            "column": "created_at",
+            "label": "Created",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 6
+          },
+          {
+            "column": "updated_at",
+            "label": "Updated",
+            "sortable": true,
+            "searchable": false,
+            "filterable": true,
+            "hiddenInTable": false,
+            "hiddenInForm": true,
+            "fieldRequirement": "optional",
+            "position": 7
+          }
+        ]
+      }
+    }
+  ]
+}

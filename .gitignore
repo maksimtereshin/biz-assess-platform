@@ -26,4 +26,12 @@ dist/
 admin-passwords.txt
 backend/admin-passwords.txt
 
+# Kottster Admin Panel
+kottster-app/.kottster/
+kottster-app/node_modules/
+kottster-app/dist/
+kottster-app/.env
+kottster-app/app.db
+kottster-app/data/
+
 .vscode/

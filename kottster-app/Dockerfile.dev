@@ -1,0 +1,22 @@
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Install build dependencies for native modules (better-sqlite3)
+RUN apk add --no-cache python3 make g++
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Rebuild better-sqlite3 for the current architecture
+RUN npm rebuild better-sqlite3
+
+# Copy application source
+COPY . .
+
+# Expose Kottster port (configured via env)
+EXPOSE 5480
+
+# Start development server
+CMD ["npm", "run", "dev"]
