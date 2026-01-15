@@ -65,10 +65,7 @@ async function setupAdminJS(app: any) {
         "SurveyPreview",
         path.join(componentsPath, "SurveyPreview"),
       ),
-      TelegramLogin: componentLoader.add(
-        "TelegramLogin",
-        path.join(componentsPath, "TelegramLogin"),
-      ),
+      // TelegramLogin removed - using default AdminJS login page
     };
 
     console.log(
