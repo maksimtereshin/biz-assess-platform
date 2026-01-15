@@ -25,3 +25,5 @@ dist/
 # Admin password generation output
 admin-passwords.txt
 backend/admin-passwords.txt
+
+.vscode/

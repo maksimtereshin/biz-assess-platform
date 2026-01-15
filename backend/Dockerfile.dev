@@ -39,8 +39,8 @@ RUN mkdir -p src/data/reports && mkdir -p dist/data/reports
 COPY ./backend/src/data/reports/*.csv ./src/data/reports/
 COPY ./backend/src/data/reports/*.csv ./dist/data/reports/
 
-# Expose port
-EXPOSE 3001
+# Expose ports (app + debugger)
+EXPOSE 3001 9229
 
-# Start in development mode
-CMD ["npm", "run", "start:dev"]
+# Start in debug mode with inspector
+CMD ["npm", "run", "start:debug"]

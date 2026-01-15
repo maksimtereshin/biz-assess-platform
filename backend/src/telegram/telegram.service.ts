@@ -224,15 +224,10 @@ export class TelegramService implements OnModuleInit {
       ],
     ];
 
-    // Add admin button for authorized users
-    if (user?.username && (await this.isAdmin(user.username))) {
-      baseKeyboard.push([
-        {
-          text: this.contentService.getCachedContent("main_button_admin"),
-          callback_data: "main_admin",
-        },
-      ]);
-    }
+    // Admin panel is now desktop-only (removed from Telegram bot menu)
+    // Admins should access the panel via desktop browser at:
+    // https://biz-assess-platform.onrender.com/admin
+    // No Telegram WebApp button needed
 
     return {
       inline_keyboard: baseKeyboard,
@@ -597,27 +592,14 @@ export class TelegramService implements OnModuleInit {
       return;
     }
 
-    // Generate admin auth token (15 minute expiration)
-    // Normalize username to lowercase for consistency with database
-    const normalizedUsername = username.trim().toLowerCase();
-    const token = this.authService.generateAdminAuthToken(normalizedUsername);
+    // Admin panel is now desktop-only (no Telegram WebApp access)
+    const adminPanelUrl = `${this.backendUrl}/admin`;
 
-    // Create admin panel URL with token
-    const adminPanelUrl = `${this.backendUrl}/admin?token=${token}`;
+    this.logger.log(`Admin panel request from ${username} (desktop-only mode)`);
 
-    this.logger.log(
-      `Generated admin panel URL for ${username}: ${adminPanelUrl.substring(0, 50)}...`,
-    );
-
-    // Send message with WebApp button
+    // Inform user to access admin panel from desktop browser
     const keyboard = {
       inline_keyboard: [
-        [
-          {
-            text: "🔧 Открыть админ-панель",
-            web_app: { url: adminPanelUrl },
-          },
-        ],
         [
           {
             text: "⬅️ Назад в главное меню",
@@ -629,7 +611,12 @@ export class TelegramService implements OnModuleInit {
 
     await this.sendMessageWithKeyboard(
       chatId,
-      "🔧 *Админ-панель*\n\nНажмите кнопку ниже для открытия панели управления.\n\n_Токен действителен 15 минут._",
+      `🔧 *Админ-панель*\n\n` +
+        `Админ-панель доступна только через веб-браузер на компьютере.\n\n` +
+        `*URL:* ${adminPanelUrl}\n` +
+        `*Логин:* ${username}\n` +
+        `*Пароль:* Используйте пароль, установленный администратором\n\n` +
+        `Откройте указанный URL в браузере Chrome, Firefox или Safari.`,
       keyboard,
     );
   }

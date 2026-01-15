@@ -691,6 +691,54 @@ npm run build                  # Build shared types
 docker exec -it bizass-postgres-dev psql -U postgres -d bizass_platform
 ```
 
+### Debug Mode
+
+To debug the backend service in VSCode with breakpoints and step-through debugging:
+
+#### Starting Debug Mode
+
+```bash
+# Stop any running services first
+./dev.sh down
+
+# Start services in debug mode
+./dev.sh debug
+```
+
+This starts the backend with Node.js inspector listening on port 9229.
+
+#### Connecting VSCode Debugger
+
+1. Open VSCode and navigate to the Debug panel (Cmd+Shift+D / Ctrl+Shift+D)
+2. Select the configuration: **"🐳 Backend: Attach to Docker"**
+3. Press F5 or click "Start Debugging"
+4. Set breakpoints in your backend code (e.g., [backend/src/main.ts](backend/src/main.ts))
+5. Send a request to the API to trigger the breakpoint
+
+#### Verifying Debug Connection
+
+```bash
+# Check that port 9229 is listening inside the container
+docker exec bizass-backend-dev netstat -tln | grep 9229
+
+# Should show:
+# tcp        0      0 0.0.0.0:9229            0.0.0.0:*               LISTEN
+
+# Check that Node.js is running with debug flag
+docker exec bizass-backend-dev ps aux | grep debug
+
+# Should show: --debug=0.0.0.0:9229 flag
+```
+
+#### Switching Back to Normal Mode
+
+```bash
+./dev.sh down
+./dev.sh up
+```
+
+**Note:** Debug mode may be slightly slower than normal development mode due to debugger overhead. Use `./dev.sh up` for regular development and `./dev.sh debug` only when you need to debug with breakpoints.
+
 ## Architecture Overview
 
 ### Monorepo Structure

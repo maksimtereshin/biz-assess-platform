@@ -4,7 +4,7 @@ import { AppModule } from "./app.module";
 import * as path from "path";
 import { AdminService } from "./admin/admin.service";
 import { SurveyVersionService } from "./survey/survey-version.service";
-import { createAuthProvider } from "./admin/providers/auth.provider";
+import { createPasswordAuthProvider } from "./admin/providers/telegram-auth.provider";
 import * as session from "express-session";
 
 async function setupAdminJS(app: any) {
@@ -65,6 +65,10 @@ async function setupAdminJS(app: any) {
         "SurveyPreview",
         path.join(componentsPath, "SurveyPreview"),
       ),
+      TelegramLogin: componentLoader.add(
+        "TelegramLogin",
+        path.join(componentsPath, "TelegramLogin"),
+      ),
     };
 
     console.log(
@@ -104,6 +108,8 @@ async function setupAdminJS(app: any) {
         logo: false,
       },
       componentLoader,
+      // Use default AdminJS login page (username + password)
+      // No custom pages needed for password authentication
       locale: {
         language: "ru",
         translations: {
@@ -164,13 +170,15 @@ async function setupAdminJS(app: any) {
       console.log("[DEBUG] Components will be bundled on-demand");
     }
 
-    // Create simple username/password authentication provider
-    // Replaces complex Telegram authentication with standard login form
-    const authProvider = createAuthProvider(
+    // Create password-based authentication provider
+    // Admin users login with username and password (no Telegram dependency)
+    const authProvider = createPasswordAuthProvider(
       DefaultAuthProvider,
       componentLoader,
       adminService,
     );
+
+    // AdminJS will use default login page with username/password fields
 
     // Session secret for AdminJS
     const sessionSecret =
@@ -211,7 +219,7 @@ async function setupAdminJS(app: any) {
         cookie: {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // Allows cookies in Telegram WebApp (production), normal behavior in dev
+          sameSite: "lax", // Desktop browser access = first-party cookies (no need for 'none')
           maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         },
       },

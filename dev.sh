@@ -33,6 +33,7 @@ print_help() {
     echo "  frontend - Access frontend container shell"
     echo "  db       - Access database shell"
     echo "  tools    - Start with additional tools (adminer)"
+    echo "  debug    - Start in DEBUG mode (enables Node.js debugger on port 9229)"
     echo ""
 }
 
@@ -118,7 +119,31 @@ case "$1" in
         echo "Adminer:  http://localhost:8080"
         echo "Database: localhost:5432"
         ;;
-    
+
+    debug)
+        echo -e "${GREEN}Starting development environment in DEBUG mode...${NC}"
+
+        # Check if .env.dev exists, if not copy from .env.example
+        if [ ! -f .env.dev ]; then
+            echo -e "${YELLOW}Creating .env.dev from .env.example...${NC}"
+            cp .env.example .env.dev
+            echo -e "${YELLOW}Please edit .env.dev with your development settings${NC}"
+        fi
+
+        $DOCKER_COMPOSE -f $COMPOSE_FILE -f docker-compose.debug.yml up -d
+        echo -e "${GREEN}Services started in DEBUG mode!${NC}"
+        echo ""
+        echo "Frontend: http://localhost:3000"
+        echo "Backend:  http://localhost:3001"
+        echo "Database: localhost:5432"
+        echo ""
+        echo -e "${YELLOW}Debug mode enabled:${NC}"
+        echo "Backend debugger: localhost:9229"
+        echo "VSCode: Use '🐳 Backend: Attach to Docker' configuration"
+        echo ""
+        echo "To stop debug mode: ./dev.sh down"
+        ;;
+
     *)
         print_help
         ;;

@@ -1,0 +1,12 @@
+# Docker Compose override for debug mode
+# Usage: docker-compose -f docker-compose.dev.yml -f docker-compose.debug.yml up
+# Or use: ./dev.sh debug
+
+services:
+  # Backend with debug mode enabled
+  backend:
+    command: npm run start:debug
+    environment:
+      # Enable debug-specific logging
+      DEBUG: "true"
+      LOG_LEVEL: debug
