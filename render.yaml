@@ -83,6 +83,10 @@ services:
     plan: starter
     dockerfilePath: ./kottster-app/Dockerfile
     dockerContext: ./kottster-app
+    disk:
+      name: kottster-data
+      mountPath: /app/data
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production

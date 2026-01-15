@@ -19,7 +19,7 @@ export const app = createApp({
    * See https://kottster.app/docs/app-configuration/identity-provider
    */
   identityProvider: createIdentityProvider("sqlite", {
-    fileName: "app.db",
+    fileName: process.env.SQLITE_DB_PATH || "/app/data/app.db",
 
     passwordHashAlgorithm: "bcrypt",
     jwtSecretSalt: process.env.KOTTSTER_JWT_SALT || "",
