@@ -1,38 +1,29 @@
-# Kottster Admin Panel - Production Deployment
-# Multi-stage build for optimized production image
+# Kottster Admin Panel - TEMPORARY DEVELOPMENT MODE FOR RENDER
+# Running in development mode to enable visual builder for datasource/page configuration
+# TODO: Revert to production build after configuration is complete
+# BACKUP: Dockerfile.prod.backup
 
-# ============================================================
-# STAGE 1: Builder
-# ============================================================
-FROM node:22-alpine AS builder
-WORKDIR /app
-
-# Copy package files and install all dependencies (including devDependencies)
-COPY package*.json ./
-RUN npm install
-
-# Copy source code and build
-COPY . .
-RUN npm run build
-
-# ============================================================
-# STAGE 2: Production
-# ============================================================
 FROM node:22-alpine
 WORKDIR /app
 
-# Copy package files and install production dependencies only
-COPY package*.json ./
-RUN npm install --omit=dev
+# Install build dependencies for native modules (better-sqlite3)
+RUN apk add --no-cache python3 make g++
 
-# Copy built artifacts from builder stage
-COPY --from=builder /app/dist ./dist
+# Copy package files and install ALL dependencies (including devDependencies for dev mode)
+COPY package*.json ./
+RUN npm install
+
+# Rebuild better-sqlite3 for the current architecture
+RUN npm rebuild better-sqlite3
+
+# Copy application source
+COPY . .
 
 # Create directory for SQLite identity database (created at runtime)
 RUN mkdir -p /app/data && chown -R node:node /app/data
 
 # Environment variables (will be overridden by Render)
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 ENV PORT=5480
 ENV DB_HOST=localhost
 ENV DB_PORT=5432
@@ -56,5 +47,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 # Run as non-root user for security
 USER node
 
-# Start the server
-CMD ["node", "dist/server/server.cjs"]
+# Start the development server (enables visual builder)
+CMD ["npm", "run", "dev"]
